@@ -61,7 +61,7 @@ export default function DashboardAPI() {
         <div>
           <legend className="fieldset-legend">Geoapify</legend>
           <input
-            type="text"
+            type="password"
             className="input w-full"
             placeholder="Type here"
             value={keys.geoapify}
@@ -71,7 +71,7 @@ export default function DashboardAPI() {
         <div>
           <legend className="fieldset-legend">NBN</legend>
           <input
-            type="text"
+             type="password"
             className="input w-full"
             placeholder="Type here"
             value={keys.nbn}
@@ -81,7 +81,7 @@ export default function DashboardAPI() {
         <div>
           <legend className="fieldset-legend">reCAPTCHA</legend>
           <input
-            type="text"
+             type="password"
             className="input w-full"
             placeholder="Type here"
             value={keys.recaptcha}
