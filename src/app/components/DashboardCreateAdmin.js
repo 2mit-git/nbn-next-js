@@ -2,7 +2,12 @@
 import React, { useState } from "react";
 
 export default function DashboardCreateAdmin({ onGoBack }) {
-  const [form, setForm] = useState({ email: "",number: "", password: "", confirm: "" });
+  const [form, setForm] = useState({
+    email: "",
+    number: "",
+    password: "",
+    confirm: "",
+  });
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, message: "" });
 
@@ -19,11 +24,17 @@ export default function DashboardCreateAdmin({ onGoBack }) {
       return showToast("Passwords do not match.");
     }
     setLoading(true);
+    let to = form.number.trim();
+    if (!to.startsWith("+")) to = "+" + to;
     try {
       const res = await fetch("/api/admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.email, number: form.number, password: form.password }),
+        body: JSON.stringify({
+          email: form.email,
+          number: to,
+          password: form.password,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Create failed");

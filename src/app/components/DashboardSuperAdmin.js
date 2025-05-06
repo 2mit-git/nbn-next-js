@@ -112,7 +112,8 @@ export default function DashboardSuperAdmin() {
                 {admins.map((admin, i) => (
                   <tr key={admin._id}>
                     <th>{i + 1}</th>
-                    <td>{admin.email}</td>
+                    <td>{admin.email} {
+                      admin.type=="superadmin" && (<div class="badge badge-outline badge-success ms-2">superadmin</div>)}</td>
                     <td>
                       <input
                         type="password"
@@ -147,12 +148,12 @@ export default function DashboardSuperAdmin() {
                           >
                             Edit
                           </button>
-                          <button
+                          {admin.type=="admin" && (<button
                             onClick={() => handleDelete(admin._id)}
                             className="btn btn-error btn-sm"
                           >
                             Delete
-                          </button>
+                          </button>)}
                         </>
                       )}
                     </td>
