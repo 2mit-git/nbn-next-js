@@ -1,4 +1,3 @@
-// pages/api/products.js
 import dbConnect from "../../lib/dbConnect";
 import Product   from "../../models/Product";
 
@@ -14,14 +13,41 @@ export default async function handler(req, res) {
 
   // ── CREATE a product ──────────────────────────────────────────
   if (method === "POST") {
-    const { category, speed, price } = req.body;
-    if (!category || !speed || !price) {
-      return res
-        .status(400)
-        .json({ error: "category, speed and price are all required." });
+    const {
+      category,
+      speed,
+      title,
+      subtitle,
+      actualPrice,
+      discountPrice,
+      termsAndConditions = [],
+      recommendation,
+    } = req.body;
+
+    // required checks
+    if (
+      !category ||
+      !speed ||
+      !title ||
+      actualPrice == null  // allow zero
+      || !Array.isArray(termsAndConditions)
+    ) {
+      return res.status(400).json({
+        error: "category, speed, title and actualPrice are required."
+      });
     }
+
     try {
-      const created = await Product.create({ category, speed, price });
+      const created = await Product.create({
+        category,
+        speed,
+        title,
+        subtitle,
+        actualPrice,
+        discountPrice,
+        termsAndConditions,
+        recommendation,
+      });
       return res.status(201).json(created);
     } catch (err) {
       console.error(err);
@@ -31,14 +57,35 @@ export default async function handler(req, res) {
 
   // ── UPDATE a product ──────────────────────────────────────────
   if (method === "PUT") {
-    const { id, category, speed, price } = req.body;
+    const {
+      id,
+      category,
+      speed,
+      title,
+      subtitle,
+      actualPrice,
+      discountPrice,
+      termsAndConditions =[],
+      recommendation,
+    } = req.body;
+
     if (!id) {
       return res.status(400).json({ error: "Product id is required." });
     }
+
     try {
       const updated = await Product.findByIdAndUpdate(
         id,
-        { category, speed, price },
+        {
+          category,
+          speed,
+          title,
+          subtitle,
+          actualPrice,
+          discountPrice,
+          termsAndConditions,
+          recommendation,
+        },
         { new: true }
       );
       if (!updated) {
@@ -70,6 +117,6 @@ export default async function handler(req, res) {
   }
 
   // ── METHOD NOT ALLOWED ────────────────────────────────────────
-  res.setHeader("Allow", ["GET","POST","PUT","DELETE"]);
+  res.setHeader("Allow", ["GET", "POST", "PUT", "DELETE"]);
   res.status(405).end(`Method ${method} Not Allowed`);
 }

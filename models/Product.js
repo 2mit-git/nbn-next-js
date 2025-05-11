@@ -1,4 +1,3 @@
-// models/Product.js
 import mongoose from "mongoose";
 
 const ProductSchema = new mongoose.Schema({
@@ -11,13 +10,37 @@ const ProductSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  price: {
+
+  // ── New fields ────────────────────────────────────────────────
+  title: {
     type: String,
     required: true,
+    trim: true,
+  },
+  subtitle: {
+    type: String,
+    trim: true,
+  },
+  actualPrice: {
+    type: Number,
+    required: true,
+  },
+  discountPrice: {
+    type: Number,
+    default: 0,
+  },
+  termsAndConditions: {
+    type: [String],
+    trim: true,
+  },
+  recommendation: {
+    type: String,
+    trim: true,
   },
 }, {
   timestamps: true,
 });
 
+// Avoid model overwrite in dev
 export default mongoose.models.Product ||
-       mongoose.model("Product", ProductSchema);
+  mongoose.model("Product", ProductSchema);

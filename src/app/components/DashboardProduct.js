@@ -1,3 +1,4 @@
+// File: src/components/DashboardProduct.js
 "use client";
 import React, { useState, useEffect } from "react";
 
@@ -6,11 +7,9 @@ export default function DashboardProduct() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState(null);
-  const [editedSpeed, setEditedSpeed] = useState("");
-  const [editedPrice, setEditedPrice] = useState("");
+  const [edited, setEdited] = useState({});
   const [addingCategory, setAddingCategory] = useState(null);
-  const [newSpeed, setNewSpeed] = useState("");
-  const [newPrice, setNewPrice] = useState("");
+  const [newProduct, setNewProduct] = useState({});
   const [openCats, setOpenCats] = useState({});
 
   const categories = ["FTTP", "HFC", "FTTN_FTTC_FTTB", "Wireless"];
@@ -21,53 +20,39 @@ export default function DashboardProduct() {
       const res = await fetch("/api/products");
       if (!res.ok) throw new Error();
       setProducts(await res.json());
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Failed to load products");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
+  useEffect(() => { loadProducts(); }, []);
 
-  const toggleCategory = (cat) => {
+  const toggleCategory = (cat) =>
     setOpenCats((prev) => ({ ...prev, [cat]: !prev[cat] }));
-  };
 
-  const handleEditClick = (product) => {
-    setEditingId(product._id);
-    setEditedSpeed(product.speed);
-    setEditedPrice(product.price);
-    setOpenCats((prev) => ({ ...prev, [product.category]: true }));
+  const handleEditClick = (p) => {
+    setEditingId(p._id);
+    setEdited({ ...p });
+    setOpenCats((prev) => ({ ...prev, [p.category]: true }));
   };
 
   const handleSaveClick = async (id) => {
-    if (!editedSpeed || !editedPrice) {
-      return alert("Speed and price required");
-    }
     try {
+      const trimmedTCs = Array.isArray(edited.termsAndConditions)
+        ? edited.termsAndConditions.map((l) => l.trim()).filter((l) => l)
+        : [];
+      const payload = { ...edited, termsAndConditions: trimmedTCs, id };
       const res = await fetch("/api/products", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id,
-          category: products.find((p) => p._id === id).category,
-          speed: editedSpeed,
-          price: editedPrice,
-        }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error();
       setEditingId(null);
-      setOpenCats((prev) => ({
-        ...prev,
-        [products.find((p) => p._id === id).category]: true,
-      }));
       loadProducts();
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert("Failed to update product");
     }
   };
@@ -83,41 +68,38 @@ export default function DashboardProduct() {
       if (!res.ok) throw new Error();
       setOpenCats((prev) => ({ ...prev, [category]: true }));
       loadProducts();
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert("Failed to delete product");
     }
   };
 
   const handleAddClick = (category) => {
     setAddingCategory(category);
-    setNewSpeed("");
-    setNewPrice("");
+    setNewProduct({ category, termsAndConditions: [] });
     setOpenCats((prev) => ({ ...prev, [category]: true }));
   };
 
   const handleSaveNew = async (category) => {
-    if (!newSpeed || !newPrice) {
-      return alert("Speed and price required");
-    }
     try {
+      const tcs = Array.isArray(newProduct.termsAndConditions)
+        ? newProduct.termsAndConditions.map((l) => l.trim()).filter((l) => l)
+        : [];
+      const payload = { ...newProduct, category, termsAndConditions: tcs };
       const res = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category, speed: newSpeed, price: newPrice }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error();
       setAddingCategory(null);
-      setOpenCats((prev) => ({ ...prev, [category]: true }));
       loadProducts();
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert("Failed to add product");
     }
   };
 
   if (loading) return <p className="m-10">Loading products…</p>;
-  if (error) return <p className="m-10 text-red-500">{error}</p>;
+  if (error)   return <p className="m-10 text-red-500">{error}</p>;
 
   return (
     <div className="w-full h-full">
@@ -125,7 +107,6 @@ export default function DashboardProduct() {
         {categories.map((cat) => {
           const items = products.filter((p) => p.category === cat);
           const isOpen = !!openCats[cat];
-
           return (
             <div
               key={cat}
@@ -146,108 +127,175 @@ export default function DashboardProduct() {
                   <table className="table w-full">
                     <thead>
                       <tr>
-                        <th></th>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Subtitle</th>
                         <th>Speed</th>
-                        <th>Price</th>
+                        <th>Actual Price</th>
+                        <th>Discount Price</th>
+                        <th>T&C</th>
+                        <th>Recommendation</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {items.map((p, idx) => (
-                        <tr key={p._id}>
-                          <th>{idx + 1}</th>
-                          <td>
-                            {editingId === p._id ? (
-                              <input
-                                type="text"
-                                className="input input-sm w-full"
-                                value={editedSpeed}
-                                onChange={(e) => setEditedSpeed(e.target.value)}
-                              />
-                            ) : (
-                              p.speed
-                            )}
-                          </td>
-                          <td>
-                            {editingId === p._id ? (
-                              <input
-                                type="text"
-                                className="input input-sm w-full"
-                                value={editedPrice}
-                                onChange={(e) => setEditedPrice(e.target.value)}
-                              />
-                            ) : (
-                              p.price
-                            )}
-                          </td>
-                          <td className="space-x-2">
-                            {editingId === p._id ? (
-                              <>
-                                <button
-                                  onClick={() => handleSaveClick(p._id)}
-                                  className="btn btn-success btn-sm"
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  onClick={() => setEditingId(null)}
-                                  className="btn btn-neutral btn-sm"
-                                >
-                                  Cancel
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={() => handleEditClick(p)}
-                                  className="btn btn-warning btn-sm"
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteClick(p._id, cat)}
-                                  className="btn btn-error btn-sm"
-                                >
-                                  Delete
-                                </button>
-                              </>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                      {items.map((p, idx) => {
+                        const tcs = Array.isArray(p.termsAndConditions)
+                          ? p.termsAndConditions
+                          : [];
+                        return (
+                          <tr key={p._id}>
+                            <th>{idx + 1}</th>
+                            {['title', 'subtitle', 'speed', 'actualPrice', 'discountPrice'].map((field) => (
+                              <td key={field}>
+                                {editingId === p._id ? (
+                                  <input
+                                    type={field.includes('Price') ? 'number' : 'text'}
+                                    className="input input-sm w-full"
+                                    value={edited[field] || ''}
+                                    onChange={(e) =>
+                                      setEdited((prev) => ({
+                                        ...prev,
+                                        [field]: field.includes('Price')
+                                          ? parseFloat(e.target.value)
+                                          : e.target.value,
+                                      }))}
+                                  />
+                                ) : (
+                                  p[field]
+                                )}
+                              </td>
+                            ))}
 
+                            {/* T&C */}
+                            <td>
+                              {editingId === p._id ? (
+                                <textarea
+                                  className="textarea textarea-sm w-full"
+                                  rows={Math.max(3, tcs.length)}
+                                  value={(edited.termsAndConditions || []).join("\n")}
+                                  onChange={(e) =>
+                                    setEdited((prev) => ({
+                                      ...prev,
+                                      termsAndConditions: e.target.value
+                                        .split("\n")
+                                        .map((l) => l.trim())
+                                        .filter((l) => l),
+                                    }))
+                                  }
+                                  onKeyDown={(e) => e.stopPropagation()}
+                                />
+                              ) : (
+                                tcs.map((t, i) => (
+                                  <div key={i} className="text-xs">
+                                    {t}
+                                  </div>
+                                ))
+                              )}
+                            </td>
+
+                            {/* Recommendation */}
+                            <td>
+                              {editingId === p._id ? (
+                                <input
+                                  type="text"
+                                  className="input input-sm w-full"
+                                  value={edited.recommendation || ''}
+                                  onChange={(e) =>
+                                    setEdited((prev) => ({
+                                      ...prev,
+                                      recommendation: e.target.value,
+                                    }))
+                                  }
+                                />
+                              ) : (
+                                p.recommendation
+                              )}
+                            </td>
+
+                            {/* Actions */}
+                            <td className="space-x-2">
+                              {editingId === p._id ? (
+                                <>
+                                  <button onClick={() => handleSaveClick(p._id)} className="btn btn-success btn-sm">
+                                    Save
+                                  </button>
+                                  <button onClick={() => setEditingId(null)} className="btn btn-neutral btn-sm">
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button onClick={() => handleEditClick(p)} className="btn btn-warning btn-sm">
+                                    Edit
+                                  </button>
+                                  <button onClick={() => handleDeleteClick(p._id, cat)} className="btn btn-error btn-sm">
+                                    Delete
+                                  </button>
+                                </>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                       {addingCategory === cat && (
                         <tr>
                           <th>*</th>
+                          {['title', 'subtitle', 'speed', 'actualPrice', 'discountPrice'].map((field) => (
+                            <td key={field}>
+                              <input
+                                type={field.includes('Price') ? 'number' : 'text'}
+                                className="input input-sm w-full"
+                                placeholder={field}
+                                value={newProduct[field] || ''}
+                                onChange={(e) =>
+                                  setNewProduct((prev) => ({
+                                    ...prev,
+                                    [field]: field.includes('Price')
+                                      ? parseFloat(e.target.value)
+                                      : e.target.value,
+                                  }))
+                                }
+                              />
+                            </td>
+                          ))}
                           <td>
-                            <input
-                              type="text"
-                              className="input input-sm w-full"
-                              placeholder="Speed"
-                              value={newSpeed}
-                              onChange={(e) => setNewSpeed(e.target.value)}
+                            <textarea
+                              className="textarea textarea-sm w-full"
+                              rows={3}
+                              placeholder="One term per line"
+                              value={(newProduct.termsAndConditions || []).join("\n")}
+                              onChange={(e) =>
+                                setNewProduct((prev) => ({
+                                  ...prev,
+                                  termsAndConditions: e.target.value
+                                    .split("\n")
+                                    .map((l) => l.trim())
+                                    .filter((l) => l),
+                                }))
+                              }
+                              onKeyDown={(e) => e.stopPropagation()}
                             />
                           </td>
                           <td>
                             <input
                               type="text"
                               className="input input-sm w-full"
-                              placeholder="Price"
-                              value={newPrice}
-                              onChange={(e) => setNewPrice(e.target.value)}
+                              placeholder="recommendation"
+                              value={newProduct.recommendation || ''}
+                              onChange={(e) =>
+                                setNewProduct((prev) => ({
+                                  ...prev,
+                                  recommendation: e.target.value,
+                                }))
+                              }
                             />
                           </td>
                           <td className="space-x-2">
-                            <button
-                              onClick={() => handleSaveNew(cat)}
-                              className="btn btn-success btn-sm"
-                            >
+                            <button onClick={() => handleSaveNew(cat)} className="btn btn-success btn-sm">
                               Add
                             </button>
-                            <button
-                              onClick={() => setAddingCategory(null)}
-                              className="btn btn-neutral btn-sm"
-                            >
+                            <button onClick={() => setAddingCategory(null)} className="btn btn-neutral btn-sm">
                               Cancel
                             </button>
                           </td>
@@ -257,16 +305,9 @@ export default function DashboardProduct() {
                   </table>
                 </div>
                 <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleAddClick(cat);
-                  }}
-                  className="btn btn-success btn-sm ml-2 mt-5"
-                >
-                  Add Item
-                </button>
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAddClick(cat); }}
+                  className="btn btn-success btn-sm mt-5"
+                >Add Item</button>
               </div>
             </div>
           );
