@@ -1,18 +1,27 @@
+// File: src/app/page.js
 "use client";
 
-import NbnAddressLookup from "./components/NbnAddressLookup";
-import ProductGrid from "./components/ProductGrid";
 import { useState } from "react";
-
-
+import NbnAddressLookup from "./components/NbnAddressLookup";
+import ProductGrid      from "./components/ProductGrid";
+import ExtrasSelector   from "./components/ExtrasSelector";
+import ContractForm     from "./components/ContractForm";
 
 export default function Home() {
+  const [step, setStep]                   = useState(0);
+  const [selectedTech, setSelectedTech]   = useState(null);
+  const [serviceAddress, setServiceAddress] = useState("");
+  const [selectedPlan, setSelectedPlan]   = useState(null);
+  const [extras, setExtras]               = useState({ modems: [], phone: null });
 
-  const [selectedTech, setSelectedTech] = useState(null);
+  const next = () => setStep((s) => Math.min(s + 1, 3));
+  const back = () => setStep((s) => Math.max(s - 1, 0));
+
   return (
-    <div>
+    <div className="min-h-screen">
+      {/* header & nav omitted for brevity */}
       {/* header section */}
-      <div className="navbar bg-base-100 shadow-sm">
+     <div className="navbar bg-base-100 shadow-sm">
         <div className="navbar-start">
           <div className="dropdown">
             <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
@@ -138,23 +147,80 @@ export default function Home() {
         <div className="navbar-end"></div>
       </div>
 
-      <div>
-        <ul className="steps w-full">
-          <li className="step step-primary">check nbn</li>
-          <li className="step ">Choose plan</li>
-          <li className="step">Select Modem</li>
-          <li className="step">Final Step</li>
-        </ul>
-      </div>
-      <div className="w-full m-20 space-y-10">
-        <NbnAddressLookup onTechChange={setSelectedTech} />
-      </div>
-      <div>
-      <h1 className="text-2xl font-bold p-6">Our NBN Plans</h1>
-      <ProductGrid tech={selectedTech} />
-      </div>
+      {/* Steps Bar */}
+      <ul className="steps w-full mt10">
+        {["Check NBN", "Choose plan", "Select extras", "Your details"].map((label, i) => (
+          <li key={i} className={`step ${i <= step ? "step-primary" : ""}`}>
+            {label}
+          </li>
+        ))}
+      </ul>
 
-      <div></div>
+      <div className="p-8 space-y-8">
+        {/* Step 0: Address */}
+        {step === 0 && (
+          <>
+            <NbnAddressLookup
+              onTechChange={setSelectedTech}
+              onAddressChange={setServiceAddress}
+            />
+            <button
+              className="btn btn-primary"
+              disabled={!selectedTech}
+              onClick={next}
+            >
+              Next: Choose plan
+            </button>
+          </>
+        )}
+
+        {/* Step 1: Plan */}
+        {step === 1 && (
+          <>
+            <h1 className="text-2xl font-bold">Our NBN Plans</h1>
+            <ProductGrid
+              tech={selectedTech}
+              onSelectPlan={(plan) => {
+                setSelectedPlan(plan);
+                next();
+              }}
+            />
+            <div className="flex justify-between">
+              <button className="btn btn-secondary" onClick={back}>
+                ← Back
+              </button>
+              {/* Next is triggered by onSelectPlan */}
+            </div>
+          </>
+        )}
+
+        {/* Step 2: Extras */}
+        {step === 2 && (
+          <>
+            <ExtrasSelector onChange={setExtras} />
+            <div className="flex justify-between">
+              <button className="btn btn-secondary" onClick={back}>
+                ← Back
+              </button>
+              <button className="btn btn-primary" onClick={next}>
+                Next: Your details
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Step 3: Contract form */}
+        {step === 3 && (
+          <>
+            <ContractForm serviceAddress={serviceAddress} />
+            <div className="mt-4">
+              <button className="btn btn-secondary" onClick={back}>
+                ← Back
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

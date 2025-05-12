@@ -15,7 +15,7 @@ function useDebounce(value, delay = 300) {
  * Props:
  *   onTechChange: (techType: string|null) => void
  */
-export default function NbnAddressLookup({ onTechChange }) {
+export default function NbnAddressLookup({ onTechChange , onAddressChange }) {
   const GEO_API_KEY   = "5e98dc856d0942e9993f939d68e0c9d7";
   const RAPIDAPI_KEY = "91e426bd3cmshef10284de2b4fd9p1f4f0djsn16a0f604d1bb";
 
@@ -29,6 +29,7 @@ export default function NbnAddressLookup({ onTechChange }) {
   useEffect(() => {
     // reset parent techType when user is typing
     onTechChange(null);
+    onAddressChange?.(null);
 
     if (debouncedQuery.length < 2) {
       setSuggestions([]);
@@ -53,6 +54,9 @@ export default function NbnAddressLookup({ onTechChange }) {
     setSuggestions([]);
     setLoading(true);
 
+      // lift address up
+   onAddressChange?.(addr);
+
     try {
       const nbnUrl =
         `https://nbnco-address-check.p.rapidapi.com/nbn_address` +
@@ -66,13 +70,16 @@ export default function NbnAddressLookup({ onTechChange }) {
       });
       const json = await res.json();
       setNbnResult(json);
+      onTechChange(json?.addressDetail?.techType || null);
 
       // notify parent of the techType (or null if missing)
       onTechChange(json?.addressDetail?.techType || null);
     } catch (err) {
       console.error(err);
       setNbnResult(null);
-      onTechChange(null);
+           onTechChange(null);
+    onAddressChange?.(null);
+
     } finally {
       setLoading(false);
     }
@@ -135,7 +142,6 @@ export default function NbnAddressLookup({ onTechChange }) {
                 : "No free upgrade available."}
             </p>
           </div>
-          <button className="btn btn-success">Get started</button>
         </div>
       )}
     </div>
