@@ -1,10 +1,13 @@
 // File: src/components/ContractForm.jsx
 "use client";
+
 import React, { useState, useEffect } from "react";
 
 const TITLES = ["Mr", "Mrs", "Ms", "Dr", "Prof"];
+const PRIMARY = "#1DA6DF";
 
 export default function ContractForm({ serviceAddress }) {
+  console.log(serviceAddress);
   const [form, setForm] = useState({
     title: "Mr",
     firstName: "",
@@ -25,9 +28,9 @@ export default function ContractForm({ serviceAddress }) {
     accountNumber: "",
   });
 
-  // keep serviceAddress in sync
+  // sync serviceAddress prop
   useEffect(() => {
-    setForm(f => ({ ...f, serviceAddress: serviceAddress || "" }));
+    setForm((f) => ({ ...f, serviceAddress: serviceAddress || "" }));
   }, [serviceAddress]);
 
   const handleChange = (key) => (e) => {
@@ -38,307 +41,344 @@ export default function ContractForm({ serviceAddress }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Form data:", form);
+    console.log("Submitting:", form);
     // TODO: send to backend
   };
+
+  // common input style
+  const inputClasses =
+    "w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:border-[--primary] focus:ring-2 focus:ring-[--primary]/30";
+  // toggle button style
+  const toggleBtn = (active) =>
+    `px-5 py-2 rounded-full font-medium transition ${
+      active
+        ? "bg-[--primary] text-white shadow-md hover:bg-opacity-90"
+        : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+    }`;
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-base-100 shadow-lg rounded-lg p-8 space-y-8"
+      className="max-w-4xl mx-auto space-y-8"
+      style={{ "--primary": PRIMARY }}
     >
-      {/* Contact Details */}
-      <fieldset className="border border-base-300 rounded-lg p-6 space-y-4">
-        <legend className="text-xl font-bold">Enter your contact details</legend>
-
-        <div className="form-control w-full">
-          <label className="label">
-            <span className="label-text">Title</span>
-          </label>
-          <select
-            className="select select-bordered w-full"
-            value={form.title}
-            onChange={handleChange("title")}
-          >
-            {TITLES.map((t) => (
-              <option key={t}>{t}</option>
-            ))}
-          </select>
-        </div>
-
+      {/* Section Card */}
+      {/** Wrap each fieldset in a card-like container **/}
+      {/** Contact Details **/}
+      <div className="bg-white rounded-2xl shadow p-6 space-y-6">
+        <h2 className="text-2xl font-semibold text-[--primary]">
+          Contact Details
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">First name</span>
+          {/* Title */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Title
+            </label>
+            <select
+              className={inputClasses}
+              value={form.title}
+              onChange={handleChange("title")}
+            >
+              {TITLES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+          {/* First Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              First Name
             </label>
             <input
               type="text"
-              className="input input-bordered"
+              className={inputClasses}
               value={form.firstName}
               onChange={handleChange("firstName")}
               required
             />
           </div>
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Last name</span>
+          {/* Last Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Last Name
             </label>
             <input
               type="text"
-              className="input input-bordered"
+              className={inputClasses}
               value={form.lastName}
               onChange={handleChange("lastName")}
               required
             />
           </div>
-        </div>
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Email address</span>
-          </label>
-          <input
-            type="email"
-            className="input input-bordered"
-            value={form.email}
-            onChange={handleChange("email")}
-            required
-          />
-        </div>
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Contact number</span>
-            <span className="label-text-alt">(Mobile or Home Phone)</span>
-          </label>
-          <input
-            type="tel"
-            className="input input-bordered"
-            value={form.contactNumber}
-            onChange={handleChange("contactNumber")}
-            required
-          />
-        </div>
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Date of birth</span>
-            <span className="label-text-alt">DD/MM/YYYY</span>
-          </label>
-          <input
-            type="date"
-            className="input input-bordered"
-            value={form.dob}
-            onChange={handleChange("dob")}
-            required
-          />
-        </div>
-      </fieldset>
-
-      {/* Connection Details */}
-      <fieldset className="border border-base-300 rounded-lg p-6 space-y-4">
-        <legend className="text-xl font-bold">Connection details</legend>
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Service address</span>
-          </label>
-          <input
-            type="text"
-            className="input input-bordered bg-base-200 cursor-not-allowed"
-            value={form.serviceAddress}
-            readOnly
-          />
-        </div>
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Preferred activation date</span>
-            <span className="label-text-alt">DD/MM/YYYY</span>
-          </label>
-          <div className="flex items-center gap-4">
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Email Address
+            </label>
             <input
-              type="checkbox"
-              id="asap"
-              className="checkbox checkbox-success"
-              checked={form.activateASAP}
-              onChange={handleChange("activateASAP")}
+              type="email"
+              className={inputClasses}
+              value={form.email}
+              onChange={handleChange("email")}
+              required
             />
-            <label htmlFor="asap">As soon as possible</label>
           </div>
-          {!form.activateASAP && (
+          {/* Contact Number */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Contact Number{" "}
+              <span className="text-xs text-gray-500">(Mobile or Home)</span>
+            </label>
+            <input
+              type="tel"
+              className={inputClasses}
+              value={form.contactNumber}
+              onChange={handleChange("contactNumber")}
+              required
+            />
+          </div>
+          {/* Date of Birth */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Date of Birth
+            </label>
             <input
               type="date"
-              className="input input-bordered mt-2"
-              value={form.activationDate}
-              onChange={handleChange("activationDate")}
+              className={inputClasses}
+              value={form.dob}
+              onChange={handleChange("dob")}
               required
             />
-          )}
-        </div>
-      </fieldset>
-
-      {/* Delivery Details */}
-      <fieldset className="border border-base-300 rounded-lg p-6 space-y-4">
-        <legend className="text-xl font-bold">Delivery details</legend>
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">
-              Delivery address (Physical only)
-            </span>
-          </label>
-          <div className="flex items-center gap-4">
-            <input
-              type="checkbox"
-              id="same"
-              className="checkbox checkbox-success"
-              checked={form.deliverySame}
-              onChange={handleChange("deliverySame")}
-            />
-            <label htmlFor="same">Same as service address</label>
           </div>
-          {!form.deliverySame ? (
+        </div>
+      </div>
+
+      {/** Connection Details **/}
+      <div className="bg-white rounded-2xl shadow p-6 space-y-6">
+        <h2 className="text-2xl font-semibold text-[--primary]">
+          Connection Details
+        </h2>
+        <div className="space-y-4">
+          {/* Service Address */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Service Address
+            </label>
             <input
               type="text"
-              className="input input-bordered mt-2"
-              value={form.deliveryAddress}
-              onChange={handleChange("deliveryAddress")}
-              required
-            />
-          ) : (
-            <input
-              type="text"
-              className="input input-bordered bg-base-200 cursor-not-allowed mt-2"
+              className={`${inputClasses} bg-gray-100 cursor-not-allowed text-black`}
               value={form.serviceAddress}
               readOnly
             />
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Full name (Delivery)</span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered"
-              value={form.deliveryName}
-              onChange={handleChange("deliveryName")}
-            />
           </div>
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">
-                Company name <span className="opacity-50">(if applicable)</span>
-              </span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered"
-              value={form.companyName}
-              onChange={handleChange("companyName")}
-            />
-          </div>
-        </div>
-      </fieldset>
-
-      {/* Phone Porting */}
-      <fieldset className="border border-base-300 rounded-lg p-6 space-y-4">
-        <legend className="text-xl font-bold">Your phone details</legend>
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">
-              Do you want to keep an existing phone number?
+          {/* Activation Date */}
+          <div>
+            <span className="block text-sm font-medium text-gray-700">
+              Activate ASAP?
             </span>
-          </label>
-          <div className="flex gap-4">
-            <button
-              type="button"
-              className={form.keepPhone ? "btn btn-success" : "btn btn-outline"}
-              onClick={() => setForm((f) => ({ ...f, keepPhone: true }))}
-            >
-              Yes
-            </button>
-            <button
-              type="button"
-              className={!form.keepPhone ? "btn btn-success" : "btn btn-outline"}
-              onClick={() => setForm((f) => ({ ...f, keepPhone: false }))}
-            >
-              No
-            </button>
+            <div className="flex space-x-4">
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, activateASAP: true }))}
+                className={`px-5 py-2 rounded-full font-medium transition ${
+                  form.activateASAP
+                    ? "bg-[#1DA6DF] text-white"
+                    : "bg-white text-black border border-gray-300"
+                }`}
+              >
+                ASAP
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, activateASAP: false }))}
+                className={`px-5 py-2 rounded-full font-medium transition ${
+                  !form.activateASAP
+                    ? "bg-[#1DA6DF] text-white"
+                    : "bg-white text-black border border-gray-300"
+                }`}
+              >
+                Pick Date
+              </button>
+            </div>
+
+            {!form.activateASAP && (
+              <input
+                type="date"
+                className={`${inputClasses} mt-2`}
+                value={form.activationDate}
+                onChange={handleChange("activationDate")}
+                required
+              />
+            )}
           </div>
         </div>
+      </div>
 
-        {form.keepPhone && (
-          <>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">
-                  Your phone number (fixed line)
-                </span>
+      {/** Delivery Details **/}
+      <div className="bg-white rounded-2xl shadow p-6 space-y-6">
+        <h2 className="text-2xl font-semibold text-[--primary]">
+          Delivery Details
+        </h2>
+        <div className="space-y-4">
+          {/* Same as Service? */}
+          <div>
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                className="h-5 w-5 text-[--primary] border-gray-300 rounded focus:ring focus:ring-[--primary]/30"
+                checked={form.deliverySame}
+                onChange={handleChange("deliverySame")}
+              />
+              <span className="text-gray-700">Same as Service Address</span>
+            </label>
+            {!form.deliverySame && (
+              <input
+                type="text"
+                className={`${inputClasses} mt-2`}
+                placeholder="Delivery Address"
+                value={form.deliveryAddress}
+                onChange={handleChange("deliveryAddress")}
+                required
+              />
+            )}
+          </div>
+          {/* Recipient Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Full Name (Delivery)
               </label>
               <input
+                type="text"
+                className={inputClasses}
+                value={form.deliveryName}
+                onChange={handleChange("deliveryName")}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Company Name{" "}
+                <span className="text-xs text-gray-500">(Optional)</span>
+              </label>
+              <input
+                type="text"
+                className={inputClasses}
+                value={form.companyName}
+                onChange={handleChange("companyName")}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/** Phone Details **/}
+      <div className="bg-white rounded-2xl shadow p-6 space-y-6">
+        <h2 className="text-2xl font-semibold text-[--primary]">
+          Phone Details
+        </h2>
+        <div className="space-y-4">
+          {/* Keep Number */}
+          <div>
+            <span className="block text-sm font-medium text-gray-700">
+              Keep existing number?
+            </span>
+            <div className="flex space-x-4">
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, keepPhone: true }))}
+                className={`px-5 py-2 rounded-full font-medium transition ${
+                  form.keepPhone
+                    ? "bg-[#1DA6DF] text-white"
+                    : "bg-white text-black border border-gray-300"
+                }`}
+              >
+                Yes
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, keepPhone: false }))}
+                className={`px-5 py-2 rounded-full font-medium transition ${
+                  !form.keepPhone
+                    ? "bg-[#1DA6DF] text-white"
+                    : "bg-white text-black border border-gray-300"
+                }`}
+              >
+                No
+              </button>
+            </div>
+          </div>
+          {/* Porting */}
+          {form.keepPhone && (
+            <>
+              <input
                 type="tel"
-                className="input input-bordered"
+                className={inputClasses}
+                placeholder="Phone Number"
                 value={form.phoneNumber}
                 onChange={handleChange("phoneNumber")}
                 required
               />
-            </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">
-                  Transfer as Exetel VoIP number?
-                </span>
-              </label>
-              <div className="flex gap-4">
+              <span className="block text-sm font-medium text-gray-700">
+                Transfer as VoIP?
+              </span>
+              <div className="flex space-x-4">
                 <button
                   type="button"
-                  className={form.transferVoip ? "btn btn-success" : "btn btn-outline"}
                   onClick={() => setForm((f) => ({ ...f, transferVoip: true }))}
+                  className={`px-5 py-2 rounded-full font-medium transition ${
+                    form.transferVoip
+                      ? "bg-[#1DA6DF] text-white"
+                      : "bg-white text-black border border-gray-300"
+                  }`}
                 >
                   Yes
                 </button>
+
                 <button
                   type="button"
-                  className={!form.transferVoip ? "btn btn-success" : "btn btn-outline"}
-                  onClick={() => setForm((f) => ({ ...f, transferVoip: false }))}
+                  onClick={() =>
+                    setForm((f) => ({ ...f, transferVoip: false }))
+                  }
+                  className={`px-5 py-2 rounded-full font-medium transition ${
+                    !form.transferVoip
+                      ? "bg-[#1DA6DF] text-white"
+                      : "bg-white text-black border border-gray-300"
+                  }`}
                 >
                   No
                 </button>
               </div>
-            </div>
 
-            {form.transferVoip && (
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">
-                    Account number (with current provider)
-                  </span>
-                </label>
+              {form.transferVoip && (
                 <input
                   type="text"
-                  className="input input-bordered"
+                  className={inputClasses}
+                  placeholder="Account Number"
                   value={form.accountNumber}
                   onChange={handleChange("accountNumber")}
                   required
                 />
-              </div>
-            )}
-          </>
-        )}
-      </fieldset>
-
-      {/* Submit */}
-      <div className="form-control mt-6">
-        <button type="submit" className="btn btn-primary btn-block">
-          Submit Contract
-        </button>
+              )}
+            </>
+          )}
+        </div>
       </div>
+
+      {/** Submit Button **/}
+     <div className="text-right">
+  <button
+    type="submit"
+    className="px-8 py-3 bg-[#1DA6DF] text-white rounded-lg font-semibold hover:bg-[#199CCF] transition"
+  >
+    Submit Contract
+  </button>
+</div>
+
     </form>
   );
 }

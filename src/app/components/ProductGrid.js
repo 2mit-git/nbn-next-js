@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from "react";
 
 export default function ProductGrid({ tech, onSelectPlan }) {
-  const [all, setAll]             = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState("");
+  const [all, setAll] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("/api/products")
@@ -19,7 +19,7 @@ export default function ProductGrid({ tech, onSelectPlan }) {
   }, []);
 
   if (loading) return <p className="m-10">Loading…</p>;
-  if (error)   return <p className="m-10 text-red-500">{error}</p>;
+  if (error) return <p className="m-10 text-red-500">{error}</p>;
 
   // Only show plans matching the selected tech
   const list = tech
@@ -35,56 +35,79 @@ export default function ProductGrid({ tech, onSelectPlan }) {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
       {list.map((p) => (
-        <div key={p._id} className="card bg-base-100 shadow-sm">
-          {p.recommendation && (
-            <div className="card-actions justify-end p-2">
-              <span className="badge badge-warning">{p.recommendation}</span>
-            </div>
-          )}
-          <div className="card-body">
-            <div className="flex justify-between items-baseline">
-              <h2 className="text-3xl font-bold">{p.title}</h2>
-              <div className="flex items-baseline space-x-2">
-                <span className="line-through text-base-content/50">
-                  ${p.actualPrice.toFixed(2)}
-                </span>
-                <span className="text-2xl text-primary font-semibold">
-                  ${p.discountPrice.toFixed(2)}
+        // ⬅️ CHANGED: Using Uiverse-style card design
+        <div
+          key={p._id}
+          className="rounded-2xl shadow-lg p-3 bg-[#1DA6DF] text-gray-600 mx-auto max-w-xs w-full"
+        >
+          <div className="relative flex flex-col items-center p-5 pt-20 pb-10 bg-[#c1e4f5] rounded-xl">
+            {/* Price badge */}
+
+            <div className="mt-[-12px] me-[-12px]  absolute top-0 right-0 flex flex-col items-center bg-[#0B3559] rounded-l-full rounded-tr-2xl py-2 px-3 text-2xl">
+              <div>
+                <span className="font-semibold text-white">
+                  ${p.discountPrice.toFixed(2)}{" "}
+                  <small className="text-xs ml-1 text-white">/ month</small>
                 </span>
               </div>
+              <div className="flex w-full justify-end">
+                <small className="block m-0 p-0 text-[10px] text-white leading-none text-end">
+                For the first 6 months
+               <br /> 
+                after that <strong>{p.actualPrice}</strong>/mth
+              </small>
+              </div>
             </div>
-            <p className="text-sm text-gray-600">{p.subtitle}</p>
-            <p className="mt-1 text-xs text-gray-500">{p.speed}</p>
-            <ul className="mt-4 space-y-1 text-xs">
+
+            {/* Plan title */}
+            <p className="text-xl font-semibold text-white bg-[#1DA6DF] px-2 py-1 rounded-lg ">
+              {p.speed}
+            </p>
+
+            {/* Subtitle */}
+            <p className="text-center mt-3 text-sm text-gray-700">
+              {p.subtitle}
+            </p>
+            <div className="divider"></div>
+            {/* Features list (T&C) */}
+            <ul className="flex flex-col space-y-3 mt-4 w-full">
               {p.termsAndConditions.map((t, i) => (
-                <li key={i} className="flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 text-success mr-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span>{t}</span>
+                <li key={i} className="flex items-center space-x-2">
+                  <span className="flex items-center justify-center w-5 h-5 bg-teal-500 text-white rounded-full">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                    >
+                      <path fill="none" d="M0 0h24v24H0z" />
+                      <path
+                        d="M10 15.172l9.192-9.193 1.415 1.414L10 18l-6.364-6.364 1.414-1.414z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </span>
+                  <span className="text-gray-800">{t}</span>
                 </li>
               ))}
             </ul>
-            {/* <-- Here we call onSelectPlan when clicked --> */}
-            <button
-              className="btn btn-primary btn-block mt-6"
-              onClick={() => onSelectPlan(p)}
-            >
-              Select plan
-            </button>
+
+            <div className="divider"></div>
+            <div className="flex flex-col w-full text-[13px] text-black">
+              <strong>Recomended for : </strong>
+              <p>{p.recommendation}</p>
+            </div>
+            {/* Action button */}
+            <div className="w-full flex justify-end mt-6">
+              <button
+                className="w-full py-3 text-center text-white bg-[#0B3559] rounded-lg font-medium text-lg hover:bg-[#000000] focus:outline-none"
+                onClick={() => onSelectPlan(p)} // ⬅️ Calls parent handler
+              >
+                Select plan
+              </button>
+            </div>
           </div>
         </div>
       ))}

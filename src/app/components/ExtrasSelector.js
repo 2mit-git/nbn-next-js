@@ -101,13 +101,13 @@ export default function ExtrasSelector({ onChange }) {
         </h2>
         <div className="grid grid-cols-2 gap-4">
           <button
-            className={includeModem ? "btn btn-success" : "btn btn-outline"}
+            className={includeModem ? "btn bg-[#1DA6DF] text-white" : "btn btn-outline"}
             onClick={() => setIncludeModem(true)}
           >
             Yes
           </button>
           <button
-            className={!includeModem ? "btn btn-success" : "btn btn-outline"}
+            className={!includeModem ? "btn bg-[#1DA6DF] text-white" : "btn btn-outline"}
             onClick={() => setIncludeModem(false)}
           >
             No
@@ -129,7 +129,7 @@ export default function ExtrasSelector({ onChange }) {
                 <div
                   key={m.id}
                   className={`card card-side bg-base-100 shadow-sm cursor-pointer border-2 ${
-                    isSel ? "border-success" : "border-base-200"
+                    isSel ? "border-[#1DA6DF]" : "border-base-200"
                   }`}
                   onClick={() => toggleModem(m.id)}
                 >
@@ -145,7 +145,7 @@ export default function ExtrasSelector({ onChange }) {
                       <h3 className="card-title">{m.title}</h3>
                       <input
                         type="checkbox"
-                        className="checkbox checkbox-success"
+                        className="checkbox checkbox-info text-white"
                         checked={isSel}
                         readOnly
                       />
@@ -158,7 +158,7 @@ export default function ExtrasSelector({ onChange }) {
                         <li key={i} className="flex items-start gap-2">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4 text-success"
+                            className="h-4 w-4 text-[#1DA6DF]"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -187,7 +187,7 @@ export default function ExtrasSelector({ onChange }) {
         <h2 className="text-xl font-bold">Do you want a phone service?</h2>
         <div className="grid grid-cols-2 gap-4">
           <button
-            className={includePhone ? "btn btn-success" : "btn btn-outline"}
+            className={includePhone ? "btn bg-[#1DA6DF] text-white" : "btn btn-outline"}
             onClick={() => {
               setIncludePhone(true);
               setSelectedPhone(phoneOptions[0].id);
@@ -196,7 +196,7 @@ export default function ExtrasSelector({ onChange }) {
             Yes
           </button>
           <button
-            className={!includePhone ? "btn btn-success" : "btn btn-outline"}
+            className={!includePhone ? "btn bg-[#1DA6DF] text-white" : "btn btn-outline"}
             onClick={() => setIncludePhone(false)}
           >
             No
@@ -211,7 +211,7 @@ export default function ExtrasSelector({ onChange }) {
                 <div
                   key={opt.id}
                   className={`card bg-base-100 shadow-sm cursor-pointer border-2 ${
-                    isSel ? "border-success" : "border-base-200"
+                    isSel ? "border-[#1DA6DF]" : "border-base-200"
                   }`}
                   onClick={() => pickPhone(opt.id)}
                 >
@@ -221,7 +221,7 @@ export default function ExtrasSelector({ onChange }) {
                       <input
                         type="radio"
                         name="phone"
-                        className="radio radio-success"
+                        className="radio radio-info"
                         checked={isSel}
                         readOnly
                       />
@@ -235,16 +235,7 @@ export default function ExtrasSelector({ onChange }) {
                               <li className="text-right">{rate}</li>
                             </React.Fragment>
                           ))}
-                          {opt.footerLink && (
-                            <li className="col-span-2 mt-2">
-                              <a
-                                href={opt.footerLink.href}
-                                className="text-blue-600"
-                              >
-                                {opt.footerLink.text}
-                              </a>
-                            </li>
-                          )}
+                          
                         </ul>
                       ) : (
                         <>
@@ -253,7 +244,7 @@ export default function ExtrasSelector({ onChange }) {
                               <li key={i} className="flex items-start gap-2">
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
-                                  className="h-5 w-5 text-success mt-1"
+                                  className="h-5 w-5 text-[#1DA6DF] mt-1"
                                   fill="none"
                                   viewBox="0 0 24 24"
                                   stroke="currentColor"
@@ -269,11 +260,7 @@ export default function ExtrasSelector({ onChange }) {
                               </li>
                             ))}
                           </ul>
-                          {opt.promo && (
-                            <div className="mt-3 p-3 bg-green-100 text-green-800 text-sm rounded">
-                              {opt.promo}
-                            </div>
-                          )}
+                          
                         </>
                       )}
                     </div>
