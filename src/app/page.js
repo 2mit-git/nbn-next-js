@@ -158,52 +158,73 @@ export default function Home() {
         <div className="navbar-end"></div>
       </div>
 
+    
       {/* Steps Bar */}
-     {/* Steps Bar */}
-<div className="max-w-4xl mx-auto mt-12">
-  <div className="relative h-12">
-    {/* Progress Track */}
-    <div
-      className="absolute top-1/2 transform -translate-y-1/2 h-1 bg-gray-200 rounded-full"
-      style={{ left: "12.5%", right: "12.5%" }}
-    >
-      <div
-        className="h-full bg-[#1DA6DF] rounded-full transition-all duration-500"
-        style={{
-          // still 0→100% fill between those endpoints
-          width: `${(step / (steps.length - 1)) * 100}%`,
-        }}
-      />
-    </div>
-
-    {/* Step Icons & Labels */}
-    <div className="relative grid grid-cols-4 text-center">
-      {steps.map((label, i) => {
-        const active = i <= step;
-        return (
-          <div key={i} className="flex flex-col items-center">
+      <div className="max-w-4xl mx-auto mt-12">
+        <div className="relative h-12">
+          {/* Progress Track */}
+          <div
+            className="absolute top-1/2 transform -translate-y-1/2 h-1 bg-gray-200 rounded-full"
+            style={{ left: "12.5%", right: "12.5%" }}
+          >
             <div
-              className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors duration-300
-                ${active
-                  ? "bg-[#1DA6DF] text-white shadow-lg"
-                  : "bg-white border-2 border-gray-300 text-gray-400"}`}
-            >
-              {i + 1}
-            </div>
-            <span
-              className={`mt-2 text-sm font-medium transition-colors duration-300 ${
-                active ? "text-[#1DA6DF]" : "text-gray-500"
-              }`}
-            >
-              {label}
-            </span>
+              className="h-full bg-[#1DA6DF] rounded-full transition-all duration-500"
+              style={{
+                // still 0→100% fill between those endpoints
+                width: `${(step / (steps.length - 1)) * 100}%`,
+              }}
+            />
           </div>
-        );
-      })}
-    </div>
-  </div>
-</div>
 
+          {/* Step Icons & Labels */}
+          <div className="relative grid grid-cols-4 text-center">
+            {steps.map((label, i) => {
+              const active = i <= step;
+              return (
+                <div key={i} className="flex flex-col items-center">
+                  <div
+                    className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors duration-300
+                ${
+                  active
+                    ? "bg-[#1DA6DF] text-white shadow-lg"
+                    : "bg-white border-2 border-gray-300 text-gray-400"
+                }`}
+                  >
+                    {i + 1}
+                  </div>
+                  <span
+                    className={`mt-2 text-sm font-medium transition-colors duration-300 ${
+                      active ? "text-[#1DA6DF]" : "text-gray-500"
+                    }`}
+                  >
+                    {label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Selection Summary Bar */}
+      {step > 0 && (
+        <div className="max-w-4xl mx-auto mt-10 mb-8">
+          <div className="flex flex-wrap gap-4 items-center bg-blue-50 border border-blue-200 rounded-lg px-6 py-3 shadow-sm min-h-[44px]">
+            {serviceAddress && (
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-blue-900">Address:</span>
+                <span className="text-blue-800">{serviceAddress}</span>
+              </div>
+            )}
+            {selectedPlan && selectedPlan.speed && (
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-blue-900">Plan Speed:</span>
+                <span className="text-blue-800">{selectedPlan.speed}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="p-8 space-y-8">
         {/* Step 0: Address & Package */}

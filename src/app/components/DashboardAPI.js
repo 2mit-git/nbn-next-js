@@ -10,8 +10,25 @@ export default function DashboardAPI() {
   const [saving, setSaving] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
-  // Load existing keys if any (silently ignore errors/404)
+  // Cache key
+  const CACHE_KEY = "dashboard_api_keys";
+
+  // Load existing keys if any (use cache if available)
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setKeys({
+            geoapify: parsed.geoapify || "",
+            nbn: parsed.nbn || "",
+            recaptcha: parsed.recaptcha || "",
+          });
+          return;
+        }
+      } catch (e) {}
+    }
     fetch("/api/keys")
       .then((res) => {
         if (!res.ok) return;
@@ -24,6 +41,11 @@ export default function DashboardAPI() {
             nbn: data.nbn || "",
             recaptcha: data.recaptcha || "",
           });
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+            } catch (e) {}
+          }
         }
       })
       .catch(() => {}); // no warning if not found
@@ -45,6 +67,12 @@ export default function DashboardAPI() {
         // show toast on successful update
         setShowToast(true);
         setTimeout(() => setShowToast(false), 3000);
+        // update cache
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(keys));
+          } catch (e) {}
+        }
       })
       .catch((err) => {
         console.error(err);

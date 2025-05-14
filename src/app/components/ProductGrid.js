@@ -7,23 +7,98 @@ export default function ProductGrid({ tech, onSelectPlan }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  console.log(tech)
+
+  // Cache key
+  const CACHE_KEY = "product_grid_cache";
+
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Try to load cache
+    let cached = null;
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (raw) cached = JSON.parse(raw);
+    } catch (e) {}
+
     fetch("/api/products")
       .then((r) => {
         if (!r.ok) throw new Error("Network error");
         return r.json();
       })
-      .then(setAll)
+      .then((data) => {
+        // data: { products, updatedAt }
+        if (
+          cached &&
+          cached.updatedAt &&
+          data.updatedAt &&
+          cached.updatedAt === data.updatedAt &&
+          Array.isArray(cached.products)
+        ) {
+          setAll(cached.products);
+        } else {
+          setAll(data.products);
+          try {
+            localStorage.setItem(
+              CACHE_KEY,
+              JSON.stringify({ products: data.products, updatedAt: data.updatedAt })
+            );
+          } catch (e) {}
+        }
+      })
       .catch(() => setError("Could not load products"))
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p className="m-10">Loading…</p>;
+  if (loading) return <div className="flex gap-6">
+        <div >
+          <div className="flex w-80 flex-col gap-4">
+            <div className="skeleton h-32 w-full"></div>
+            <div className="skeleton h-4 w-28"></div>
+            <div className="skeleton h-4 w-full"></div>
+            <div className="skeleton h-4 w-full"></div>
+          </div>
+        </div>
+        <div>
+          <div className="flex w-80 flex-col gap-4">
+            <div className="skeleton h-32 w-full"></div>
+            <div className="skeleton h-4 w-28"></div>
+            <div className="skeleton h-4 w-full"></div>
+            <div className="skeleton h-4 w-full"></div>
+          </div>
+        </div>
+        <div>
+          <div className="flex w-80 flex-col gap-4">
+            <div className="skeleton h-32 w-full"></div>
+            <div className="skeleton h-4 w-28"></div>
+            <div className="skeleton h-4 w-full"></div>
+            <div className="skeleton h-4 w-full"></div>
+          </div>
+        </div>
+        <div>
+          <div className="flex w-80 flex-col gap-4">
+            <div className="skeleton h-32 w-full"></div>
+            <div className="skeleton h-4 w-28"></div>
+            <div className="skeleton h-4 w-full"></div>
+            <div className="skeleton h-4 w-full"></div>
+          </div>
+        </div>
+      </div>;
   if (error) return <p className="m-10 text-red-500">{error}</p>;
 
-  // Only show plans matching the selected tech
+  // Only show plans matching the selected tech, sorted by price (low to high)
+  console.log(all)
   const list = tech
-    ? all.filter((p) => p.category.toLowerCase() === tech.toLowerCase())
+    ? all
+        .filter(
+          (p) =>
+            Array.isArray(p.categories) &&
+            p.categories.some(
+              (cat) => cat.toLowerCase() === tech.toLowerCase()
+            )
+        )
+        .sort((a, b) => (a.discountPrice ?? a.actualPrice ?? 0) - (b.discountPrice ?? b.actualPrice ?? 0))
     : [];
 
   if (tech && list.length === 0) {
@@ -39,7 +114,7 @@ export default function ProductGrid({ tech, onSelectPlan }) {
       {list.map((p) => (
         // ⬅️ CHANGED: Using Uiverse-style card design
         <div
-          key={p._id}
+          key={typeof p._id === "object" && p._id.$oid ? p._id.$oid : String(p._id)}
           className="rounded-2xl shadow-lg p-3 bg-[#1DA6DF] text-gray-600 mx-auto max-w-xs w-full"
         >
           <div className="relative flex flex-col items-center p-5 pt-20 pb-10 bg-[#c1e4f5] rounded-xl">
@@ -48,7 +123,7 @@ export default function ProductGrid({ tech, onSelectPlan }) {
             <div className="mt-[-12px] me-[-12px]  absolute top-0 right-0 flex flex-col items-center bg-[#0B3559] rounded-l-full rounded-tr-2xl py-2 px-3 text-2xl">
               <div>
                 <span className="font-semibold text-white">
-                  ${p.discountPrice.toFixed(2)}{" "}
+                  ${p.discountPrice}{" "}
                   <small className="text-xs ml-1 text-white">/ month</small>
                 </span>
               </div>

@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 
 const ProductSchema = new mongoose.Schema({
-  category: {
-    type: String,
+  categories: {
+    type: [String],
     required: true,
-    enum: ["FTTP", "HFC", "FTTN_FTTC_FTTB", "Wireless"],
+    enum: ["FTTP", "HFC", "FTTN","FTTC","FTTB", "Fixed Wireless"],
   },
   speed: {
     type: String,

@@ -1,8 +1,9 @@
+// File: src/components/NbnAddressLookup.js
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
 // Debounce hook (default now 2000ms)
-function useDebounce(value, delay = 2000) {
+function useDebounce(value, delay = 1000) {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
     const t = setTimeout(() => setDebounced(value), delay);
@@ -10,6 +11,8 @@ function useDebounce(value, delay = 2000) {
   }, [value, delay]);
   return debounced;
 }
+
+const inflightSuggestQueries = new Set();
 
 export default function NbnAddressLookup({
   onTechChange,
@@ -20,14 +23,13 @@ export default function NbnAddressLookup({
   const RAPIDAPI_KEY = "91e426bd3cmshef10284de2b4fd9p1f4f0djsn16a0f604d1bb";
 
   const [query, setQuery] = useState("");
-  const debouncedQuery = useDebounce(query); // 2s debounce
+  const debouncedQuery = useDebounce(query);
   const [suggestions, setSuggestions] = useState([]);
   const [nbnResult, setNbnResult] = useState(null);
   const [loadingSuggest, setLoadingSuggest] = useState(false);
   const [loadingNbn, setLoadingNbn] = useState(false);
   const lastSelected = useRef(null);
 
-  // “Typing” flag
   const isTyping = query.length >= 2 && query !== debouncedQuery;
 
   // Autocomplete effect
@@ -44,6 +46,12 @@ export default function NbnAddressLookup({
       return;
     }
 
+    // Avoid duplicate requests for the same query
+    if (inflightSuggestQueries.has(debouncedQuery)) {
+      return;
+    }
+    inflightSuggestQueries.add(debouncedQuery);
+
     const controller = new AbortController();
     const url =
       `https://api.geoapify.com/v1/geocode/autocomplete` +
@@ -58,9 +66,15 @@ export default function NbnAddressLookup({
       .catch((err) => {
         if (err.name !== "AbortError") console.error(err);
       })
-      .finally(() => setLoadingSuggest(false));
+      .finally(() => {
+        setLoadingSuggest(false);
+        inflightSuggestQueries.delete(debouncedQuery);
+      });
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      inflightSuggestQueries.delete(debouncedQuery);
+    };
   }, [debouncedQuery, onTechChange, onAddressChange]);
 
   // NBN lookup
@@ -84,9 +98,9 @@ export default function NbnAddressLookup({
       });
       const json = await res.json();
       setNbnResult(json);
-      onTechChange(json?.addressDetail?.techType || null);
 
-      // 🚀 Pass the formattedAddress from the NBN result up to the parent:
+      const currentTech = json.addressDetail?.techType || null;
+      onTechChange(currentTech);
       onAddressChange?.(json.addressDetail.formattedAddress);
     } catch (err) {
       console.error(err);
@@ -98,7 +112,6 @@ export default function NbnAddressLookup({
     }
   };
 
-  // Manual search button
   const handleSearchClick = () => {
     const feature = suggestions.find(
       (f) => f.properties.formatted === query
@@ -106,16 +119,16 @@ export default function NbnAddressLookup({
     if (feature) handleSelect(feature);
   };
 
+  // Simplified upgrade logic: show FTTP whenever techChangeStatus is "Eligible to Order"
+  const rawStatus = nbnResult?.addressDetail?.techChangeStatus || "";
+  const canUpgrade = rawStatus.trim().toLowerCase() === "eligible to order";
+
   return (
     <div className="space-y-4 ms-80 me-80">
       {/* Search box */}
-      <div className="relative bg-gray-100 rounded-2xl shadow-md p-1.5 transition-all duration-150 ease-in-out hover:scale-105 hover:shadow-lg">
+      <div className="relative bg-gray-100 rounded-2xl shadow-md p-1.5 transition-all duration-150 ease-in-out hover:scale-105 hover:shadow-lg border-1 border-[#1DA6DF]">
         <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-          <svg
-            className="h-5 w-5 text-[#1DA6DF]"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
+          <svg className="h-5 w-5 text-[#1DA6DF]" viewBox="0 0 20 20" fill="currentColor">
             <path
               fillRule="evenodd"
               clipRule="evenodd"
@@ -138,8 +151,6 @@ export default function NbnAddressLookup({
               onTechChange(null);
             }}
           />
-
-          {/* Spinner */}
           {(isTyping || loadingSuggest || loadingNbn) && (
             <div className="flex items-center justify-center m-2">
               <div className="w-5 h-5 border-4 border-transparent border-t-blue-400 rounded-full animate-spin" />
@@ -149,14 +160,14 @@ export default function NbnAddressLookup({
 
         {/* Suggestions dropdown */}
         {suggestions.length > 0 && (
-          <div className="absolute z-20 mt-1 w-full bg-white border rounded shadow-md">
+          <div className="absolute z-20 mt-2 ms-[-4px] w-full bg-white border rounded-2xl shadow-md">
             {suggestions.map((f) => (
               <div
                 key={f.properties.place_id}
-                className="p-2 hover:bg-base-200 cursor-pointer flex items-center gap-2"
+                className="p-2 hover:bg-[#1DA6DF] hover:text-white hover:rounded-2xl cursor-pointer flex items-center gap-2"
                 onClick={() => handleSelect(f)}
               >
-                <span>{f.properties.formatted}</span>
+                <span className="ms-2">{f.properties.formatted}</span>
               </div>
             ))}
           </div>
@@ -186,13 +197,9 @@ export default function NbnAddressLookup({
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M12 22s-7-4.5-7-10a7 7 
-             0 1114 0c0 5.5-7 10-7 10z"
-              />
+                   0 1114 0c0 5.5-7 10-7 10z" />
             </svg>
             <h2 className="text-xl font-semibold text-gray-800">
               {nbnResult.addressDetail.formattedAddress}
@@ -200,17 +207,14 @@ export default function NbnAddressLookup({
           </div>
 
           <div className="bg-gray-100 rounded-2xl p-5">
-            {/* Instruction */}
             <p className="text-base text-gray-600 mb-2 font-bold">
               Select your package
             </p>
-
-            {/* Status cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className={`grid ${canUpgrade ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"} gap-6`}>
               {/* Connect Now */}
               <div
                 role="button"
-                onClick={() => onPackageSelect?.("connect")}
+                onClick={() => onPackageSelect("connect")}
                 className="flex flex-col border-[#1DA6DF] bg-gray-50 border rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105"
               >
                 <h3 className="text-lg font-medium text-[#1DA6DF] mb-1">
@@ -218,26 +222,29 @@ export default function NbnAddressLookup({
                 </h3>
                 <p className="text-gray-700">
                   {nbnResult.servingArea.serviceStatus === "available"
-                    ? "Great news! You qualify for high-speed broadband on the nbn network."
+                    ? "Great news! You qualify for high-speed broadband."
                     : `Status: ${nbnResult.servingArea.serviceStatus}`}
                 </p>
               </div>
 
               {/* Fibre Upgrade */}
-              <div
-                role="button"
-                onClick={() => onPackageSelect?.("fibre")}
-                className="flex flex-col bg-[#1DA6DF] border border-gray-100 rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105"
-              >
-                <h3 className="text-lg font-medium text-white mb-1">
-                  Fibre Upgrade
-                </h3>
-                <p className="text-white">
-                  {nbnResult.addressDetail.zeroBuildCost
-                    ? `Free installation available (Tech: ${nbnResult.addressDetail.techType}).`
-                    : "No free upgrade available at this address."}
-                </p>
-              </div>
+              {canUpgrade && (
+                <div
+                  role="button"
+                  onClick={() => {
+                    onTechChange("FTTP");
+                    onPackageSelect("fibre");
+                  }}
+                  className="flex flex-col bg-[#1DA6DF] border border-white rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105"
+                >
+                  <h3 className="text-lg font-medium text-white mb-1">
+                    Upgrade to FTTP
+                  </h3>
+                  <p className="text-white">
+                    Tech change status: {nbnResult.addressDetail.techChangeStatus}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

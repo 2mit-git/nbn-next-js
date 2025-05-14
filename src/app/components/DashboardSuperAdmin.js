@@ -9,12 +9,36 @@ export default function DashboardSuperAdmin() {
   const [editingId, setEditingId]     = useState(null);
   const [newPassword, setNewPassword] = useState("");
 
+  // Cache key
+  const CACHE_KEY = "dashboard_admins";
+
   const loadAdmins = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin");
-      if (!res.ok) throw new Error();
-      setAdmins(await res.json());
+      let usedCache = false;
+      if (typeof window !== "undefined") {
+        try {
+          const cached = localStorage.getItem(CACHE_KEY);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed)) {
+              setAdmins(parsed);
+              usedCache = true;
+            }
+          }
+        } catch (e) {}
+      }
+      if (!usedCache) {
+        const res = await fetch("/api/admin");
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        setAdmins(data);
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+          } catch (e) {}
+        }
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -23,7 +47,9 @@ export default function DashboardSuperAdmin() {
   };
 
   useEffect(() => {
-    loadAdmins();
+    if (typeof window !== "undefined") {
+      loadAdmins();
+    }
   }, []);
 
   const handleEdit = (id) => {
@@ -41,7 +67,17 @@ export default function DashboardSuperAdmin() {
       });
       if (!res.ok) throw new Error();
       setEditingId(null);
-      loadAdmins();
+      // After update, fetch fresh and update cache
+      if (typeof window !== "undefined") {
+        try {
+          const res = await fetch("/api/admin");
+          if (res.ok) {
+            const data = await res.json();
+            setAdmins(data);
+            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+          }
+        } catch (e) {}
+      }
     } catch (err) {
       console.error(err);
       alert("Failed to update password");
@@ -57,7 +93,17 @@ export default function DashboardSuperAdmin() {
         body: JSON.stringify({ id }),
       });
       if (!res.ok) throw new Error();
-      loadAdmins();
+      // After delete, fetch fresh and update cache
+      if (typeof window !== "undefined") {
+        try {
+          const res = await fetch("/api/admin");
+          if (res.ok) {
+            const data = await res.json();
+            setAdmins(data);
+            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+          }
+        } catch (e) {}
+      }
     } catch (err) {
       console.error(err);
       alert("Failed to delete admin");
@@ -113,7 +159,7 @@ export default function DashboardSuperAdmin() {
                   <tr key={admin._id}>
                     <th>{i + 1}</th>
                     <td>{admin.email} {
-                      admin.type=="superadmin" && (<div class="badge badge-outline badge-success ms-2">superadmin</div>)}</td>
+                      admin.type=="superadmin" && (<div className="badge badge-outline badge-success ms-2">superadmin</div>)}</td>
                     <td>
                       <input
                         type="password"

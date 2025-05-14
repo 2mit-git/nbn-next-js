@@ -51,7 +51,7 @@ export default async function handler(req, res) {
   const token = jwt.sign(
     { sub: user._id.toString(), email: user.email, type: user.type },
     process.env.JWT_SECRET,
-    { expiresIn: "1h" }
+    { expiresIn: "10h" }
   );
 
   // 4) Set it as an HttpOnly cookie
@@ -60,7 +60,7 @@ export default async function handler(req, res) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60, // 1 hour
+    maxAge: (10*60) * 60, // 1 hour
   }));
 
   // 5) Done

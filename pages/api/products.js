@@ -1,5 +1,23 @@
 import dbConnect from "../../lib/dbConnect";
 import Product   from "../../models/Product";
+import jwt from "jsonwebtoken";
+import { parse } from "cookie";
+
+function requireAuth(req, res) {
+  const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
+  const token = cookies.token;
+  if (!token) {
+    res.status(401).json({ error: "Unauthorized" });
+    return null;
+  }
+  try {
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    return user;
+  } catch {
+    res.status(401).json({ error: "Invalid token" });
+    return null;
+  }
+}
 
 export default async function handler(req, res) {
   await dbConnect();
@@ -8,13 +26,26 @@ export default async function handler(req, res) {
   // ── GET all products ───────────────────────────────────────────
   if (method === "GET") {
     const all = await Product.find({}).lean();
-    return res.status(200).json(all);
+    // Find the latest updatedAt timestamp
+    const updatedAt =
+      all.length > 0
+        ? all.reduce(
+            (max, p) =>
+              p.updatedAt && new Date(p.updatedAt) > new Date(max)
+                ? p.updatedAt
+                : max,
+            all[0].updatedAt || ""
+          )
+        : null;
+    return res.status(200).json({ products: all, updatedAt });
   }
 
   // ── CREATE a product ──────────────────────────────────────────
   if (method === "POST") {
+    const user = requireAuth(req, res);
+    if (!user) return;
     const {
-      category,
+      categories,
       speed,
       title,
       subtitle,
@@ -26,20 +57,22 @@ export default async function handler(req, res) {
 
     // required checks
     if (
-      !category ||
+      !categories ||
+      !Array.isArray(categories) ||
+      categories.length === 0 ||
       !speed ||
       !title ||
       actualPrice == null  // allow zero
       || !Array.isArray(termsAndConditions)
     ) {
       return res.status(400).json({
-        error: "category, speed, title and actualPrice are required."
+        error: "categories, speed, title and actualPrice are required."
       });
     }
 
     try {
       const created = await Product.create({
-        category,
+        categories,
         speed,
         title,
         subtitle,
@@ -57,9 +90,11 @@ export default async function handler(req, res) {
 
   // ── UPDATE a product ──────────────────────────────────────────
   if (method === "PUT") {
+    const user = requireAuth(req, res);
+    if (!user) return;
     const {
       id,
-      category,
+      categories,
       speed,
       title,
       subtitle,
@@ -77,7 +112,7 @@ export default async function handler(req, res) {
       const updated = await Product.findByIdAndUpdate(
         id,
         {
-          category,
+          categories,
           speed,
           title,
           subtitle,
@@ -100,6 +135,8 @@ export default async function handler(req, res) {
 
   // ── DELETE a product ──────────────────────────────────────────
   if (method === "DELETE") {
+    const user = requireAuth(req, res);
+    if (!user) return;
     const { id } = req.body;
     if (!id) {
       return res.status(400).json({ error: "Product id is required." });
