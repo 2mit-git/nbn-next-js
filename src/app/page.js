@@ -14,6 +14,7 @@ export default function Home() {
   const [serviceAddress, setServiceAddress] = useState("");
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [extras, setExtras] = useState({ modems: [], phone: null });
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   const next = () => setStep((s) => Math.min(s + 1, 3));
   const back = () => setStep((s) => Math.max(s - 1, 0));
@@ -207,7 +208,7 @@ export default function Home() {
       </div>
 
       {/* Selection Summary Bar */}
-      {step > 0 && (
+      {step > 0 && step < 3 && (
         <div className="max-w-4xl mx-auto mt-10 mb-8">
           <div className="flex flex-wrap gap-4 items-center bg-blue-50 border border-blue-200 rounded-lg px-6 py-3 shadow-sm min-h-[44px]">
             {serviceAddress && (
@@ -277,12 +278,32 @@ export default function Home() {
         {/* Step 3: Contract form */}
         {step === 3 && (
           <>
-            <ContractForm serviceAddress={serviceAddress} />
-            <div className="mt-4">
-              <button className="btn btn-info" onClick={back}>
-                ← Back
-              </button>
-            </div>
+            <ContractForm
+              serviceAddress={serviceAddress}
+              selectedPlan={selectedPlan}
+              extras={extras}
+              onSuccess={() => {
+                setSelectedPlan(null);
+                setExtras({ modems: [], phone: null });
+              }}
+              onRestart={() => {
+                setStep(0);
+                setSelectedTech(null);
+                setSelectedPackage(null);
+                setServiceAddress("");
+                setSelectedPlan(null);
+                setExtras({ modems: [], phone: null });
+                setFormSubmitted(false);
+              }}
+              onSubmitSuccess={() => setFormSubmitted(true)}
+            />
+            {!formSubmitted && (
+              <div className="mt-4">
+                <button className="btn btn-info" onClick={back}>
+                  ← Back
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

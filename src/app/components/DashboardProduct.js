@@ -29,27 +29,49 @@ export default function DashboardProduct() {
   // Cache key
   const CACHE_KEY = "nbn_products_cache";
 
-  // Load products: use cache only (no API call on mount)
+  // Load products: use cache if fresh, otherwise fetch from API
   useEffect(() => {
     if (typeof window === "undefined") return;
     setLoading(true);
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in ms
+    let usedCache = false;
     try {
       const raw = localStorage.getItem(CACHE_KEY);
       if (raw) {
         const cached = JSON.parse(raw);
+        const now = Date.now();
         if (
           cached &&
           typeof cached === "object" &&
           !Array.isArray(cached) &&
-          Array.isArray(cached.products)
+          Array.isArray(cached.products) &&
+          cached.updatedAt &&
+          now - new Date(cached.updatedAt).getTime() < CACHE_TTL
         ) {
           setProducts(cached.products);
           setLoading(false);
-          return;
+          usedCache = true;
         }
       }
     } catch (e) {}
-    setLoading(false);
+    if (!usedCache) {
+      fetch("/api/products")
+        .then(res => res.ok ? res.json() : Promise.reject("Failed to fetch products"))
+        .then(data => {
+          setProducts(data.products || []);
+          setLoading(false);
+          if (typeof window !== "undefined") {
+            localStorage.setItem(
+              CACHE_KEY,
+              JSON.stringify({ products: data.products, updatedAt: data.updatedAt || new Date().toISOString() })
+            );
+          }
+        })
+        .catch(err => {
+          setError("Failed to load products from API.");
+          setLoading(false);
+        });
+    }
   }, []);
 
   const handleAddSubmit = async (e) => {

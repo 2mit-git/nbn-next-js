@@ -7,7 +7,7 @@ export default function ProductGrid({ tech, onSelectPlan }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  console.log(tech)
+  console.log(tech);
 
   // Cache key
   const CACHE_KEY = "product_grid_cache";
@@ -42,7 +42,10 @@ export default function ProductGrid({ tech, onSelectPlan }) {
           try {
             localStorage.setItem(
               CACHE_KEY,
-              JSON.stringify({ products: data.products, updatedAt: data.updatedAt })
+              JSON.stringify({
+                products: data.products,
+                updatedAt: data.updatedAt,
+              })
             );
           } catch (e) {}
         }
@@ -51,15 +54,9 @@ export default function ProductGrid({ tech, onSelectPlan }) {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="flex gap-6">
-        <div >
-          <div className="flex w-80 flex-col gap-4">
-            <div className="skeleton h-32 w-full"></div>
-            <div className="skeleton h-4 w-28"></div>
-            <div className="skeleton h-4 w-full"></div>
-            <div className="skeleton h-4 w-full"></div>
-          </div>
-        </div>
+  if (loading)
+    return (
+      <div className="flex gap-6 items-center justify-center">
         <div>
           <div className="flex w-80 flex-col gap-4">
             <div className="skeleton h-32 w-full"></div>
@@ -84,21 +81,46 @@ export default function ProductGrid({ tech, onSelectPlan }) {
             <div className="skeleton h-4 w-full"></div>
           </div>
         </div>
-      </div>;
+        <div>
+          <div className="flex w-80 flex-col gap-4">
+            <div className="skeleton h-32 w-full"></div>
+            <div className="skeleton h-4 w-28"></div>
+            <div className="skeleton h-4 w-full"></div>
+            <div className="skeleton h-4 w-full"></div>
+          </div>
+        </div>
+      </div>
+    );
   if (error) return <p className="m-10 text-red-500">{error}</p>;
 
   // Only show plans matching the selected tech, sorted by price (low to high)
-  console.log(all)
+  console.log(all);
+  // inside your component render/body
   const list = tech
     ? all
-        .filter(
-          (p) =>
+        .filter((p) => {
+          // special case for FTTP_Upgrade
+          if (tech === "FTTP_Upgrade") {
+            const price = p.discountPrice ?? p.actualPrice ?? 0;
+            return (
+              Array.isArray(p.categories) &&
+              // match only FTTP packages
+              p.categories.some((cat) => cat.toLowerCase() === "fttp") &&
+              // and price ≥ 100
+              price >= 100
+            );
+          }
+          // default behaviour: match whatever tech the user picked
+          return (
             Array.isArray(p.categories) &&
-            p.categories.some(
-              (cat) => cat.toLowerCase() === tech.toLowerCase()
-            )
+            p.categories.some((cat) => cat.toLowerCase() === tech.toLowerCase())
+          );
+        })
+        .sort(
+          (a, b) =>
+            (a.discountPrice ?? a.actualPrice ?? 0) -
+            (b.discountPrice ?? b.actualPrice ?? 0)
         )
-        .sort((a, b) => (a.discountPrice ?? a.actualPrice ?? 0) - (b.discountPrice ?? b.actualPrice ?? 0))
     : [];
 
   if (tech && list.length === 0) {
@@ -109,12 +131,16 @@ export default function ProductGrid({ tech, onSelectPlan }) {
     );
   }
 
+  
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
       {list.map((p) => (
         // ⬅️ CHANGED: Using Uiverse-style card design
         <div
-          key={typeof p._id === "object" && p._id.$oid ? p._id.$oid : String(p._id)}
+          key={
+            typeof p._id === "object" && p._id.$oid ? p._id.$oid : String(p._id)
+          }
           className="rounded-2xl shadow-lg p-3 bg-[#1DA6DF] text-gray-600 mx-auto max-w-xs w-full"
         >
           <div className="relative flex flex-col items-center p-5 pt-20 pb-10 bg-[#c1e4f5] rounded-xl">
@@ -129,10 +155,10 @@ export default function ProductGrid({ tech, onSelectPlan }) {
               </div>
               <div className="flex w-full justify-end">
                 <small className="block m-0 p-0 text-[10px] text-white leading-none text-end">
-                For the first 6 months
-               <br /> 
-                after that <strong>{p.actualPrice}</strong>/mth
-              </small>
+                  For the first 6 months
+                  <br />
+                  after that <strong>{p.actualPrice}</strong>/mth
+                </small>
               </div>
             </div>
 

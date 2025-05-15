@@ -232,7 +232,7 @@ export default function NbnAddressLookup({
                 <div
                   role="button"
                   onClick={() => {
-                    onTechChange("FTTP");
+                    onTechChange("FTTP_Upgrade");
                     onPackageSelect("fibre");
                   }}
                   className="flex flex-col bg-[#1DA6DF] border border-white rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105"
