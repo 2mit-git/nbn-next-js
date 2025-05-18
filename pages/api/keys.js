@@ -1,4 +1,4 @@
-// pages/api/keys.js
+// File: pages/api/keys.js
 import dbConnect from "../../lib/dbConnect";
 import ApiKey from "../../models/ApiKey";
 import jwt from "jsonwebtoken";
@@ -28,38 +28,66 @@ export default async function handler(req, res) {
     if (!doc) {
       return res
         .status(404)
-        .json({ error: "No API-keys found. Use PUT to create them first." });
+        .json({ error: "No API keys found. Use PUT to create them first." });
     }
     return res.status(200).json({
-      geoapify:  doc.geoapify,
-      nbn:       doc.nbn,
-      recaptcha: doc.recaptcha,
+      TWILIO_ACCOUNT_SID: doc.TWILIO_ACCOUNT_SID,
+      TWILIO_AUTH_TOKEN: doc.TWILIO_AUTH_TOKEN,
+      TWILIO_SERVICE_SID: doc.TWILIO_SERVICE_SID,
+      GHL_WEBHOOK: doc.GHL_WEBHOOK,
+      GEO_API_KEY: doc.GEO_API_KEY,
+      RAPIDAPI_KEY: doc.RAPIDAPI_KEY,
     });
   }
 
   if (req.method === "PUT") {
     const user = requireAuth(req, res);
     if (!user) return;
-    const { geoapify, nbn, recaptcha } = req.body;
-    if (!geoapify || !nbn || !recaptcha) {
-      return res
-        .status(400)
-        .json({ error: "geoapify, nbn and recaptcha are all required." });
+    const {
+      TWILIO_ACCOUNT_SID,
+      TWILIO_AUTH_TOKEN,
+      TWILIO_SERVICE_SID,
+      GHL_WEBHOOK,
+      GEO_API_KEY,
+      RAPIDAPI_KEY,
+    } = req.body;
+    if (
+      !TWILIO_ACCOUNT_SID ||
+      !TWILIO_AUTH_TOKEN ||
+      !TWILIO_SERVICE_SID ||
+      !GHL_WEBHOOK ||
+      !GEO_API_KEY ||
+      !RAPIDAPI_KEY
+    ) {
+      return res.status(400).json({
+        error:
+          "TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_SERVICE_SID, GHL_WEBHOOK, GEO_API_KEY, and RAPIDAPI_KEY are all required.",
+      });
     }
 
-    // upsert: update if exists, otherwise create
+    // Upsert: update if exists, otherwise create
     const updated = await ApiKey.findOneAndUpdate(
-      {},                              // filter: the single doc
-      { geoapify, nbn, recaptcha },    // new values
-      { upsert: true, new: true }      // create if missing, return the new doc
+      {},
+      {
+        TWILIO_ACCOUNT_SID,
+        TWILIO_AUTH_TOKEN,
+        TWILIO_SERVICE_SID,
+        GHL_WEBHOOK,
+        GEO_API_KEY,
+        RAPIDAPI_KEY,
+      },
+      { upsert: true, new: true }
     );
 
     return res.status(200).json({
-      message: "API-keys updated",
-      keys:    {
-        geoapify:  updated.geoapify,
-        nbn:       updated.nbn,
-        recaptcha: updated.recaptcha,
+      message: "API keys updated",
+      keys: {
+        TWILIO_ACCOUNT_SID: updated.TWILIO_ACCOUNT_SID,
+        TWILIO_AUTH_TOKEN: updated.TWILIO_AUTH_TOKEN,
+        TWILIO_SERVICE_SID: updated.TWILIO_SERVICE_SID,
+        GHL_WEBHOOK: updated.GHL_WEBHOOK,
+        GEO_API_KEY: updated.GEO_API_KEY,
+        RAPIDAPI_KEY: updated.RAPIDAPI_KEY,
       },
     });
   }

@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 
-const TITLES = ["Mr", "Mrs", "Ms", "Dr", "Prof"];
+const TITLES = ["Mr", "Mrs", "Ms"];
 const PRIMARY = "#1DA6DF";
 
 export default function ContractForm({

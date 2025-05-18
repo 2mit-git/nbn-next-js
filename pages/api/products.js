@@ -1,18 +1,19 @@
+// pages/api/products.js
 import dbConnect from "../../lib/dbConnect";
 import Product   from "../../models/Product";
-import jwt from "jsonwebtoken";
+import jwt       from "jsonwebtoken";
 import { parse } from "cookie";
 
+// Helper: read & verify the token cookie
 function requireAuth(req, res) {
   const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
-  const token = cookies.token;
+  const token   = cookies.token;
   if (!token) {
     res.status(401).json({ error: "Unauthorized" });
     return null;
   }
   try {
-    const user = jwt.verify(token, process.env.JWT_SECRET);
-    return user;
+    return jwt.verify(token, process.env.JWT_SECRET);
   } catch {
     res.status(401).json({ error: "Invalid token" });
     return null;
@@ -23,10 +24,15 @@ export default async function handler(req, res) {
   await dbConnect();
   const { method } = req;
 
-  // ── GET all products ───────────────────────────────────────────
+  // ── PROTECT all non-GET methods ───────────────────────────
+  if (method !== "GET") {
+    const user = requireAuth(req, res);
+    if (!user) return;  // stops here with 401 if not authenticated
+  }
+
+  // ── GET all products (public) ─────────────────────────────
   if (method === "GET") {
     const all = await Product.find({}).lean();
-    // Find the latest updatedAt timestamp
     const updatedAt =
       all.length > 0
         ? all.reduce(
@@ -40,10 +46,8 @@ export default async function handler(req, res) {
     return res.status(200).json({ products: all, updatedAt });
   }
 
-  // ── CREATE a product ──────────────────────────────────────────
+  // ── CREATE a product ──────────────────────────────────────
   if (method === "POST") {
-    const user = requireAuth(req, res);
-    if (!user) return;
     const {
       categories,
       speed,
@@ -55,15 +59,14 @@ export default async function handler(req, res) {
       recommendation,
     } = req.body;
 
-    // required checks
     if (
       !categories ||
       !Array.isArray(categories) ||
       categories.length === 0 ||
       !speed ||
       !title ||
-      actualPrice == null  // allow zero
-      || !Array.isArray(termsAndConditions)
+      actualPrice == null ||  // allow zero
+      !Array.isArray(termsAndConditions)
     ) {
       return res.status(400).json({
         error: "categories, speed, title and actualPrice are required."
@@ -88,10 +91,8 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── UPDATE a product ──────────────────────────────────────────
+  // ── UPDATE a product ──────────────────────────────────────
   if (method === "PUT") {
-    const user = requireAuth(req, res);
-    if (!user) return;
     const {
       id,
       categories,
@@ -100,7 +101,7 @@ export default async function handler(req, res) {
       subtitle,
       actualPrice,
       discountPrice,
-      termsAndConditions =[],
+      termsAndConditions = [],
       recommendation,
     } = req.body;
 
@@ -133,10 +134,8 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── DELETE a product ──────────────────────────────────────────
+  // ── DELETE a product ──────────────────────────────────────
   if (method === "DELETE") {
-    const user = requireAuth(req, res);
-    if (!user) return;
     const { id } = req.body;
     if (!id) {
       return res.status(400).json({ error: "Product id is required." });
@@ -153,7 +152,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── METHOD NOT ALLOWED ────────────────────────────────────────
+  // ── METHOD NOT ALLOWED ─────────────────────────────────────
   res.setHeader("Allow", ["GET", "POST", "PUT", "DELETE"]);
   res.status(405).end(`Method ${method} Not Allowed`);
 }
