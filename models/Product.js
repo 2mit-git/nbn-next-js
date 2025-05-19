@@ -4,7 +4,7 @@ const ProductSchema = new mongoose.Schema({
   categories: {
     type: [String],
     required: true,
-    enum: ["FTTP", "HFC", "FTTN","FTTC","FTTB", "Fixed Wireless"],
+    enum: ["FTTP", "HFC", "FTTN","FTTC","FTTB", "Wireless"],
   },
   speed: {
     type: String,

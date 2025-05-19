@@ -17,17 +17,15 @@ const inflightSuggestQueries = new Set();
 export default function NbnAddressLookup({
   onTechChange,
   onAddressChange,
-  onPackageSelect, // new callback prop
+  onPackageSelect,
 }) {
-  const geoApi = process.env.NEXT_PUBLIC_GEO_API_KEY;
-  const nbnApi = process.env.NEXT_PUBLIC_RAPIDAPI_KEY;
-
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query);
   const [suggestions, setSuggestions] = useState([]);
   const [nbnResult, setNbnResult] = useState(null);
   const [loadingSuggest, setLoadingSuggest] = useState(false);
   const [loadingNbn, setLoadingNbn] = useState(false);
+  const [selectedAddr, setSelectedAddr] = useState("");
   const lastSelected = useRef(null);
 
   const isTyping = query.length >= 2 && query !== debouncedQuery;
@@ -50,11 +48,7 @@ export default function NbnAddressLookup({
     inflightSuggestQueries.add(debouncedQuery);
 
     const controller = new AbortController();
-    const url =
-      `https://api.geoapify.com/v1/geocode/autocomplete` +
-      `?text=${encodeURIComponent(debouncedQuery)}` +
-      `&lang=en&limit=5&filter=countrycode:au` +
-      `&apiKey=${geoApi}`;
+    const url = `/api/geocode?text=${encodeURIComponent(debouncedQuery)}`;
 
     setLoadingSuggest(true);
     fetch(url, { signal: controller.signal })
@@ -79,26 +73,20 @@ export default function NbnAddressLookup({
     const addr = feature.properties.formatted;
     lastSelected.current = addr;
     setQuery(addr);
+    setSelectedAddr(addr);
     setSuggestions([]);
     setLoadingNbn(true);
 
     try {
-      const nbnUrl =
-        `https://nbnco-address-check.p.rapidapi.com/nbn_address` +
-        `?address=${encodeURIComponent(addr)}`;
-      const res = await fetch(nbnUrl, {
-        method: "GET",
-        headers: {
-          "x-rapidapi-key": nbnApi,
-          "x-rapidapi-host": "nbnco-address-check.p.rapidapi.com",
-        },
-      });
+      const res = await fetch(
+        `/api/nbn?address=${encodeURIComponent(addr)}`
+      );
       const json = await res.json();
       setNbnResult(json);
 
       const currentTech = json.addressDetail?.techType || null;
       onTechChange(currentTech);
-      onAddressChange?.(json.addressDetail.formattedAddress);
+      onAddressChange?.(json.addressDetail.formattedAddress || addr);
     } catch (err) {
       console.error(err);
       setNbnResult(null);
@@ -110,12 +98,15 @@ export default function NbnAddressLookup({
   };
 
   const handleSearchClick = () => {
-    const feature = suggestions.find((f) => f.properties.formatted === query);
+    const feature = suggestions.find(
+      (f) => f.properties.formatted === query
+    );
     if (feature) handleSelect(feature);
   };
 
   const rawStatus = nbnResult?.addressDetail?.techChangeStatus || "";
-  const canUpgrade = rawStatus.trim().toLowerCase() === "eligible to order";
+  const canUpgrade =
+    rawStatus.trim().toLowerCase() === "eligible to order";
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto px-4">
@@ -131,10 +122,7 @@ export default function NbnAddressLookup({
             <path
               fillRule="evenodd"
               clipRule="evenodd"
-              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 
-                 6 0 1110.89 3.476l4.817 4.817a1 
-                 1 0 01-1.414 1.414l-4.816-4.816A6 
-                 6 0 012 8z"
+              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
             />
           </svg>
         </div>
@@ -189,64 +177,24 @@ export default function NbnAddressLookup({
         <div className="w-full bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-6">
           {/* Header */}
           <div className="flex items-center space-x-3">
-            <svg
-              className="w-8 h-8 text-[#1DA6DF]"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 22s-7-4.5-7-10a7 7 
-                   0 1114 0c0 5.5-7 10-7 10z"
-              />
-            </svg>
-            <h2 className="text-xl font-semibold text-gray-800">
-              {nbnResult.addressDetail.formattedAddress}
-            </h2>
+            <svg className="w-8 h-8 text-[#1DA6DF]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 22s-7-4.5-7-10a7 7 0 1114 0c0 5.5-7 10-7 10z" /></svg>
+            <h2 className="text-xl font-semibold text-gray-800">{nbnResult.addressDetail.formattedAddress || selectedAddr}</h2>
           </div>
 
           <div className="bg-gray-100 rounded-2xl p-5">
-            <p className="text-base text-gray-600 mb-2 font-bold">
-              Select your package
-            </p>
+            <p className="text-base text-gray-600 mb-2 font-bold">Select your package</p>
             <div className={`grid grid-cols-1 md:grid-cols-2 gap-6`}>
               {/* Connect Now */}
-              <div
-                role="button"
-                onClick={() => onPackageSelect("connect")}
-                className="flex flex-col border border-[#1DA6DF] bg-gray-50 rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105"
-              >
-                <h3 className="text-lg font-medium text-[#1DA6DF] mb-1">
-                  Connect Now
-                </h3>
-                <p className="text-gray-700">
-                  {nbnResult.servingArea.serviceStatus === "available"
-                    ? "Great news! You qualify for high-speed broadband."
-                    : `Status: ${nbnResult.servingArea.serviceStatus}`}
-                </p>
+              <div role="button" onClick={() => onPackageSelect("connect")} className="flex flex-col border border-[#1DA6DF] bg-gray-50 rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105">
+                <h3 className="text-lg font-medium text-[#1DA6DF] mb-1">Connect Now</h3>
+                <p className="text-gray-700">{nbnResult.servingArea.serviceStatus === "available" ? "Great news! You qualify for high-speed broadband." : `Status: ${nbnResult.servingArea.serviceStatus}`}</p>
               </div>
 
               {/* Fibre Upgrade */}
               {canUpgrade && (
-                <div
-                  role="button"
-                  onClick={() => {
-                    onTechChange("FTTP_Upgrade");
-                    onPackageSelect("fibre");
-                  }}
-                  className="flex flex-col bg-[#1DA6DF] border border-transparent rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105"
-                >
-                  <h3 className="text-lg font-medium text-white mb-1">
-                    Upgrade to FTTP
-                  </h3>
-                  <p className="text-white">
-                    Tech change status:{" "}
-                    {nbnResult.addressDetail.techChangeStatus}
-                  </p>
+                <div role="button" onClick={() => { onTechChange("FTTP_Upgrade"); onPackageSelect("fibre"); }} className="flex flex-col bg-[#1DA6DF] border border-transparent rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105">
+                  <h3 className="text-lg font-medium text-white mb-1">Upgrade to FTTP</h3>
+                  <p className="text-white">Tech change status: {nbnResult.addressDetail.techChangeStatus}</p>
                 </div>
               )}
             </div>

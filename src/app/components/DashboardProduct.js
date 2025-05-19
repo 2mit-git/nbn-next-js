@@ -6,6 +6,8 @@ export default function DashboardProduct() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [alert, setAlert] = useState({ show: false, type: "success", message: "" });
+  const alertTimeoutRef = React.useRef(null);
 
   const [sortKey, setSortKey] = useState(null);
   const [filterCategory, setFilterCategory] = useState("All");
@@ -24,7 +26,7 @@ export default function DashboardProduct() {
   const [editingId, setEditingId] = useState(null);
   const [edited, setEdited] = useState({});
 
-  const categories = ["All", "FTTP", "HFC", "FTTN","FTTC","FTTB", "Fixed Wireless"];
+  const categories = ["All", "FTTP", "HFC", "FTTN","FTTC","FTTB", "Wireless"];
 
   // Cache key
   const CACHE_KEY = "nbn_products_cache";
@@ -108,6 +110,9 @@ export default function DashboardProduct() {
         recommendation: "",
         categories: []
       });
+      if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
+      setAlert({ show: true, type: "success", message: "Product has been created successfully!" });
+      alertTimeoutRef.current = setTimeout(() => setAlert(a => ({ ...a, show: false })), 6000);
       // After add, fetch fresh and update cache
       if (typeof window !== "undefined") {
         try {
@@ -136,6 +141,7 @@ export default function DashboardProduct() {
   const handleSaveClick = async (id) => {
     const payload = {
       ...edited,
+      id: edited._id,
       termsAndConditions: Array.isArray(edited.termsAndConditions)
         ? edited.termsAndConditions
         : [],
@@ -154,6 +160,9 @@ export default function DashboardProduct() {
       if (!res.ok) throw new Error(body.message || "Server rejected the update");
 
       setEditingId(null);
+      if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
+      setAlert({ show: true, type: "success", message: "Product has been updated successfully!" });
+      alertTimeoutRef.current = setTimeout(() => setAlert(a => ({ ...a, show: false })), 6000);
       // After update, fetch fresh and update cache
       if (typeof window !== "undefined") {
         try {
@@ -194,6 +203,9 @@ export default function DashboardProduct() {
               CACHE_KEY,
               JSON.stringify({ products: data.products, updatedAt: data.updatedAt })
             );
+            if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
+            setAlert({ show: true, type: "danger", message: "Product has been deleted successfully!" });
+            alertTimeoutRef.current = setTimeout(() => setAlert(a => ({ ...a, show: false })), 6000);
           }
         } catch (e) {}
       }
@@ -225,7 +237,34 @@ export default function DashboardProduct() {
   if (error) return <p className="m-10 text-red-500">{error}</p>;
 
   return (
-    <div className="w-full h-full p-10">
+    <div className="w-full min-h-screen h-full sm:p-10 p-3">
+      {alert.show && (
+        <div
+          role="alert"
+          className={`alert fixed bottom-4 left-1/2 -translate-x-1/2 w-[95vw] max-w-xs z-50 flex items-center gap-2 shadow-lg px-3 py-2
+            sm:bottom-6 sm:right-6 sm:left-auto sm:translate-x-0 sm:w-auto sm:max-w-sm
+            ${alert.type === "success" ? "alert-success" : "alert-error"}`}
+        >
+          {alert.type === "success" ? (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          )}
+          <span>{alert.message}</span>
+          <button
+            onClick={() => setAlert(a => ({ ...a, show: false }))}
+            className="ml-auto text-lg font-bold px-2"
+            aria-label="Close"
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+      )}
       <div className="flex flex-wrap gap-4 mb-6">
         <select
           value={filterCategory}

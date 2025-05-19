@@ -47,7 +47,7 @@ export default function DashboardClient({ type }) {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex min-h-screen h-full sm:h-screen">
       {/* Sidebar */}
       <aside
         className={`flex flex-col bg-gray-800 text-gray-200 transition-all duration-200
@@ -87,12 +87,13 @@ export default function DashboardClient({ type }) {
         <div className="mt-auto">
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center h-12 w-full hover:bg-gray-700"
+            className="flex items-center justify-center h-12 w-full bg-red-600 hover:bg-gray-700"
             title="Logout"
           >
             {/* logout icon */}
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 17v1a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2h7a2 2 0 012 2v1" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12h10m0 0l-3-3m3 3l-3 3" />
             </svg>
             {!isMinimized && <span className="ml-3">Logout</span>}
           </button>

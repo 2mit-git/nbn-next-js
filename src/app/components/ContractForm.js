@@ -14,6 +14,9 @@ export default function ContractForm({
   onRestart,
   onSubmitSuccess,
 }) {
+  // Today's date in YYYY-MM-DD format for max attribute
+  const today = new Date().toISOString().split("T")[0];
+
   const [form, setForm] = useState({
     title: "Mr",
     firstName: "",
@@ -82,7 +85,7 @@ export default function ContractForm({
       const res = await fetch("/api/contract-send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: normalizedPhone, method }),
+        body: JSON.stringify({ phone: normalizedPhone, channel: method }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -277,59 +280,55 @@ export default function ContractForm({
       finalData
     );
 
-    // Send to Go High Level webhook
-    const webhookUrl = process.env.NEXT_PUBLIC_CONTRACT_WEBHOOK;
-    if (webhookUrl) {
-      try {
-        const res = await fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(finalData),
+    // Submit contract data to backend API, which will handle the webhook
+    try {
+      const res = await fetch("/api/contract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(finalData),
+      });
+      if (res.ok) {
+        setSubmitSuccess(true);
+        setForm({
+          title: "Mr",
+          firstName: "",
+          lastName: "",
+          email: "",
+          contactNumber: "",
+          dob: "",
+          serviceAddress: serviceAddress || "",
+          activateASAP: true,
+          activationDate: "",
+          deliverySame: true,
+          deliveryAddress: "",
+          deliveryName: "",
+          companyName: "",
+          keepPhone: false,
+          phoneNumber: "",
+          transferVoip: false,
+          accountNumber: "",
+          planSpeed: "",
+          includeModem: false,
+          includePhoneService: false,
+          packagePrice: selectedPlan.discountPrice,
+          modemPrice: 0,
+          phoneServicePrice: 0,
         });
-        if (res.ok) {
-          setSubmitSuccess(true);
-          setForm({
-            title: "Mr",
-            firstName: "",
-            lastName: "",
-            email: "",
-            contactNumber: "",
-            dob: "",
-            serviceAddress: serviceAddress || "",
-            activateASAP: true,
-            activationDate: "",
-            deliverySame: true,
-            deliveryAddress: "",
-            deliveryName: "",
-            companyName: "",
-            keepPhone: false,
-            phoneNumber: "",
-            transferVoip: false,
-            accountNumber: "",
-            planSpeed: "",
-            includeModem: false,
-            includePhoneService: false,
-            packagePrice: selectedPlan.discountPrice,
-            modemPrice: 0,
-            phoneServicePrice: 0,
-          });
-          setOtpSent(false);
-          setOtp("");
-          setOtpVerified(false);
-          if (typeof onSuccess === "function") {
-            onSuccess();
-          }
-          if (typeof onSubmitSuccess === "function") {
-            onSubmitSuccess();
-          }
-        } else {
-          setError("Failed to submit contract to webhook.");
+        setOtpSent(false);
+        setOtp("");
+        setOtpVerified(false);
+        if (typeof onSuccess === "function") {
+          onSuccess();
         }
-      } catch (err) {
-        setError("Failed to submit contract to webhook.");
+        if (typeof onSubmitSuccess === "function") {
+          onSubmitSuccess();
+        }
+      } else {
+        const data = await res.json();
+        setError(data?.error || "Failed to submit contract.");
       }
-    } else {
-      setError("Webhook URL is not configured.");
+    } catch (err) {
+      setError("Failed to submit contract.");
     }
     setLoading(false);
   };
@@ -484,6 +483,7 @@ export default function ContractForm({
                   value={form.dob}
                   onChange={handleChange("dob")}
                   required
+                  max={today}
                   disabled={otpSent && !otpVerified}
                 />
               </div>
@@ -627,18 +627,6 @@ export default function ContractForm({
                 <div className="flex space-x-4">
                   <button
                     type="button"
-                    onClick={() => setForm((f) => ({ ...f, keepPhone: true }))}
-                    className={`px-5 py-2 rounded-full font-medium transition ${
-                      form.keepPhone
-                        ? "bg-[#1DA6DF] text-white"
-                        : "bg-white text-black border border-gray-300"
-                    }`}
-                  >
-                    Yes
-                  </button>
-
-                  <button
-                    type="button"
                     onClick={() => setForm((f) => ({ ...f, keepPhone: false }))}
                     className={`px-5 py-2 rounded-full font-medium transition ${
                       !form.keepPhone
@@ -646,8 +634,22 @@ export default function ContractForm({
                         : "bg-white text-black border border-gray-300"
                     }`}
                   >
+                    Yes
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, keepPhone: true }))}
+                    className={`px-5 py-2 rounded-full font-medium transition ${
+                      form.keepPhone
+                        ? "bg-[#1DA6DF] text-white"
+                        : "bg-white text-black border border-gray-300"
+                    }`}
+                  >
                     No
                   </button>
+
+                  
                 </div>
               </div>
               {/* Porting */}
