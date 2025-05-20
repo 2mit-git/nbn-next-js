@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import DashboardSuperAdmin from "../../app/components/DashboardSuperAdmin";
 import DashboardProduct from "../../app/components/DashboardProduct";
-import DashboardAPI from "../../app/components/DashboardAPI";
+
 
 const menuItems = [
   { label: "Super Admin", page: "SuperAdmin", icon: (
@@ -18,12 +18,6 @@ const menuItems = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" />
       </svg>
     ), roles: ['superadmin','user']
-  },
-  { label: "API", page: "API", icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 17l4-4-4-4m5 8l4-4-4-4" />
-      </svg>
-    ), roles: ['superadmin']
   }
 ];
 
@@ -41,7 +35,6 @@ export default function DashboardClient({ type }) {
     switch (page) {
       case "SuperAdmin": return <DashboardSuperAdmin />;
       case "NBNProducts": return <DashboardProduct />;
-      case "API": return <DashboardAPI />;
       default: return null;
     }
   };

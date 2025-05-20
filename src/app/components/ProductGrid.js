@@ -165,7 +165,7 @@ export default function ProductGrid({ tech, onSelectPlan }) {
             <div className="flex flex-col flex-1 justify-between items-stretch">
               {/* Top: Title + Subtitle */}
               <div className="flex flex-col items-stretch mb-2" style={{ minHeight: 90 }}>
-                <p className="text-2xl sm:text-xl font-bold text-white bg-[#1DA6DF] px-3 py-2 rounded-lg text-center mb-2">
+                <p className="text-2xl md:text-base  sm:text-xl font-bold text-white bg-[#1DA6DF] px-3 py-2 rounded-lg text-center mb-2">
                   {p.speed}
                 </p>
                 <p className="text-center text-base  text-gray-700 font-medium min-h-[32px] flex items-center justify-center">

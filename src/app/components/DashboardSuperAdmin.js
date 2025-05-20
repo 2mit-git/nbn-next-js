@@ -2,12 +2,62 @@
 import React, { useState, useEffect } from "react";
 import DashboardCreateAdmin from "./DashboardCreateAdmin";
 
+// AlertPopup component
+function AlertPopup({ show, message, onClose }) {
+  if (!show) return null;
+  return (
+    <div
+      style={{
+        position: "fixed",
+        bottom: 24,
+        right: 24,
+        zIndex: 9999,
+        minWidth: 300,
+        maxWidth: 400,
+        transition: "opacity 0.3s",
+      }}
+      className="animate-fade-in"
+    >
+      <div role="alert" className="alert alert-info shadow-lg flex items-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          className="h-6 w-6 shrink-0 stroke-current"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          ></path>
+        </svg>
+        <span className="ml-2">{message}</span>
+        <button
+          onClick={onClose}
+          className="btn btn-sm btn-circle btn-ghost ml-2"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardSuperAdmin() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [admins, setAdmins]           = useState([]);
   const [loading, setLoading]         = useState(true);
   const [editingId, setEditingId]     = useState(null);
   const [newPassword, setNewPassword] = useState("");
+  const [alert, setAlert] = useState({ show: false, message: "" });
+
+  // Show alert for 3 seconds
+  const triggerAlert = (message) => {
+    setAlert({ show: true, message });
+    setTimeout(() => setAlert({ show: false, message: "" }), 3000);
+  };
 
   // Cache key
   const CACHE_KEY = "dashboard_admins";
@@ -15,7 +65,18 @@ export default function DashboardSuperAdmin() {
   const loadAdmins = async () => {
     setLoading(true);
     try {
-      let usedCache = false;
+      // Always try to fetch fresh data from the API first
+      const res = await fetch("/api/admin");
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setAdmins(data);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        } catch (e) {}
+      }
+    } catch (err) {
+      // If API fails, fallback to cache
       if (typeof window !== "undefined") {
         try {
           const cached = localStorage.getItem(CACHE_KEY);
@@ -23,23 +84,10 @@ export default function DashboardSuperAdmin() {
             const parsed = JSON.parse(cached);
             if (Array.isArray(parsed)) {
               setAdmins(parsed);
-              usedCache = true;
             }
           }
         } catch (e) {}
       }
-      if (!usedCache) {
-        const res = await fetch("/api/admin");
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        setAdmins(data);
-        if (typeof window !== "undefined") {
-          try {
-            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-          } catch (e) {}
-        }
-      }
-    } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
@@ -78,6 +126,7 @@ export default function DashboardSuperAdmin() {
           }
         } catch (e) {}
       }
+      triggerAlert("Admin password updated successfully.");
     } catch (err) {
       console.error(err);
       alert("Failed to update password");
@@ -104,6 +153,7 @@ export default function DashboardSuperAdmin() {
           }
         } catch (e) {}
       }
+      triggerAlert("Admin deleted successfully.");
     } catch (err) {
       console.error(err);
       alert("Failed to delete admin");
@@ -118,6 +168,11 @@ export default function DashboardSuperAdmin() {
           setShowCreateForm(false);
           loadAdmins();
         }}
+        onSuccess={() => {
+          setShowCreateForm(false);
+          loadAdmins();
+          triggerAlert("Admin created successfully.");
+        }}
       />
      </div>
     );
@@ -125,6 +180,12 @@ export default function DashboardSuperAdmin() {
 
   return (
     <div className="w-full h-full">
+      {/* Alert Popup */}
+      <AlertPopup
+        show={alert.show}
+        message={alert.message}
+        onClose={() => setAlert({ show: false, message: "" })}
+      />
       <div className="m-10 space-y-6">
         <div className="flex items-center space-x-4">
           <div className="stats shadow border-1 h-30">

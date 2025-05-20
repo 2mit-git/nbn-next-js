@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,6 +23,21 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        {/* PostMessage script to send height to parent */}
+        <Script id="iframe-height-post" strategy="afterInteractive">
+          {`
+            function sendHeight() {
+              const height = document.documentElement.scrollHeight;
+              window.parent.postMessage({ iframeHeight: height }, "*");
+            }
+
+            window.addEventListener("load", sendHeight);
+            window.addEventListener("resize", sendHeight);
+            const observer = new MutationObserver(sendHeight);
+            observer.observe(document.body, { childList: true, subtree: true });
+          `}
+        </Script>
+
         {children}
       </body>
     </html>

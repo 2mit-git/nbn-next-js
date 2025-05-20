@@ -74,14 +74,27 @@ export default function ContractForm({
     return () => clearTimeout(timer);
   }, [resendTimer]);
 
+  const normalizePhoneNumber = (input) => {
+    let phone = input.trim();
+    // Bangladesh: starts with 88 or +88
+    if (phone.startsWith("88") || phone.startsWith("+88")) {
+      if (!phone.startsWith("+")) phone = "+" + phone;
+      return phone;
+    }
+    // Remove any leading 0 for Australian numbers
+    if (phone.startsWith("0")) phone = phone.slice(1);
+    // Remove any leading + for Australian numbers
+    if (phone.startsWith("+")) phone = phone.slice(1);
+    // Ensure +61 for Australia
+    return "+61" + phone;
+  };
+
   const handleSendOtp = async (method = "sms") => {
     setLoading(true);
     setError("");
     try {
-      // Normalize phone number: trim and ensure leading +
-      let normalizedPhone = form.contactNumber.trim();
-      if (!normalizedPhone.startsWith("+"))
-        normalizedPhone = "+" + normalizedPhone;
+      // Normalize phone number for AU/BD
+      let normalizedPhone = normalizePhoneNumber(form.contactNumber);
       const res = await fetch("/api/contract-send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -104,10 +117,8 @@ export default function ContractForm({
     setLoading(true);
     setError("");
     try {
-      // Normalize phone number: trim and ensure leading +
-      let normalizedPhone = form.contactNumber.trim();
-      if (!normalizedPhone.startsWith("+"))
-        normalizedPhone = "+" + normalizedPhone;
+      // Normalize phone number for AU/BD
+      let normalizedPhone = normalizePhoneNumber(form.contactNumber);
       const res = await fetch("/api/contract-verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -464,12 +475,11 @@ export default function ContractForm({
                   value={form.contactNumber}
                   onChange={handleChange("contactNumber")}
                   required
-                  placeholder="e.g. 8801799859736 (include country code)"
+                  placeholder="e.g. 412345678 (AU) "
                   disabled={otpSent && !otpVerified}
                 />
                 <span className="text-xs text-gray-500">
-                  Please enter your full number with country code (e.g.
-                  8801799859736)
+                  Enter your number without country code (e.g. 412345678 or 0412345678).
                 </span>
               </div>
               {/* Date of Birth */}

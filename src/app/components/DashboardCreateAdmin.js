@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 
-export default function DashboardCreateAdmin({ onGoBack }) {
+export default function DashboardCreateAdmin({ onGoBack, onSuccess }) {
   const [form, setForm] = useState({
     email: "",
     number: "",
@@ -9,19 +9,16 @@ export default function DashboardCreateAdmin({ onGoBack }) {
     confirm: "",
   });
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState({ show: false, message: "" });
+  const [error, setError] = useState("");
 
   const handleChange = (k) => (e) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const showToast = (message) => {
-    setToast({ show: true, message });
-    setTimeout(() => setToast({ show: false, message: "" }), 3000);
-  };
-
   const handleCreate = async () => {
+    setError("");
     if (form.password !== form.confirm) {
-      return showToast("Passwords do not match.");
+      setError("Passwords do not match.");
+      return;
     }
     setLoading(true);
     let to = form.number.trim();
@@ -39,12 +36,14 @@ export default function DashboardCreateAdmin({ onGoBack }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Create failed");
 
-      showToast("Admin created successfully.");
-      // optionally delay going back until after toast:
-      setTimeout(onGoBack, 3000);
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        onGoBack();
+      }
     } catch (err) {
       console.error(err);
-      showToast("Error creating admin.");
+      setError("Error creating admin.");
     } finally {
       setLoading(false);
     }
@@ -52,11 +51,11 @@ export default function DashboardCreateAdmin({ onGoBack }) {
 
   return (
     <div className="relative">
-      {/* Toast */}
-      {toast.show && (
+      {/* Error Alert */}
+      {error && (
         <div className="toast">
-          <div className="alert alert-info">
-            <span>{toast.message}</span>
+          <div className="alert alert-error">
+            <span>{error}</span>
           </div>
         </div>
       )}

@@ -30,60 +30,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* header section */}
-      <header className="bg-base-100 shadow-sm">
-        <div className="max-w-screen-xl mx-auto w-full px-4 py-3 flex items-center justify-between">
-          {/* Mobile menu button */}
-          <button className="lg:hidden btn btn-ghost p-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h8m-8 6h16" />
-            </svg>
-          </button>
-          {/* Logo */}
-          <img
-            className="h-12"
-            src="https://2mit.com.au/wp-content/uploads/2025/03/CMYK-Logo_Rectangle-Border.png"
-            alt="Logo"
-          />
-          {/* Desktop nav */}
-          <nav className="hidden lg:flex space-x-6 font-semibold text-sm">
-            <a href="#" className="hover:text-[#1DA6DF]">Home</a>
-            <details className="group relative">
-              <summary className="cursor-pointer list-none">IT Services</summary>
-              <ul className="absolute top-full left-0 mt-2 w-48 bg-white border rounded shadow-lg hidden group-open:block">
-                <li><a className="block px-4 py-2 hover:bg-gray-100">Managed IT Support</a></li>
-                <li><a className="block px-4 py-2 hover:bg-gray-100">IT Consulting</a></li>
-                <li><a className="block px-4 py-2 hover:bg-gray-100">Cloud Migration</a></li>
-                <li><a className="block px-4 py-2 hover:bg-gray-100">Microsoft 365 Management</a></li>
-                <li><a className="block px-4 py-2 hover:bg-gray-100">Hardware Procurement</a></li>
-                <li><a className="block px-4 py-2 hover:bg-gray-100">Disaster Recovery</a></li>
-              </ul>
-            </details>
-            <details className="group relative">
-              <summary className="cursor-pointer list-none">Telcom Services</summary>
-              <ul className="absolute top-full left-0 mt-2 w-48 bg-white border rounded shadow-lg hidden group-open:block">
-                <li><a className="block px-4 py-2 hover:bg-gray-100">FTTP</a></li>
-                <li><a className="block px-4 py-2 hover:bg-gray-100">HFC</a></li>
-              </ul>
-            </details>
-            <details className="group relative">
-              <summary className="cursor-pointer list-none">Web Services</summary>
-              <ul className="absolute top-full left-0 mt-2 w-48 bg-white border rounded shadow-lg hidden group-open:block">
-                <li><a className="block px-4 py-2 hover:bg-gray-100">Web Design</a></li>
-                <li><a className="block px-4 py-2 hover:bg-gray-100">E-Commerce</a></li>
-              </ul>
-            </details>
-            <details className="group relative">
-              <summary className="cursor-pointer list-none">Integrated Solutions</summary>
-              <ul className="absolute top-full left-0 mt-2 w-48 bg-white border rounded shadow-lg hidden group-open:block">
-                <li><a className="block px-4 py-2 hover:bg-gray-100">Custom APIs</a></li>
-                <li><a className="block px-4 py-2 hover:bg-gray-100">Automation</a></li>
-              </ul>
-            </details>
-            <a href="#contact" className="hover:text-[#1DA6DF]">Contact Us</a>
-          </nav>
-        </div>
-      </header>
+      
 
       {/* Main Content */}
       <main className="flex-grow w-full">
