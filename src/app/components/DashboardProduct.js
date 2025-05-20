@@ -88,7 +88,7 @@ export default function DashboardProduct() {
       actualPrice: Number(newProduct.actualPrice),
       discountPrice: Number(newProduct.discountPrice),
     };
-    console.log("Submitting:", payload);
+    
 
     try {
       const res = await fetch("/api/products", {
@@ -148,7 +148,7 @@ export default function DashboardProduct() {
       actualPrice: Number(edited.actualPrice),
       discountPrice: Number(edited.discountPrice),
     };
-    console.log("Updating:", payload);
+    
 
     try {
       const res = await fetch("/api/products", {

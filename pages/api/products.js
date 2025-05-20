@@ -25,8 +25,9 @@ export default async function handler(req, res) {
   const { method } = req;
 
   // ── PROTECT all non-GET methods ───────────────────────────
+  let user = null;
   if (method !== "GET") {
-    const user = requireAuth(req, res);
+    user = requireAuth(req, res);
     if (!user) return;  // stops here with 401 if not authenticated
   }
 
@@ -48,6 +49,9 @@ export default async function handler(req, res) {
 
   // ── CREATE a product ──────────────────────────────────────
   if (method === "POST") {
+    if (!user || user.type !== "superadmin") {
+      return res.status(403).json({ error: "Forbidden: Superadmin only." });
+    }
     const {
       categories,
       speed,
@@ -93,6 +97,9 @@ export default async function handler(req, res) {
 
   // ── UPDATE a product ──────────────────────────────────────
   if (method === "PUT") {
+    if (!user || (user.type !== "admin" && user.type !== "superadmin")) {
+      return res.status(403).json({ error: "Forbidden: Admin or Superadmin only." });
+    }
     const {
       id,
       categories,
@@ -136,6 +143,9 @@ export default async function handler(req, res) {
 
   // ── DELETE a product ──────────────────────────────────────
   if (method === "DELETE") {
+    if (!user || (user.type !== "admin" && user.type !== "superadmin")) {
+      return res.status(403).json({ error: "Forbidden: Admin or Superadmin only." });
+    }
     const { id } = req.body;
     if (!id) {
       return res.status(400).json({ error: "Product id is required." });

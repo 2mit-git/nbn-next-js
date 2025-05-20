@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 
 export default function ExtrasSelector({ onChange }) {
   // --- modem state (multi-select) ---
@@ -134,9 +135,11 @@ export default function ExtrasSelector({ onChange }) {
                   onClick={() => toggleModem(m.id)}
                 >
                   <figure className="p-4">
-                    <img
+                    <Image
                       src={m.img}
-                      alt=""
+                      alt={m.title}
+                      width={120}
+                      height={120}
                       className="h-50 object-cover"
                     />
                   </figure>

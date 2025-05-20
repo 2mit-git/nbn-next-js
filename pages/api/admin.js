@@ -5,28 +5,38 @@ import bcrypt    from "bcryptjs";
 import jwt       from "jsonwebtoken";
 import { parse } from "cookie";
 
-// Helper: reads the token cookie & verifies it
-function requireAuth(req, res) {
+/**
+ * Helper: reads the token cookie, verifies it, and checks for superadmin role
+ */
+async function requireSuperadmin(req, res) {
   const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
   const token   = cookies.token;
   if (!token) {
     res.status(401).json({ error: "Unauthorized" });
     return null;
   }
+  let decoded;
   try {
-    return jwt.verify(token, process.env.JWT_SECRET);
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
   } catch {
     res.status(401).json({ error: "Invalid token" });
     return null;
   }
+  // Fetch user from DB and check type
+  const admin = await Admin.findById(decoded.sub);
+  if (!admin || admin.type !== "superadmin") {
+    res.status(403).json({ error: "Forbidden: Superadmin only" });
+    return null;
+  }
+  return admin;
 }
 
 export default async function handler(req, res) {
   await dbConnect();
 
-  // ── PROTECT ALL ROUTES ──────────────────────────────────────
-  const user = requireAuth(req, res);
-  if (!user) return; // stops here with 401 if not logged in
+  // ── PROTECT ALL ROUTES: Only superadmin can access ─────────
+  const user = await requireSuperadmin(req, res);
+  if (!user) return; // stops here with 401/403 if not superadmin
 
   // ── GET all admins ─────────────────────────────────────────
   if (req.method === "GET") {

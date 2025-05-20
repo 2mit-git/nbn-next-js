@@ -20,9 +20,7 @@ export default function Home() {
   const back = () => setStep((s) => Math.max(s - 1, 0));
   const steps = ["Check NBN", "Choose plan", "Select extras", "Your details"];
 
-  useEffect(() => {
-    console.log("serviceAddress in parent now:", serviceAddress);
-  }, [serviceAddress]);
+  
 
   useEffect(() => {
     if (selectedPackage) next();

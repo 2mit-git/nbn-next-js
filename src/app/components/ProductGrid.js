@@ -7,7 +7,7 @@ export default function ProductGrid({ tech, onSelectPlan }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  console.log(tech);
+ 
 
   // Cache key
   const CACHE_KEY = "product_grid_cache";
@@ -94,7 +94,7 @@ export default function ProductGrid({ tech, onSelectPlan }) {
   if (error) return <p className="m-10 text-red-500">{error}</p>;
 
   // Only show plans matching the selected tech, sorted by price (low to high)
-  console.log(all);
+  
   // inside your component render/body
   const list = tech
     ? all

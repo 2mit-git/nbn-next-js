@@ -14,6 +14,8 @@ export default function ContractForm({
   onRestart,
   onSubmitSuccess,
 }) {
+
+  
   // Today's date in YYYY-MM-DD format for max attribute
   const today = new Date().toISOString().split("T")[0];
 
@@ -286,10 +288,7 @@ export default function ContractForm({
       },
     };
 
-    console.log(
-      "Submitting full contract data for Go High Level webhook:",
-      finalData
-    );
+    
 
     // Submit contract data to backend API, which will handle the webhook
     try {
@@ -740,7 +739,7 @@ export default function ContractForm({
                     : "$0.00"}
                 </span>
               </div>
-              {/* Modem */}
+              {/* Modems */}
               {(() => {
                 const modemOptions = [
                   {
@@ -754,24 +753,21 @@ export default function ContractForm({
                     price: "$120 / Upfront",
                   },
                 ];
-                const modemId = extras?.modems?.length
-                  ? extras.modems[0]
-                  : null;
-                const modem =
-                  modemOptions.find((m) => m.id === modemId) || null;
-                let modemPrice = 0;
-                if (modem) {
-                  const match = modem.price && modem.price.match(/\$([\d.]+)/);
-                  if (match) {
-                    modemPrice = Number(match[1]);
-                  }
+                if (extras?.modems?.length) {
+                  return extras.modems.map((modemId) => {
+                    const modem = modemOptions.find((m) => m.id === modemId);
+                    if (!modem) return null;
+                    const match = modem.price && modem.price.match(/\$([\d.]+)/);
+                    const modemPrice = match ? Number(match[1]) : 0;
+                    return (
+                      <div className="flex justify-between" key={modemId}>
+                        <span className="font-medium">{modem.title}</span>
+                        <span>{`$${modemPrice.toFixed(2)}`}</span>
+                      </div>
+                    );
+                  });
                 }
-                return modem ? (
-                  <div className="flex justify-between">
-                    <span className="font-medium">{modem.title}</span>
-                    <span>{`$${modemPrice.toFixed(2)}`}</span>
-                  </div>
-                ) : null;
+                return null;
               })()}
               {/* Phone Service */}
               {(() => {
@@ -817,7 +813,7 @@ export default function ContractForm({
                         : typeof selectedPlan?.price !== "undefined"
                         ? Number(selectedPlan.price)
                         : 0;
-                    // Modem price
+                    // Modem prices (sum all selected)
                     const modemOptions = [
                       {
                         id: "modem",
@@ -828,18 +824,14 @@ export default function ContractForm({
                         price: "$120 / Upfront",
                       },
                     ];
-                    const modemId = extras?.modems?.length
-                      ? extras.modems[0]
-                      : null;
-                    const modem =
-                      modemOptions.find((m) => m.id === modemId) || null;
                     let modemPrice = 0;
-                    if (modem) {
-                      const match =
-                        modem.price && modem.price.match(/\$([\d.]+)/);
-                      if (match) {
-                        modemPrice = Number(match[1]);
-                      }
+                    if (extras?.modems?.length) {
+                      modemPrice = extras.modems.reduce((sum, modemId) => {
+                        const modem = modemOptions.find((m) => m.id === modemId);
+                        if (!modem) return sum;
+                        const match = modem.price && modem.price.match(/\$([\d.]+)/);
+                        return sum + (match ? Number(match[1]) : 0);
+                      }, 0);
                     }
                     // Phone service price
                     const phoneOptions = [
