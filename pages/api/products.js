@@ -49,8 +49,8 @@ export default async function handler(req, res) {
 
   // ── CREATE a product ──────────────────────────────────────
   if (method === "POST") {
-    if (!user || user.type !== "superadmin") {
-      return res.status(403).json({ error: "Forbidden: Superadmin only." });
+    if (!user || (user.type !== "admin" && user.type !== "superadmin")) {
+      return res.status(403).json({ error: "Forbidden: Admin or Superadmin only." });
     }
     const {
       categories,
