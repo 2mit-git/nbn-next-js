@@ -182,6 +182,11 @@ export default function ExtrasSelector({ onChange }) {
               );
             })}
           </div>
+          {selectedModems.length === 0 && (
+            <div className="text-red-600 text-sm mt-2">
+              Please select at least one modem or extender to continue.
+            </div>
+          )}
         </div>
       )}
 

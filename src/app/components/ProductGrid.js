@@ -2,57 +2,31 @@
 "use client";
 import React, { useState, useEffect } from "react";
 
-export default function ProductGrid({ tech, onSelectPlan }) {
+export default function ProductGrid({ tech, onSelectPlan, onLoadingChange }) {
   const [all, setAll] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
  
 
-  // Cache key
-  const CACHE_KEY = "product_grid_cache";
-
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    // Try to load cache
-    let cached = null;
-    try {
-      const raw = localStorage.getItem(CACHE_KEY);
-      if (raw) cached = JSON.parse(raw);
-    } catch (e) {}
-
     fetch("/api/products")
       .then((r) => {
         if (!r.ok) throw new Error("Network error");
         return r.json();
       })
       .then((data) => {
-        // data: { products, updatedAt }
-        if (
-          cached &&
-          cached.updatedAt &&
-          data.updatedAt &&
-          cached.updatedAt === data.updatedAt &&
-          Array.isArray(cached.products)
-        ) {
-          setAll(cached.products);
-        } else {
-          setAll(data.products);
-          try {
-            localStorage.setItem(
-              CACHE_KEY,
-              JSON.stringify({
-                products: data.products,
-                updatedAt: data.updatedAt,
-              })
-            );
-          } catch (e) {}
-        }
+        setAll(data.products);
       })
       .catch(() => setError("Could not load products"))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (typeof onLoadingChange === "function") {
+      onLoadingChange(loading);
+    }
+  }, [loading, onLoadingChange]);
 
   if (loading)
     return (
