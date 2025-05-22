@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+     "dev":   "cross-env PORT=4000 next dev",
+    "start": "cross-env PORT=8080 next start",
     "build": "next build",
-    "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
