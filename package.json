@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-     "dev":   "cross-env PORT=4000 next dev",
-    "start": "cross-env PORT=8080 next start",
+    "dev":   "next dev -p 4000",
+    "start": "next start -p $PORT",
     "build": "next build",
     "lint": "next lint"
   },

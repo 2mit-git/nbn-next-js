@@ -95,9 +95,11 @@ export default function Home() {
           <section>
             {step === 0 && (
               <div>
-                <h3 className="font-bold text-3xl mt-10 mb-10 w-full flex justify-center">
-                  See which nbn plans are available for <span className="text-[#1DA6DF] ms-2">your address.</span> 
+                <h3 className="font-bold w-full text-center text-xl sm:text-2xl md:text-3xl mt-10 mb-10 px-4">
+                  See which nbn plans are available for
+                  <span className="text-[#1DA6DF] ms-1">your address.</span>
                 </h3>
+               
                 <NbnAddressLookup
                   onTechChange={setSelectedTech}
                   onAddressChange={setServiceAddress}
@@ -108,8 +110,10 @@ export default function Home() {
 
             {step === 1 && (
               <div className="space-y-6">
-                <h3 className="font-bold text-3xl mt-10 mb-10 w-full flex justify-center">
-                  Select your unlimited data <span className="text-[#1DA6DF] ms-2">nbn plan.</span> 
+                
+                <h3 className="font-bold w-full text-center text-xl sm:text-2xl md:text-3xl mt-10 mb-10 px-4">
+                  Select your unlimited data{" "}
+                  <span className="text-[#1DA6DF] ms-2">nbn plan.</span>
                 </h3>
                 <ProductGrid
                   tech={selectedTech}
@@ -129,8 +133,9 @@ export default function Home() {
 
             {step === 2 && (
               <div className="space-y-6">
-                <h3 className="font-bold text-3xl mt-10 mb-10 w-full flex justify-center">
-                  Enhance your plan with <span className="text-[#1DA6DF] ms-2">some extras.</span> 
+                <h3 className="font-bold w-full text-center text-xl sm:text-2xl md:text-3xl mt-10 mb-10 px-4">
+                  Enhance your plan with{" "}
+                  <span className="text-[#1DA6DF] ms-2">some extras.</span>
                 </h3>
                 <ExtrasSelector onChange={setExtras} />
                 <div className="flex justify-between">
