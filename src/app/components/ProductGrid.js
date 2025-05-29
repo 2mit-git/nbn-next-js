@@ -7,8 +7,6 @@ export default function ProductGrid({ tech, onSelectPlan, onLoadingChange }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
- 
-
   useEffect(() => {
     fetch("/api/products")
       .then((r) => {
@@ -68,21 +66,25 @@ export default function ProductGrid({ tech, onSelectPlan, onLoadingChange }) {
   if (error) return <p className="m-10 text-red-500">{error}</p>;
 
   // Only show plans matching the selected tech, sorted by price (low to high)
-  
+
   // inside your component render/body
   const list = tech
     ? all
         .filter((p) => {
           // special case for FTTP_Upgrade
           if (tech === "FTTP_Upgrade") {
-            const price = p.discountPrice ?? p.actualPrice ?? 0;
-            return (
+            // match only FTTP packages and speed 100Mbps or above
+            if (
               Array.isArray(p.categories) &&
-              // match only FTTP packages
               p.categories.some((cat) => cat.toLowerCase() === "fttp") &&
-              // and price ≥ 100
-              price >= 100
-            );
+              typeof p.speed === "string"
+            ) {
+              // Extract the numeric part before 'Mbps'
+              const match = p.speed.match(/^(\d+)/);
+              const speedNum = match ? parseInt(match[1], 10) : 0;
+              return speedNum >= 100;
+            }
+            return false;
           }
           // default behaviour: match whatever tech the user picked
           return (
@@ -105,7 +107,27 @@ export default function ProductGrid({ tech, onSelectPlan, onLoadingChange }) {
     );
   }
 
-  
+  // Helper to extract download and upload speeds as numbers
+  function getSpeeds(speedStr) {
+    const match = speedStr.match(/^(\d+)[^\d]+(\d+)/);
+    if (match) {
+      return { down: parseInt(match[1], 10), up: parseInt(match[2], 10) };
+    }
+    // fallback: try to extract only download if upload missing
+    const single = speedStr.match(/^(\d+)/);
+    return { down: single ? parseInt(single[1], 10) : 0, up: 0 };
+  }
+
+  // Find min upload speed among plans with down === 100
+  const minUpFor100 = list.reduce((min, p) => {
+    if (typeof p.speed === "string") {
+      const { down, up } = getSpeeds(p.speed);
+      if (down === 100) {
+        return Math.min(min, up);
+      }
+    }
+    return min;
+  }, Infinity);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-6 items-stretch">
@@ -119,35 +141,71 @@ export default function ProductGrid({ tech, onSelectPlan, onLoadingChange }) {
         >
           <div className="relative flex flex-col justify-between items-stretch p-5 pt-20 pb-6 bg-[#c1e4f5] rounded-xl min-h-[500px] h-full w-full">
             {/* Price badge */}
-            <div className="mt-[-12px] me-[-12px] absolute top-0 right-0 flex flex-col items-center bg-[#0B3559] rounded-l-full rounded-tr-2xl py-2 px-3 text-xl sm:text-2xl">
-              <div>
-                <span className="font-bold text-white">
-                  ${p.discountPrice}{" "}
-                  <small className="text-xs ml-1 text-white">/ month</small>
-                </span>
-              </div>
-              <div className="flex w-full justify-end">
-                <small className="block m-0 p-0 text-[11px] text-white leading-none text-end">
-                  For the first 6 months
-                  <br />
-                  after that <strong>{p.actualPrice}</strong>/mth
-                </small>
-              </div>
-            </div>
+            {(() => {
+              const { down, up } = getSpeeds(p.speed);
+
+              // Show "Best Deal" only if down is 100 and up is the minimum for 100Mbps plans
+              if (down === 100 && up === minUpFor100) {
+                return (
+                  <div className="mt-[-12px] me-[-12px] absolute top-0 right-0 flex flex-col items-center bg-primary rounded-l-full rounded-tr-2xl py-2 px-3 text-xl sm:text-2xl">
+                    <div>
+                      <span className="font-bold text-[#FFFFFF]">
+                        <p className="text-xs font-bold text-[#FFFFFF] text-end w-full">Best Deal</p>${p.discountPrice}
+                        <small className="text-xs ml-1 text-[#FFFFFF]">
+                          / month
+                        </small>
+                      </span>
+                    </div>
+                    <div className="flex w-full justify-end">
+                      <small className="block m-0 p-0 text-[11px] text-[#FFFFFF] leading-none text-end">
+                        For the first 6 months
+                        <br />
+                        after that <strong>{p.actualPrice}</strong>/mth
+                      </small>
+                    </div>
+                  </div>
+                );
+              }
+              // Default badge for other plans
+              return (
+                <div className="mt-[-12px] me-[-12px] absolute top-0 right-0 flex flex-col items-center bg-[#0B3559] rounded-l-full rounded-tr-2xl py-2 px-3 text-xl sm:text-2xl">
+                  <div>
+                    <span className="font-bold text-white">
+                      ${p.discountPrice}
+                      <small className="text-xs ml-1 text-white">/ month</small>
+                    </span>
+                  </div>
+                  <div className="flex w-full justify-end">
+                    <small className="block m-0 p-0 text-[11px] text-white leading-none text-end">
+                      For the first 6 months
+                      <br />
+                      after that <strong>{p.actualPrice}</strong>/mth
+                    </small>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Main content */}
             <div className="flex flex-col flex-1 justify-between items-stretch">
               {/* Top: Title + Subtitle */}
-              <div className="flex flex-col items-stretch mb-2" style={{ minHeight: 90 }}>
+              <div
+                className="flex flex-col items-stretch mb-2"
+                style={{ minHeight: 90 }}
+              >
                 <p className="text-2xl md:text-base  sm:text-xl font-bold text-white bg-[#1DA6DF] px-3 py-2 rounded-lg text-center mb-2">
                   {p.speed}
                 </p>
+
                 <p className="text-center text-base  text-gray-700 font-medium min-h-[32px] flex items-center justify-center">
                   {p.subtitle}
                 </p>
               </div>
               {/* Features list (T&C) */}
-              <div className="flex flex-col justify-start" style={{ minHeight: 110 }}>
+              <div
+                className="flex flex-col justify-start"
+                style={{ minHeight: 110 }}
+              >
                 <div className="divider my-2"></div>
                 <ul className="flex flex-col space-y-2 mt-2 w-full">
                   {p.termsAndConditions.map((t, i) => (
@@ -172,7 +230,10 @@ export default function ProductGrid({ tech, onSelectPlan, onLoadingChange }) {
                 </ul>
               </div>
               {/* Recommended for */}
-              <div className="flex flex-col w-full text-[14px] text-black mb-2 mt-2" style={{ minHeight: 56 }}>
+              <div
+                className="flex flex-col w-full text-[14px] text-black mb-2 mt-2"
+                style={{ minHeight: 56 }}
+              >
                 <div className="divider my-2"></div>
                 <strong className="mb-1">Recommended for:</strong>
                 <p className="min-h-[24px]">{p.recommendation}</p>

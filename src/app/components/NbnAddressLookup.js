@@ -78,9 +78,7 @@ export default function NbnAddressLookup({
     setLoadingNbn(true);
 
     try {
-      const res = await fetch(
-        `/api/nbn?address=${encodeURIComponent(addr)}`
-      );
+      const res = await fetch(`/api/nbn?address=${encodeURIComponent(addr)}`);
       const json = await res.json();
       setNbnResult(json);
 
@@ -98,15 +96,12 @@ export default function NbnAddressLookup({
   };
 
   const handleSearchClick = () => {
-    const feature = suggestions.find(
-      (f) => f.properties.formatted === query
-    );
+    const feature = suggestions.find((f) => f.properties.formatted === query);
     if (feature) handleSelect(feature);
   };
 
   const rawStatus = nbnResult?.addressDetail?.techChangeStatus || "";
-  const canUpgrade =
-    rawStatus.trim().toLowerCase() === "eligible to order";
+  const canUpgrade = rawStatus.trim().toLowerCase() === "eligible to order";
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto px-4">
@@ -177,27 +172,69 @@ export default function NbnAddressLookup({
         <div className="w-full bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-6">
           {/* Header */}
           <div className="flex items-center space-x-3">
-            <svg className="w-8 h-8 text-[#1DA6DF]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 22s-7-4.5-7-10a7 7 0 1114 0c0 5.5-7 10-7 10z" /></svg>
-            <h2 className="text-xl font-semibold text-gray-800">{nbnResult.addressDetail.formattedAddress || selectedAddr}</h2>
+            <svg
+              className="w-8 h-8 text-[#1DA6DF]"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 22s-7-4.5-7-10a7 7 0 1114 0c0 5.5-7 10-7 10z"
+              />
+            </svg>
+            <h2 className="text-xl font-semibold text-gray-800">
+              {nbnResult.addressDetail.formattedAddress || selectedAddr}
+            </h2>
           </div>
 
           <div className="bg-gray-100 rounded-2xl p-5">
-            <p className="text-base text-gray-600 mb-2 font-bold">Select your package</p>
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-6`}>
+            {canUpgrade ? (
+              <p className="text-center text-2xl  text-[#1DA6DF] mb-6 font-bold">
+                You’re eligible for an nbn® Fibre Upgrade with $0 installation
+              </p>
+            ) : (
+              <p className="text-center text-2xl  text-[#1DA6DF] mb-6 font-bold">
+                {nbnResult.addressDetail.techType.charAt(0).toUpperCase() + nbnResult.addressDetail.techType.slice(1).toLowerCase()} is available at your address
+              </p>
+            )}
+            <div className={`grid grid-cols-1 ${canUpgrade ? "md:grid-cols-2" : "md:grid-cols-1"} gap-6`}>
               {/* Connect Now */}
-              <div role="button" onClick={() => onPackageSelect("connect")} className="flex flex-col border border-[#1DA6DF] bg-gray-50 rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105">
-                <h3 className="text-lg font-medium text-[#1DA6DF] mb-1">Connect Now</h3>
-                <p className="text-gray-700">{nbnResult.servingArea.serviceStatus === "available" ? "Great news! You qualify for high-speed broadband." : `Status: ${nbnResult.servingArea.serviceStatus}`}</p>
+              <div
+                role="button"
+                onClick={() => onPackageSelect("connect")}
+                className="flex items-center justify-center  flex-col border border-[#1DA6DF] bg-gray-50 rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105"
+              >
+                {canUpgrade?(<h3 className="text-2xl font-medium text-center text-[#1DA6DF] mb-1">
+                  Skip Upgrade
+                </h3>):(<h3 className="text-2xl font-medium text-center text-[#1DA6DF] mb-1">
+                  Connect Now
+                </h3>)}
+                
               </div>
 
               {/* Fibre Upgrade */}
               {canUpgrade && (
-                <div role="button" onClick={() => { onTechChange("FTTP_Upgrade"); onPackageSelect("fibre"); }} className="flex flex-col bg-[#1DA6DF] border border-transparent rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105">
-                  <h3 className="text-lg font-medium text-white mb-1">Upgrade to FTTP</h3>
-                  <p className="text-white">Tech change status: {nbnResult.addressDetail.techChangeStatus}</p>
+                <div
+                  role="button"
+                  onClick={() => {
+                    onTechChange("FTTP_Upgrade");
+                    onPackageSelect("fibre");
+                  }}
+                  className="flex items-center justify-center flex-col bg-[#1DA6DF] border border-transparent rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105"
+                >
+                  <h3 className="text-2xl font-bold text-center  text-white mb-1">
+                    Upgrade Now
+                  </h3>
                 </div>
               )}
             </div>
+            {canUpgrade && (<p className="text-sm text-gray-600 mt-4">
+              $0 Fibre Upgrade available for standard installations only. Offer valid with eligible high-speed plans. A compatible high-speed modem is required — additional charges may apply. According to nbn®, installation may take approximately 2 to 6 weeks to complete.
+            </p>)}
           </div>
         </div>
       )}
