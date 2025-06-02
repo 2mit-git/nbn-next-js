@@ -4,7 +4,10 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 
-export default function ExtrasSelector({ onChange }) {
+export default function ExtrasSelector({
+  onChange,
+  value = {},
+}) {
   // --- modem state (multi-select) ---
   const modemOptions = [
     {
@@ -33,13 +36,33 @@ export default function ExtrasSelector({ onChange }) {
       img: "https://2mit.com.au/wp-content/uploads/2025/05/broadband-zte-extender.png",
     },
   ];
-  const [includeModem, setIncludeModem] = useState(true);
-  const [selectedModems, setSelectedModems] = useState([]);
+  // null = not selected, true = yes, false = no
+  const [localIncludeModem, setLocalIncludeModem] = useState(null);
+  const [localSelectedModems, setLocalSelectedModems] = useState([]);
 
-  // clear selections when modems turned off
+  // Derive includeModem/selectedModems from modems if not explicitly provided
+  // Only treat as "No" if explicitly set, otherwise default to null (unselected)
+  const includeModem =
+    value.includeModem !== undefined
+      ? value.includeModem
+      : value.modems !== undefined
+      ? value.modems.length > 0
+        ? true
+        : value.modems.length === 0 && value._modemUserSet === false
+        ? false
+        : null
+      : localIncludeModem;
+  const selectedModems =
+    value.selectedModems !== undefined
+      ? value.selectedModems
+      : value.modems !== undefined
+      ? value.modems
+      : localSelectedModems;
+
+  // clear selections when modems turned off (only for local state)
   useEffect(() => {
-    if (!includeModem) setSelectedModems([]);
-  }, [includeModem]);
+    if (value.includeModem === undefined && localIncludeModem === false) setLocalSelectedModems([]);
+  }, [localIncludeModem, value.includeModem]);
 
   // --- phone state (exclusive) ---
   const phoneOptions = [
@@ -71,25 +94,69 @@ export default function ExtrasSelector({ onChange }) {
       logo: "https://your-slash-logo.png",
     },
   ];
-  const [includePhone, setIncludePhone] = useState(true);
-  const [selectedPhone, setSelectedPhone] = useState(phoneOptions[0].id);
+  // null = not selected, true = yes, false = no
+  const [localIncludePhone, setLocalIncludePhone] = useState(null);
+  const [localSelectedPhone, setLocalSelectedPhone] = useState(phoneOptions[0].id);
 
-  // Whenever anything changes we notify parent
+  // Derive includePhone/selectedPhone from phone if not explicitly provided
+  // Only treat as "No" if explicitly set, otherwise default to null (unselected)
+  const includePhone =
+    value.includePhone !== undefined
+      ? value.includePhone
+      : value.phone !== undefined
+      ? value.phone !== null
+        ? true
+        : value._phoneUserSet === false
+        ? false
+        : null
+      : localIncludePhone;
+  const selectedPhone =
+    value.selectedPhone !== undefined
+      ? value.selectedPhone
+      : value.phone !== undefined
+      ? value.phone
+      : localSelectedPhone;
+
+  // Whenever anything changes we notify parent (only for local state)
   useEffect(() => {
-    onChange({
-      modems: includeModem ? selectedModems : [],
-      phone: includePhone ? selectedPhone : null,
-    });
-  }, [selectedModems, includeModem, selectedPhone, includePhone, onChange]);
+    if (typeof onChange === "function") {
+      onChange({
+        includeModem,
+        selectedModems,
+        includePhone,
+        selectedPhone,
+        modems: includeModem === true ? selectedModems : [],
+        phone: includePhone === true ? selectedPhone : null,
+      });
+    }
+  }, [includeModem, selectedModems, includePhone, selectedPhone]);
 
   // handlers
   const toggleModem = (id) => {
-    setSelectedModems((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+    if (value.selectedModems !== undefined && typeof onChange === "function") {
+      const prev = selectedModems;
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      onChange({
+        ...value,
+        selectedModems: next,
+        includeModem,
+      });
+    } else {
+      setLocalSelectedModems((prev) =>
+        prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      );
+    }
   };
   const pickPhone = (id) => {
-    setSelectedPhone(id);
+    if (value.selectedPhone !== undefined && typeof onChange === "function") {
+      onChange({
+        ...value,
+        selectedPhone: id,
+        includePhone,
+      });
+    } else {
+      setLocalSelectedPhone(id);
+    }
   };
 
   return (
@@ -102,18 +169,47 @@ export default function ExtrasSelector({ onChange }) {
         </h2>
         <div className="grid grid-cols-2 gap-4">
           <button
-            className={includeModem ? "btn bg-[#1DA6DF] text-white" : "btn btn-outline"}
-            onClick={() => setIncludeModem(true)}
+            className={`py-4 px-8 text-lg font-bold rounded-xl shadow-lg transition-all duration-150 border-2 ${
+              includeModem === true
+                ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
+                : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
+            }`}
+            onClick={() => {
+              if (value.includeModem !== undefined && typeof onChange === "function") {
+                onChange({ ...value, includeModem: true });
+              } else {
+                setLocalIncludeModem(true);
+              }
+            }}
+            style={{ minWidth: 120 }}
+            aria-pressed={includeModem === true}
           >
             Yes
           </button>
           <button
-            className={!includeModem ? "btn bg-[#1DA6DF] text-white" : "btn btn-outline"}
-            onClick={() => setIncludeModem(false)}
+            className={`py-4 px-8 text-lg font-bold rounded-xl shadow-lg transition-all duration-150 border-2 ${
+              includeModem === false
+                ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
+                : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
+            }`}
+            onClick={() => {
+              if (value.includeModem !== undefined && typeof onChange === "function") {
+                onChange({ ...value, includeModem: false });
+              } else {
+                setLocalIncludeModem(false);
+              }
+            }}
+            style={{ minWidth: 120 }}
+            aria-pressed={includeModem === false}
           >
             No
           </button>
         </div>
+        {includeModem === null && (
+          <div className="text-red-600 text-sm mt-2">
+            Please select Yes or No to continue.
+          </div>
+        )}
       </div>
 
       {/* --- Modem selection (multi) --- */}
@@ -121,7 +217,7 @@ export default function ExtrasSelector({ onChange }) {
 
 
 
-      {includeModem && (
+      {includeModem === true && (
         <div className="space-y-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {modemOptions.map((m) => {
@@ -195,23 +291,50 @@ export default function ExtrasSelector({ onChange }) {
         <h2 className="text-xl font-bold">Do you want a phone service?</h2>
         <div className="grid grid-cols-2 gap-4">
           <button
-            className={includePhone ? "btn bg-[#1DA6DF] text-white" : "btn btn-outline"}
+            className={`py-4 px-8 text-lg font-bold rounded-xl shadow-lg transition-all duration-150 border-2 ${
+              includePhone === true
+                ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
+                : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
+            }`}
             onClick={() => {
-              setIncludePhone(true);
-              setSelectedPhone(phoneOptions[0].id);
+              if (value.includePhone !== undefined && typeof onChange === "function") {
+                onChange({ ...value, includePhone: true, selectedPhone: phoneOptions[0].id });
+              } else {
+                setLocalIncludePhone(true);
+                setLocalSelectedPhone(phoneOptions[0].id);
+              }
             }}
+            style={{ minWidth: 120 }}
+            aria-pressed={includePhone === true}
           >
             Yes
           </button>
           <button
-            className={!includePhone ? "btn bg-[#1DA6DF] text-white" : "btn btn-outline"}
-            onClick={() => setIncludePhone(false)}
+            className={`py-4 px-8 text-lg font-bold rounded-xl shadow-lg transition-all duration-150 border-2 ${
+              includePhone === false
+                ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
+                : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
+            }`}
+            onClick={() => {
+              if (value.includePhone !== undefined && typeof onChange === "function") {
+                onChange({ ...value, includePhone: false });
+              } else {
+                setLocalIncludePhone(false);
+              }
+            }}
+            style={{ minWidth: 120 }}
+            aria-pressed={includePhone === false}
           >
             No
           </button>
         </div>
+        {includePhone === null && (
+          <div className="text-red-600 text-sm mt-2">
+            Please select Yes or No to continue.
+          </div>
+        )}
 
-        {includePhone && (
+        {includePhone === true && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             {phoneOptions.map((opt) => {
               const isSel = selectedPhone === opt.id;

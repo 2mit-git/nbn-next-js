@@ -18,29 +18,55 @@ export default function NbnAddressLookup({
   onTechChange,
   onAddressChange,
   onPackageSelect,
+  onCanUpgradeChange,
+  query,
+  setQuery,
+  nbnResult,
+  setNbnResult,
+  selectedAddr,
+  setSelectedAddr,
+  suggestions,
+  setSuggestions,
 }) {
-  const [query, setQuery] = useState("");
-  const debouncedQuery = useDebounce(query);
-  const [suggestions, setSuggestions] = useState([]);
-  const [nbnResult, setNbnResult] = useState(null);
+  // Use controlled props if provided, otherwise fallback to internal state
+  const [internalQuery, internalSetQuery] = useState("");
+  const [internalSuggestions, internalSetSuggestions] = useState([]);
+  const [internalNbnResult, internalSetNbnResult] = useState(null);
+  const [internalSelectedAddr, internalSetSelectedAddr] = useState("");
   const [loadingSuggest, setLoadingSuggest] = useState(false);
   const [loadingNbn, setLoadingNbn] = useState(false);
-  const [selectedAddr, setSelectedAddr] = useState("");
   const lastSelected = useRef(null);
 
-  const isTyping = query.length >= 2 && query !== debouncedQuery;
+  const controlledQuery = typeof query === "string" ? query : internalQuery;
+  const controlledSetQuery = setQuery || internalSetQuery;
+  const controlledSuggestions = suggestions || internalSuggestions;
+  const controlledSetSuggestions = setSuggestions || internalSetSuggestions;
+  const controlledNbnResult = nbnResult !== undefined ? nbnResult : internalNbnResult;
+  const controlledSetNbnResult = setNbnResult || internalSetNbnResult;
+  const controlledSelectedAddr = selectedAddr || internalSelectedAddr;
+  const controlledSetSelectedAddr = setSelectedAddr || internalSetSelectedAddr;
+
+  const debouncedQuery = useDebounce(controlledQuery);
+  const isTyping = controlledQuery.length >= 2 && controlledQuery !== debouncedQuery;
 
   // Autocomplete effect
   useEffect(() => {
-    onTechChange(null);
-    onAddressChange?.(null);
+    // Stop searching if an address has been selected and the input matches the selected address/result
+    if (
+      controlledNbnResult &&
+      (controlledQuery === controlledNbnResult.addressDetail?.formattedAddress ||
+        controlledQuery === controlledSelectedAddr)
+    ) {
+      return;
+    }
+
 
     if (debouncedQuery === lastSelected.current) {
       lastSelected.current = null;
       return;
     }
     if (debouncedQuery.length < 2) {
-      setSuggestions([]);
+      controlledSetSuggestions([]);
       return;
     }
 
@@ -53,7 +79,7 @@ export default function NbnAddressLookup({
     setLoadingSuggest(true);
     fetch(url, { signal: controller.signal })
       .then((r) => r.json())
-      .then((data) => setSuggestions(data.features || []))
+      .then((data) => controlledSetSuggestions(data.features || []))
       .catch((err) => {
         if (err.name !== "AbortError") console.error(err);
       })
@@ -66,28 +92,34 @@ export default function NbnAddressLookup({
       controller.abort();
       inflightSuggestQueries.delete(debouncedQuery);
     };
-  }, [debouncedQuery, onTechChange, onAddressChange]);
+  }, [
+    debouncedQuery,
+    controlledSetSuggestions,
+    controlledNbnResult,
+    controlledQuery,
+    controlledSelectedAddr,
+  ]);
 
   // NBN lookup
   const handleSelect = async (feature) => {
     const addr = feature.properties.formatted;
     lastSelected.current = addr;
-    setQuery(addr);
-    setSelectedAddr(addr);
-    setSuggestions([]);
+    controlledSetQuery(addr);
+    controlledSetSelectedAddr(addr);
+    controlledSetSuggestions([]);
     setLoadingNbn(true);
 
     try {
       const res = await fetch(`/api/nbn?address=${encodeURIComponent(addr)}`);
       const json = await res.json();
-      setNbnResult(json);
+      controlledSetNbnResult(json);
 
       const currentTech = json.addressDetail?.techType || null;
       onTechChange(currentTech);
       onAddressChange?.(json.addressDetail.formattedAddress || addr);
     } catch (err) {
       console.error(err);
-      setNbnResult(null);
+      controlledSetNbnResult(null);
       onTechChange(null);
       onAddressChange?.(null);
     } finally {
@@ -96,12 +128,21 @@ export default function NbnAddressLookup({
   };
 
   const handleSearchClick = () => {
-    const feature = suggestions.find((f) => f.properties.formatted === query);
+    const feature = controlledSuggestions.find((f) => f.properties.formatted === controlledQuery);
     if (feature) handleSelect(feature);
   };
 
-  const rawStatus = nbnResult?.addressDetail?.techChangeStatus || "";
+  const rawStatus = controlledNbnResult?.addressDetail?.techChangeStatus || "";
   const canUpgrade = rawStatus.trim().toLowerCase() === "eligible to order";
+
+  // Notify parent of canUpgrade status when nbnResult changes
+  useEffect(() => {
+    if (typeof onCanUpgradeChange === "function") {
+      onCanUpgradeChange(canUpgrade);
+    }
+    // Only run when nbnResult changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canUpgrade]);
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto px-4">
@@ -126,10 +167,10 @@ export default function NbnAddressLookup({
             type="text"
             className="w-full pl-10 py-2 sm:py-3 text-sm sm:text-base text-gray-700 bg-transparent rounded-lg focus:outline-none"
             placeholder="Type your address..."
-            value={query}
+            value={controlledQuery}
             onChange={(e) => {
-              setQuery(e.target.value);
-              setNbnResult(null);
+              controlledSetQuery(e.target.value);
+              controlledSetNbnResult(null);
               onTechChange(null);
             }}
           />
@@ -141,9 +182,9 @@ export default function NbnAddressLookup({
         </div>
 
         {/* Suggestions dropdown */}
-        {suggestions.length > 0 && (
+        {controlledSuggestions.length > 0 && !controlledNbnResult && (
           <div className="absolute z-20 w-full mt-2 left-0 bg-white border rounded-2xl shadow-md">
-            {suggestions.map((f) => (
+            {controlledSuggestions.map((f) => (
               <div
                 key={f.properties.place_id}
                 className="px-4 py-2 hover:bg-[#1DA6DF] hover:text-white rounded-lg cursor-pointer flex items-center"
@@ -168,7 +209,7 @@ export default function NbnAddressLookup({
       )}
 
       {/* Results */}
-      {nbnResult && (
+      {controlledNbnResult && (
         <div className="w-full bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-6">
           {/* Header */}
           <div className="flex items-center space-x-3">
@@ -187,7 +228,7 @@ export default function NbnAddressLookup({
               />
             </svg>
             <h2 className="text-xl font-semibold text-gray-800">
-              {nbnResult.addressDetail.formattedAddress || selectedAddr}
+              {controlledNbnResult.addressDetail.formattedAddress || controlledSelectedAddr}
             </h2>
           </div>
 
@@ -198,7 +239,7 @@ export default function NbnAddressLookup({
               </p>
             ) : (
               <p className="text-center text-2xl  text-[#1DA6DF] mb-6 font-bold">
-                {nbnResult.addressDetail.techType.charAt(0).toUpperCase() + nbnResult.addressDetail.techType.slice(1).toLowerCase()} is available at your address
+                {controlledNbnResult.addressDetail.techType.toUpperCase()} is available at your address
               </p>
             )}
             <div className={`grid grid-cols-1 ${canUpgrade ? "md:grid-cols-2" : "md:grid-cols-1"} gap-6`}>

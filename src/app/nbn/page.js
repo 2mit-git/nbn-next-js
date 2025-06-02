@@ -7,6 +7,8 @@ import ProductGrid from "@/app/components/ProductGrid";
 import ExtrasSelector from "@/app/components/ExtrasSelector";
 import ContractForm from "@/app/components/ContractForm";
 
+import TabProductGrid from "@/app/components/TabProductGrid";
+
 export default function Home() {
   const [step, setStep] = useState(0);
   const [selectedTech, setSelectedTech] = useState(null);
@@ -16,9 +18,22 @@ export default function Home() {
   const [extras, setExtras] = useState({ modems: [], phone: null });
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [productGridLoading, setProductGridLoading] = useState(true);
+  // Track the original tech for regular packages
+  const [originalTech, setOriginalTech] = useState(null);
+
+  // New: State for address search persistence
+  const [addressQuery, setAddressQuery] = useState("");
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const [addressNbnResult, setAddressNbnResult] = useState(null);
+  const [addressSelectedAddr, setAddressSelectedAddr] = useState("");
+  // Track canUpgrade status
+  const [canUpgrade, setCanUpgrade] = useState(false);
 
   const next = () => setStep((s) => Math.min(s + 1, 3));
-  const back = () => setStep((s) => Math.max(s - 1, 0));
+  const back = () => {
+    setSelectedPackage(null);
+    setStep((s) => Math.max(s - 1, 0));
+  };
   const steps = ["Check NBN", "Choose plan", "Select extras", "Your details"];
 
   useEffect(() => {
@@ -101,32 +116,62 @@ export default function Home() {
                 </h3>
                
                 <NbnAddressLookup
-                  onTechChange={setSelectedTech}
+                  onTechChange={(tech) => {
+                    setSelectedTech(tech);
+                    // Set originalTech if not FTTP_Upgrade and not already set
+                    if (tech && tech !== "FTTP_Upgrade" && !originalTech) {
+                      setOriginalTech(tech);
+                    }
+                  }}
                   onAddressChange={setServiceAddress}
                   onPackageSelect={setSelectedPackage}
+                  onCanUpgradeChange={setCanUpgrade}
+                  query={addressQuery}
+                  setQuery={setAddressQuery}
+                  nbnResult={addressNbnResult}
+                  setNbnResult={setAddressNbnResult}
+                  selectedAddr={addressSelectedAddr}
+                  setSelectedAddr={setAddressSelectedAddr}
+                  suggestions={addressSuggestions}
+                  setSuggestions={setAddressSuggestions}
                 />
               </div>
             )}
 
             {step === 1 && (
               <div className="space-y-6">
-                
                 <h3 className="font-bold w-full text-center text-xl sm:text-2xl md:text-3xl mt-10 mb-10 px-4">
                   Select your unlimited data{" "}
                   <span className="text-[#1DA6DF] ms-2">nbn plan.</span>
                 </h3>
-                <ProductGrid
-                  tech={selectedTech}
-                  onSelectPlan={(plan) => {
-                    setSelectedPlan(plan);
-                    next();
-                  }}
-                  onLoadingChange={setProductGridLoading}
-                />
-                {!productGridLoading && (
-                  <button className="btn btn-neutral" onClick={back}>
-                    ← Back
-                  </button>
+                {canUpgrade ? (
+                  <TabProductGrid
+                    selectedTech={selectedTech}
+                    originalTech={originalTech}
+                    onSelectPlan={(plan) => {
+                      setSelectedPlan(plan);
+                      next();
+                    }}
+                    onLoadingChange={setProductGridLoading}
+                    back={back}
+                    productGridLoading={productGridLoading}
+                  />
+                ) : (
+                  <>
+                    <ProductGrid
+                      tech={originalTech}
+                      onSelectPlan={(plan) => {
+                        setSelectedPlan(plan);
+                        next();
+                      }}
+                      onLoadingChange={setProductGridLoading}
+                    />
+                    {!productGridLoading && (
+                      <button className="btn btn-neutral mt-6" onClick={back}>
+                        ← Back
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -137,7 +182,8 @@ export default function Home() {
                   Enhance your plan with{" "}
                   <span className="text-[#1DA6DF] ms-2">some extras.</span>
                 </h3>
-                <ExtrasSelector onChange={setExtras} />
+                {/* Add this above in your component: const [extras, setExtras] = useState({}); */}
+                <ExtrasSelector value={extras} onChange={setExtras} />
                 <div className="flex justify-between">
                   <button className="btn btn-neutral" onClick={back}>
                     ← Back
