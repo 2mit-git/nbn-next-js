@@ -2,8 +2,8 @@
 "use client";
 
 import React, { useState } from "react";
-import DashboardSuperAdmin from "../../app/components/DashboardSuperAdmin";
-import DashboardProduct from "../../app/components/DashboardProduct";
+import DashboardSuperAdmin from "./components/DashboardSuperAdmin";
+import DashboardProduct from "./components/DashboardProduct";
 
 
 const menuItems = [

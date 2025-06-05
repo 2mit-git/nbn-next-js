@@ -2,12 +2,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import NbnAddressLookup from "@/app/components/NbnAddressLookup";
-import ProductGrid from "@/app/components/ProductGrid";
-import ExtrasSelector from "@/app/components/ExtrasSelector";
-import ContractForm from "@/app/components/ContractForm";
+import NbnAddressLookup from "@/app/nbn/components/NbnAddressLookup";
+import ProductGrid from "@/app/nbn/components/ProductGrid";
+import ExtrasSelector from "@/app/nbn/components/ExtrasSelector";
+import ContractForm from "@/app/nbn/components/ContractForm";
 
-import TabProductGrid from "@/app/components/TabProductGrid";
+import TabProductGrid from "@/app/nbn/components/TabProductGrid";
 
 export default function Home() {
   const [step, setStep] = useState(0);
@@ -18,6 +18,9 @@ export default function Home() {
   const [extras, setExtras] = useState({ modems: [], phone: null });
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [productGridLoading, setProductGridLoading] = useState(true);
+  const [connectionType, setConnectionType] = useState(null);
+  
+
   // Track the original tech for regular packages
   const [originalTech, setOriginalTech] = useState(null);
 
@@ -39,6 +42,8 @@ export default function Home() {
   useEffect(() => {
     if (selectedPackage) next();
   }, [selectedPackage]);
+
+
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -134,6 +139,7 @@ export default function Home() {
                   setSelectedAddr={setAddressSelectedAddr}
                   suggestions={addressSuggestions}
                   setSuggestions={setAddressSuggestions}
+                  onConnectionTypeChange={setConnectionType}
                 />
               </div>
             )}
@@ -183,7 +189,7 @@ export default function Home() {
                   <span className="text-[#1DA6DF] ms-2">some extras.</span>
                 </h3>
                 {/* Add this above in your component: const [extras, setExtras] = useState({}); */}
-                <ExtrasSelector value={extras} onChange={setExtras} />
+                <ExtrasSelector value={extras} onChange={setExtras} connectionType={connectionType} />
                 <div className="flex justify-between">
                   <button className="btn btn-neutral" onClick={back}>
                     ← Back
@@ -201,6 +207,7 @@ export default function Home() {
                   serviceAddress={serviceAddress}
                   selectedPlan={selectedPlan}
                   extras={extras}
+                  connectionType={connectionType}
                   onSuccess={() => {
                     setSelectedPlan(null);
                     setExtras({ modems: [], phone: null });

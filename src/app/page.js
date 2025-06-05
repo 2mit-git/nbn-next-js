@@ -2,10 +2,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import NbnAddressLookup from "./components/NbnAddressLookup";
-import ProductGrid from "./components/ProductGrid";
-import ExtrasSelector from "./components/ExtrasSelector";
-import ContractForm from "./components/ContractForm";
+import NbnAddressLookup from "./nbn/components/NbnAddressLookup";
+import ProductGrid from "./nbn/components/ProductGrid";
+import ExtrasSelector from "./nbn/components/ExtrasSelector";
+import ContractForm from "./nbn/components/ContractForm";
 
 export default function Home() {
   const [step, setStep] = useState(0);

@@ -19,6 +19,7 @@ export default function NbnAddressLookup({
   onAddressChange,
   onPackageSelect,
   onCanUpgradeChange,
+  onConnectionTypeChange, // New prop
   query,
   setQuery,
   nbnResult,
@@ -27,7 +28,22 @@ export default function NbnAddressLookup({
   setSelectedAddr,
   suggestions,
   setSuggestions,
+  submitButton, // New prop for submit button
 }) {
+  // New state for pending package selection
+  const [pendingPackage, setPendingPackage] = useState(null);
+  const [selectedConnectionType, setSelectedConnectionType] = useState(null);
+
+  // Notify parent of connection type change
+  useEffect(() => {
+    if (typeof onConnectionTypeChange === "function" && selectedConnectionType) {
+      onConnectionTypeChange(selectedConnectionType);
+    }
+  }, [selectedConnectionType, onConnectionTypeChange]);
+  const [selectedPackage, setSelectedPackage] = useState(null);
+  // PBX install step state
+  // (PBX install step removed)
+
   // Use controlled props if provided, otherwise fallback to internal state
   const [internalQuery, internalSetQuery] = useState("");
   const [internalSuggestions, internalSetSuggestions] = useState([]);
@@ -146,6 +162,8 @@ export default function NbnAddressLookup({
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto px-4">
+      {/* Question and Connection Type Buttons */}
+      {/* Will be conditionally rendered after package selection */}
       {/* Search box */}
       <div className="relative bg-gray-100 rounded-2xl shadow-md p-1.5 transition-all duration-150 ease-in-out hover:scale-105 hover:shadow-lg border border-[#1DA6DF]">
         {/* Icon */}
@@ -243,18 +261,35 @@ export default function NbnAddressLookup({
               </p>
             )}
             <div className={`grid grid-cols-1 ${canUpgrade ? "md:grid-cols-2" : "md:grid-cols-1"} gap-6`}>
-              {/* Connect Now */}
+              {/* Connect Now / Skip Upgrade */}
               <div
                 role="button"
-                onClick={() => onPackageSelect("connect")}
-                className="flex items-center justify-center  flex-col border border-[#1DA6DF] bg-gray-50 rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105"
+                onClick={() => {
+                  setSelectedPackage("connect");
+                  setPendingPackage("connect");
+                }}
+                className={`flex items-center justify-center flex-col border rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105 font-medium text-lg
+                  ${pendingPackage === "connect"
+                    ? "border-4 border-[#1DA6DF] bg-white"
+                    : "border border-[#1DA6DF] bg-gray-50"}
+                `}
               >
-                {canUpgrade?(<h3 className="text-2xl font-medium text-center text-[#1DA6DF] mb-1">
-                  Skip Upgrade
-                </h3>):(<h3 className="text-2xl font-medium text-center text-[#1DA6DF] mb-1">
-                  Connect Now
-                </h3>)}
-                
+                {pendingPackage === "connect" && (
+                  <span className="mb-1">
+                    <svg className="w-5 h-5 inline text-[#1DA6DF]" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                )}
+                {canUpgrade ? (
+                  <h3 className="text-2xl font-medium text-center text-[#1DA6DF] mb-1">
+                    Skip Upgrade
+                  </h3>
+                ) : (
+                  <h3 className="text-2xl font-medium text-center text-[#1DA6DF] mb-1">
+                    Connect Now
+                  </h3>
+                )}
               </div>
 
               {/* Fibre Upgrade */}
@@ -263,11 +298,23 @@ export default function NbnAddressLookup({
                   role="button"
                   onClick={() => {
                     onTechChange("FTTP_Upgrade");
-                    onPackageSelect("fibre");
+                    setSelectedPackage("fibre");
+                    setPendingPackage("fibre");
                   }}
-                  className="flex items-center justify-center flex-col bg-[#1DA6DF] border border-transparent rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105"
+                  className={`flex items-center justify-center flex-col rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105 font-medium text-lg
+                    ${pendingPackage === "fibre"
+                      ? "border-4 border-[#1DA6DF] bg-white"
+                      : "border border-transparent bg-[#1DA6DF] bg-opacity-80 text-white"}
+                  `}
                 >
-                  <h3 className="text-2xl font-bold text-center  text-white mb-1">
+                  {pendingPackage === "fibre" && (
+                    <span className="mb-1">
+                      <svg className="w-5 h-5 inline text-[#1DA6DF]" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
+                  )}
+                  <h3 className="text-2xl font-bold text-center text-white mb-1">
                     Upgrade Now
                   </h3>
                 </div>
@@ -277,6 +324,79 @@ export default function NbnAddressLookup({
               $0 Fibre Upgrade available for standard installations only. Offer valid with eligible high-speed plans. A compatible high-speed modem is required — additional charges may apply. According to nbn®, installation may take approximately 2 to 6 weeks to complete.
             </p>)}
           </div>
+
+          {/* business/Residential selection after package action */}
+          {pendingPackage && (
+            <div className="mb-4 mt-6">
+              <div className="text-lg font-semibold mb-2">You are looking for connection in</div>
+              <div className="flex gap-4 flex-col md:flex-row">
+                <button
+                  type="button"
+                  className={`flex-1 flex items-center justify-center flex-col border rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105 font-medium text-lg
+                    ${selectedConnectionType === "business"
+                      ? "bg-[#1DA6DF] text-white border-[#1DA6DF]"
+                      : "bg-gray-50 text-[#1DA6DF] border-[#1DA6DF]"}
+                  `}
+                  onClick={() => setSelectedConnectionType("business")}
+                >
+                  {selectedConnectionType === "business" && (
+                    <span className="mb-1">
+                      <svg className="w-5 h-5 inline text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
+                  )}
+                  Business
+                </button>
+                <button
+                  type="button"
+                  className={`flex-1 flex items-center justify-center flex-col border rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105 font-medium text-lg
+                    ${selectedConnectionType === "residential"
+                      ? "bg-[#1DA6DF] text-white border-[#1DA6DF]"
+                      : "bg-gray-50 text-[#1DA6DF] border-[#1DA6DF]"}
+                  `}
+                  onClick={() => setSelectedConnectionType("residential")}
+                >
+                  {selectedConnectionType === "residential" && (
+                    <span className="mb-1">
+                      <svg className="w-5 h-5 inline text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
+                  )}
+                  Residential
+                </button>
+              </div>
+              <div className="flex justify-end mt-4">
+                <button
+                  type="button"
+                  className={`px-6 py-2 rounded-lg font-semibold transition ${
+                    selectedConnectionType
+                      ? "bg-[#1DA6DF] text-white hover:bg-[#178ac0] cursor-pointer"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                  disabled={!selectedConnectionType}
+                  onClick={() => {
+                    if (selectedConnectionType === "business" || selectedConnectionType === "residential") {
+                      onPackageSelect && onPackageSelect(pendingPackage, selectedConnectionType);
+                      setPendingPackage(null);
+                      setSelectedConnectionType(null);
+                    }
+                  }}
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
+          {/* PBX install step for Business */}
+          {/* (PBX install step removed) */}
+        </div>
+      )}
+      {/* Render submit button if provided */}
+      {submitButton && (
+        <div className="mt-6 flex justify-center">
+          {submitButton}
         </div>
       )}
     </div>

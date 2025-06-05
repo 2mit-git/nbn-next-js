@@ -13,6 +13,7 @@ export default function ContractForm({
   onSuccess,
   onRestart,
   onSubmitSuccess,
+  connectionType, // "business" or "residential"
 }) {
 
   
@@ -292,7 +293,11 @@ export default function ContractForm({
 
     // Submit contract data to backend API, which will handle the webhook
     try {
-      const res = await fetch("/api/contract", {
+      const apiRoute =
+        connectionType === "business"
+          ? "/api/nbnpbx-contract"
+          : "/api/contract";
+      const res = await fetch(apiRoute, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(finalData),
@@ -801,6 +806,91 @@ export default function ContractForm({
                   </div>
                 ) : null;
               })()}
+              {/* PBX Order Summary (merged, styled like other lines, with prices) */}
+              {extras?.pbx && (
+                <>
+                  {extras.pbx.plan && (
+                    <div className="flex justify-between">
+                      <span className="font-medium">PBX Plan</span>
+                      <span>{extras.pbx.plan}</span>
+                    </div>
+                  )}
+                  {extras.pbx.numUsers > 0 && (
+                    <div className="flex justify-between">
+                      <span className="font-medium">PBX Users</span>
+                      <span>{extras.pbx.numUsers}</span>
+                    </div>
+                  )}
+                  {extras.pbx.ivrCount > 0 && (
+                    <div className="flex justify-between">
+                      <span className="font-medium">PBX IVR</span>
+                      <span>{extras.pbx.ivrCount}</span>
+                    </div>
+                  )}
+                  {extras.pbx.queueCount > 0 && (
+                    <div className="flex justify-between">
+                      <span className="font-medium">PBX Queues</span>
+                      <span>{extras.pbx.queueCount}</span>
+                    </div>
+                  )}
+                  {extras.pbx.callRecording && (
+                    <div className="flex justify-between">
+                      <span className="font-medium">PBX Call Recording</span>
+                      <span>
+                        Yes
+                        {extras.pbx.callRecordingQty > 1
+                          ? ` (${extras.pbx.callRecordingQty})`
+                          : ""}
+                      </span>
+                    </div>
+                  )}
+                  {/* PBX Handset prices from ExtrasSelector.js */}
+                  {(() => {
+                    const pbxHandsets = [
+                      {
+                        name: "Yealink T31G",
+                        cost: 129,
+                      },
+                      {
+                        name: "Yealink T43U",
+                        cost: 259,
+                      },
+                      {
+                        name: "Yealink T54W",
+                        cost: 399,
+                      },
+                      {
+                        name: "Yealink WH62 Mono",
+                        cost: 205,
+                      },
+                      {
+                        name: "Yealink WH62 Dual",
+                        cost: 235,
+                      },
+                      {
+                        name: "Yealink BH72",
+                        cost: 355,
+                      },
+                    ];
+                    return Object.entries(extras.pbx.handsets || {})
+                      .filter(([_, qty]) => qty > 0)
+                      .map(([model, qty]) => {
+                        const handset = pbxHandsets.find((h) => h.name === model);
+                        const price = handset ? handset.cost : 0;
+                        return (
+                          <div className="flex justify-between" key={model}>
+                            <span className="font-medium">{model} x{qty}</span>
+                            <span>
+                              {price > 0
+                                ? `$${(price * qty).toFixed(2)}`
+                                : ""}
+                            </span>
+                          </div>
+                        );
+                      });
+                  })()}
+                </>
+              )}
               {/* Total */}
               <div className="flex justify-between border-t pt-2 mt-2 font-bold text-lg">
                 <span>Total</span>
