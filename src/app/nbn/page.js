@@ -10,6 +10,15 @@ import ContractForm from "@/app/nbn/components/ContractForm";
 import TabProductGrid from "@/app/nbn/components/TabProductGrid";
 
 export default function Home() {
+  // Clear all extras and PBX cache on full reload
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("extras");
+      localStorage.removeItem("pbx_include");
+      localStorage.removeItem("pbx_config");
+    }
+  }, []);
+
   const [step, setStep] = useState(0);
   const [selectedTech, setSelectedTech] = useState(null);
   const [selectedPackage, setSelectedPackage] = useState(null);
@@ -17,6 +26,13 @@ export default function Home() {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [extras, setExtras] = useState({ modems: [], phone: null });
   const [formSubmitted, setFormSubmitted] = useState(false);
+
+  // Persist extras to localStorage on change
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("extras", JSON.stringify(extras));
+    }
+  }, [extras]);
   const [productGridLoading, setProductGridLoading] = useState(true);
   const [connectionType, setConnectionType] = useState(null);
   

@@ -3,10 +3,9 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import PBXWizard from "@/app/pbx/page";
 
 // --- PBX Wizard Section ---
-function PBXWizardSection({ onPBXChange }) {
+function PBXWizardSection({ onPBXChange, value }) {
   // PBX config cache key
   const PBX_CACHE_KEY = "pbx_config";
 
@@ -65,32 +64,34 @@ function PBXWizardSection({ onPBXChange }) {
   const pbxCache = getPBXCache();
 
   // Plan selection
-  const [selectedPlan, setSelectedPlan] = useState(pbxCache.selectedPlan ?? null);
+  const [selectedPlan, setSelectedPlan] = useState(
+    value?.selectedPlan ?? pbxCache.selectedPlan ?? null
+  );
 
   // User/addon info
-  const [numUsers, setNumUsers] = useState(pbxCache.numUsers ?? 1);
-  const [callRecording, setCallRecording] = useState(pbxCache.callRecording ?? false);
-  const [callRecordingQty, setCallRecordingQty] = useState(pbxCache.callRecordingQty ?? 1);
-  const [ivrCount, setIVRCount] = useState(pbxCache.ivrCount ?? 0);
-  const [queueCount, setQueueCount] = useState(pbxCache.queueCount ?? 0);
+  const [numUsers, setNumUsers] = useState(
+    value?.numUsers ?? pbxCache.numUsers ?? 1
+  );
+  const [callRecording, setCallRecording] = useState(
+    value?.callRecording ?? pbxCache.callRecording ?? false
+  );
+  const [callRecordingQty, setCallRecordingQty] = useState(
+    value?.callRecordingQty ?? pbxCache.callRecordingQty ?? 1
+  );
+  const [ivrCount, setIVRCount] = useState(
+    value?.ivrCount ?? pbxCache.ivrCount ?? 0
+  );
+  const [queueCount, setQueueCount] = useState(
+    value?.queueCount ?? pbxCache.queueCount ?? 0
+  );
 
   // Handset selection
   const [handsetSelections, setHandsetSelections] = useState(
-    pbxCache.handsetSelections ??
+    value?.handsets ??
+      pbxCache.handsetSelections ??
       handsets.reduce((acc, h) => ({ ...acc, [h.name]: 0 }), {})
   );
 
-  // Step 4: Contact details (fields only, no submit)
-  const [contact, setContact] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    zip: "",
-    business: "",
-  });
 
   // Pricing logic
   const planPrices = {
@@ -166,7 +167,7 @@ function PBXWizardSection({ onPBXChange }) {
     }
     if (typeof onPBXChange === "function") {
       onPBXChange({
-        plan: selectedPlan,
+        selectedPlan,
         numUsers,
         callRecording,
         callRecordingQty: callRecording ? callRecordingQty : 0,
@@ -185,7 +186,7 @@ function PBXWizardSection({ onPBXChange }) {
     callRecordingQty,
     ivrCount,
     queueCount,
-    JSON.stringify(handsetSelections),
+    handsetSelections,
     monthlyTotal,
     upfrontTotal,
   ]);
@@ -509,14 +510,6 @@ export default function ExtrasSelector({
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("pbx_config");
-      localStorage.removeItem("pbx_include");
-    }
-  }, []);
-  // Clear PBX cache on window refresh
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("pbx_config");
-      localStorage.removeItem("pbx_include");
     }
   }, []);
   // --- modem state (multi-select) ---
@@ -548,8 +541,27 @@ export default function ExtrasSelector({
     },
   ];
   // null = not selected, true = yes, false = no
-  const [localIncludeModem, setLocalIncludeModem] = useState(null);
-  const [localSelectedModems, setLocalSelectedModems] = useState([]);
+  const [localIncludeModem, setLocalIncludeModem] = useState(
+    value.includeModem !== undefined ? value.includeModem : null
+  );
+  const [localSelectedModems, setLocalSelectedModems] = useState(
+    value.selectedModems !== undefined ? value.selectedModems : []
+  );
+
+  // Sync localIncludeModem and localSelectedModems with value prop
+  useEffect(() => {
+    if (value.includeModem !== undefined && value.includeModem !== localIncludeModem) {
+      setLocalIncludeModem(value.includeModem);
+    }
+  }, [value.includeModem]);
+  useEffect(() => {
+    if (
+      value.selectedModems !== undefined &&
+      JSON.stringify(value.selectedModems) !== JSON.stringify(localSelectedModems)
+    ) {
+      setLocalSelectedModems(value.selectedModems);
+    }
+  }, [value.selectedModems]);
 
   // Derive includeModem/selectedModems from modems if not explicitly provided
   // Only treat as "No" if explicitly set, otherwise default to null (unselected)
@@ -606,26 +618,46 @@ export default function ExtrasSelector({
     },
   ];
   // null = not selected, true = yes, false = no
-  const [localIncludePhone, setLocalIncludePhone] = useState(null);
-  const [localSelectedPhone, setLocalSelectedPhone] = useState(phoneOptions[0].id);
+  const [localIncludePhone, setLocalIncludePhone] = useState(
+    value.includePhone !== undefined ? value.includePhone : null
+  );
+  const [localSelectedPhone, setLocalSelectedPhone] = useState(
+    value.selectedPhone !== undefined ? value.selectedPhone : phoneOptions[0].id
+  );
+
+  // Sync localIncludePhone and localSelectedPhone with value prop
+  useEffect(() => {
+    if (value.includePhone !== undefined && value.includePhone !== localIncludePhone) {
+      setLocalIncludePhone(value.includePhone);
+    }
+  }, [value.includePhone]);
+  useEffect(() => {
+    if (
+      value.selectedPhone !== undefined &&
+      value.selectedPhone !== localSelectedPhone
+    ) {
+      setLocalSelectedPhone(value.selectedPhone);
+    }
+  }, [value.selectedPhone]);
 
   // --- PBX state ---
   const [localIncludePBX, setLocalIncludePBX] = useState(() => {
-  if (typeof window !== "undefined") {
-    const cached = localStorage.getItem("pbx_include");
-    if (cached === "true") return true;
-    if (cached === "false") return false;
-  }
-  return null; // Default to null if nothing is stored or during SSR
-});
-  const [pbxData, setPBXData] = useState(null);
-
-  // Cache PBX Yes/No selection
-  useEffect(() => {
+    if (value.includePBX !== undefined) return value.includePBX;
     if (typeof window !== "undefined") {
-      localStorage.setItem("pbx_include", localIncludePBX);
+      const cached = localStorage.getItem("pbx_include");
+      if (cached === "true") return true;
+      if (cached === "false") return false;
     }
-  }, [localIncludePBX]);
+    return null;
+  });
+
+  // Sync localIncludePBX with value.includePBX when prop changes
+  useEffect(() => {
+    if (value.includePBX !== undefined && value.includePBX !== localIncludePBX) {
+      setLocalIncludePBX(value.includePBX);
+    }
+  }, [value.includePBX]);
+  const [pbxData, setPBXData] = useState(null);
   const [pbxPackage, setPBXPackage] = useState("");
   const [pbxExtensions, setPBXExtensions] = useState(1);
 
@@ -652,15 +684,17 @@ export default function ExtrasSelector({
   useEffect(() => {
     if (typeof onChange === "function") {
       onChange({
+        ...value,
         includeModem,
         selectedModems,
         includePhone,
         selectedPhone,
+        includePBX: localIncludePBX,
         modems: includeModem === true ? selectedModems : [],
         phone: includePhone === true ? selectedPhone : null,
       });
     }
-  }, [includeModem, selectedModems, includePhone, selectedPhone]);
+  }, [includeModem, selectedModems, includePhone, selectedPhone, localIncludePBX]);
 console.log(connectionType)
   // handlers
   const toggleModem = (id) => {
@@ -939,7 +973,18 @@ console.log(connectionType)
                     ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
                     : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
                 }`}
-                onClick={() => setLocalIncludePBX(true)}
+                onClick={() => {
+                  setLocalIncludePBX(true);
+                  if (typeof window !== "undefined") {
+                    localStorage.setItem("pbx_include", "true");
+                  }
+                  if (typeof onChange === "function") {
+                    onChange({
+                      ...value,
+                      includePBX: true,
+                    });
+                  }
+                }}
                 aria-pressed={localIncludePBX === true}
               >
                 Yes
@@ -950,7 +995,18 @@ console.log(connectionType)
                     ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
                     : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
                 }`}
-                onClick={() => setLocalIncludePBX(false)}
+                onClick={() => {
+                  setLocalIncludePBX(false);
+                  if (typeof window !== "undefined") {
+                    localStorage.setItem("pbx_include", "false");
+                  }
+                  if (typeof onChange === "function") {
+                    onChange({
+                      ...value,
+                      includePBX: false,
+                    });
+                  }
+                }}
                 aria-pressed={localIncludePBX === false}
               >
                 No
@@ -963,11 +1019,13 @@ console.log(connectionType)
             )}
             {localIncludePBX === true && (
               <PBXWizardSection
+                value={value.pbx}
                 onPBXChange={data => {
                   setPBXData(data);
                   if (typeof onChange === "function") {
                     onChange({
                       ...value,
+                      includePBX: true,
                       pbx: data,
                     });
                   }
