@@ -9,17 +9,25 @@ export default function TabProductGrid({
   onLoadingChange,
   back,
   productGridLoading,
+  selectedTab, // new prop
+  setSelectedTab, // new prop
 }) {
   // Determine initial tab: if selectedTech is FTTP_Upgrade, start on upgrade tab, else regular
   const initialTab =
     selectedTech === "FTTP_Upgrade" ? "upgrade" : "regular";
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [internalTab, setInternalTab] = useState(initialTab);
 
-  // If selectedTech changes (user comes from address step), update tab
+  // Use controlled tab if provided, otherwise fallback to internal state
+  const activeTab = selectedTab || internalTab;
+  const handleSetTab = setSelectedTab || setInternalTab;
+
+  // If selectedTech changes (user comes from address step), update tab (only for uncontrolled)
   useEffect(() => {
-    if (selectedTech === "FTTP_Upgrade") setActiveTab("upgrade");
-    else if (selectedTech && selectedTech !== "FTTP_Upgrade") setActiveTab("regular");
-  }, [selectedTech]);
+    if (!selectedTab) {
+      if (selectedTech === "FTTP_Upgrade") setInternalTab("upgrade");
+      else if (selectedTech && selectedTech !== "FTTP_Upgrade") setInternalTab("regular");
+    }
+  }, [selectedTech, selectedTab]);
 
   return (
     <div>
@@ -31,7 +39,7 @@ export default function TabProductGrid({
               ? "border-[#1DA6DF] bg-blue-50 text-[#1DA6DF]"
               : "border-transparent bg-white text-gray-500"
           }`}
-          onClick={() => setActiveTab("regular")}
+          onClick={() => handleSetTab("regular")}
           disabled={activeTab === "regular"}
         >
           Regular Packages
@@ -42,7 +50,7 @@ export default function TabProductGrid({
               ? "border-[#1DA6DF] bg-blue-50 text-[#1DA6DF]"
               : "border-transparent bg-white text-gray-500"
           }`}
-          onClick={() => setActiveTab("upgrade")}
+          onClick={() => handleSetTab("upgrade")}
           disabled={activeTab === "upgrade"}
         >
           Upgrade Packages

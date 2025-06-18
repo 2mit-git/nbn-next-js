@@ -34,6 +34,9 @@ export default function NbnAddressLookup({
   const [pendingPackage, setPendingPackage] = useState(null);
   const [selectedConnectionType, setSelectedConnectionType] = useState(null);
 
+  // State to control which tab is selected in TabProductGrid
+  const [selectedTab, setSelectedTab] = useState("regular");
+
   // Notify parent of connection type change
   useEffect(() => {
     if (typeof onConnectionTypeChange === "function" && selectedConnectionType) {
@@ -267,6 +270,7 @@ export default function NbnAddressLookup({
                 onClick={() => {
                   setSelectedPackage("connect");
                   setPendingPackage("connect");
+                  setSelectedTab("regular");
                 }}
                 className={`flex items-center justify-center flex-col border rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105 font-medium text-lg
                   ${pendingPackage === "connect"
@@ -282,7 +286,15 @@ export default function NbnAddressLookup({
                   </span>
                 )}
                 {canUpgrade ? (
-                  <h3 className="text-2xl font-medium text-center text-[#1DA6DF] mb-1">
+                  <h3
+                    className="text-2xl font-medium text-center text-[#1DA6DF] mb-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedPackage("skip");
+                      setPendingPackage("skip");
+                      setSelectedTab("regular");
+                    }}
+                  >
                     Skip Upgrade
                   </h3>
                 ) : (
@@ -300,10 +312,11 @@ export default function NbnAddressLookup({
                     onTechChange("FTTP_Upgrade");
                     setSelectedPackage("fibre");
                     setPendingPackage("fibre");
+                    setSelectedTab("upgrade");
                   }}
                   className={`flex items-center justify-center flex-col rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105 font-medium text-lg
                     ${pendingPackage === "fibre"
-                      ? "border-4 border-[#1DA6DF] bg-white"
+                      ? "border-4 border-[#1DA6DF] bg-white text-[#1DA6DF]"
                       : "border border-transparent bg-[#1DA6DF] bg-opacity-80 text-white"}
                   `}
                 >
@@ -314,7 +327,7 @@ export default function NbnAddressLookup({
                       </svg>
                     </span>
                   )}
-                  <h3 className="text-2xl font-bold text-center text-white mb-1">
+                  <h3 className="text-2xl font-medium text-center mb-1">
                     Upgrade Now
                   </h3>
                 </div>

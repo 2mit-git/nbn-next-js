@@ -7,17 +7,10 @@ import PBXWizard from "@/app/pbx/page";
 
 // --- PBX Wizard Section ---
 function PBXWizardSection({ onPBXChange }) {
-  // Plan selection
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  // PBX config cache key
+  const PBX_CACHE_KEY = "pbx_config";
 
-  // User/addon info
-  const [numUsers, setNumUsers] = useState(1);
-  const [callRecording, setCallRecording] = useState(false);
-  const [callRecordingQty, setCallRecordingQty] = useState(1);
-  const [ivrCount, setIVRCount] = useState(0);
-  const [queueCount, setQueueCount] = useState(0);
-
-  // Handset selection
+  // Handset list (static)
   const handsets = [
     {
       name: "Yealink T31G",
@@ -56,8 +49,35 @@ function PBXWizardSection({ onPBXChange }) {
       img: "https://2mit.com.au/wp-content/uploads/2025/04/70963a5b-8c96-44ca-9045-35b2a52c3b0e.png",
     },
   ];
+
+  // Restore PBX config from localStorage if present
+  const getPBXCache = () => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem(PBX_CACHE_KEY);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch {}
+      }
+    }
+    return {};
+  };
+  const pbxCache = getPBXCache();
+
+  // Plan selection
+  const [selectedPlan, setSelectedPlan] = useState(pbxCache.selectedPlan ?? null);
+
+  // User/addon info
+  const [numUsers, setNumUsers] = useState(pbxCache.numUsers ?? 1);
+  const [callRecording, setCallRecording] = useState(pbxCache.callRecording ?? false);
+  const [callRecordingQty, setCallRecordingQty] = useState(pbxCache.callRecordingQty ?? 1);
+  const [ivrCount, setIVRCount] = useState(pbxCache.ivrCount ?? 0);
+  const [queueCount, setQueueCount] = useState(pbxCache.queueCount ?? 0);
+
+  // Handset selection
   const [handsetSelections, setHandsetSelections] = useState(
-    handsets.reduce((acc, h) => ({ ...acc, [h.name]: 0 }), {})
+    pbxCache.handsetSelections ??
+      handsets.reduce((acc, h) => ({ ...acc, [h.name]: 0 }), {})
   );
 
   // Step 4: Contact details (fields only, no submit)
@@ -129,6 +149,21 @@ function PBXWizardSection({ onPBXChange }) {
 
   // Always send PBX data to parent on any change
   React.useEffect(() => {
+    // Cache PBX config to localStorage
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        PBX_CACHE_KEY,
+        JSON.stringify({
+          selectedPlan,
+          numUsers,
+          callRecording,
+          callRecordingQty,
+          ivrCount,
+          queueCount,
+          handsetSelections,
+        })
+      );
+    }
     if (typeof onPBXChange === "function") {
       onPBXChange({
         plan: selectedPlan,
@@ -470,6 +505,20 @@ export default function ExtrasSelector({
   connectionType,
   value = {},
 }) {
+  // Clear PBX cache on window refresh
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("pbx_config");
+      localStorage.removeItem("pbx_include");
+    }
+  }, []);
+  // Clear PBX cache on window refresh
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("pbx_config");
+      localStorage.removeItem("pbx_include");
+    }
+  }, []);
   // --- modem state (multi-select) ---
   const modemOptions = [
     {
@@ -561,7 +610,22 @@ export default function ExtrasSelector({
   const [localSelectedPhone, setLocalSelectedPhone] = useState(phoneOptions[0].id);
 
   // --- PBX state ---
-  const [localIncludePBX, setLocalIncludePBX] = useState(null);
+  const [localIncludePBX, setLocalIncludePBX] = useState(() => {
+  if (typeof window !== "undefined") {
+    const cached = localStorage.getItem("pbx_include");
+    if (cached === "true") return true;
+    if (cached === "false") return false;
+  }
+  return null; // Default to null if nothing is stored or during SSR
+});
+  const [pbxData, setPBXData] = useState(null);
+
+  // Cache PBX Yes/No selection
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("pbx_include", localIncludePBX);
+    }
+  }, [localIncludePBX]);
   const [pbxPackage, setPBXPackage] = useState("");
   const [pbxExtensions, setPBXExtensions] = useState(1);
 
@@ -866,52 +930,51 @@ console.log(connectionType)
       </div>
       {/* --- PBX --- */}
       {connectionType === "business" && (
-        <div className="mt-4">
-          <h3 className="text-lg font-semibold">Do you want a PBX?</h3>
-          <div className="grid grid-cols-2 gap-4 mt-2">
-            <button
-              className={`py-2 px-6 text-base font-bold rounded-xl shadow transition-all duration-150 border-2 ${
-                localIncludePBX === true
-                  ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
-                  : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
-              }`}
-              onClick={() => setLocalIncludePBX(true)}
-              aria-pressed={localIncludePBX === true}
-            >
-              Yes
-            </button>
-            <button
-              className={`py-2 px-6 text-base font-bold rounded-xl shadow transition-all duration-150 border-2 ${
-                localIncludePBX === false
-                  ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
-                  : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
-              }`}
-              onClick={() => setLocalIncludePBX(false)}
-              aria-pressed={localIncludePBX === false}
-            >
-              No
-            </button>
-          </div>
-          {localIncludePBX === null && (
-            <div className="text-red-600 text-sm mt-2">
-              Please select Yes or No to continue.
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold">Do you want a PBX?</h3>
+            <div className="grid grid-cols-2 gap-4 mt-2">
+              <button
+                className={`py-2 px-6 text-base font-bold rounded-xl shadow transition-all duration-150 border-2 ${
+                  localIncludePBX === true
+                    ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
+                    : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
+                }`}
+                onClick={() => setLocalIncludePBX(true)}
+                aria-pressed={localIncludePBX === true}
+              >
+                Yes
+              </button>
+              <button
+                className={`py-2 px-6 text-base font-bold rounded-xl shadow transition-all duration-150 border-2 ${
+                  localIncludePBX === false
+                    ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
+                    : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
+                }`}
+                onClick={() => setLocalIncludePBX(false)}
+                aria-pressed={localIncludePBX === false}
+              >
+                No
+              </button>
             </div>
-          )}
-          {localIncludePBX === true && (
-            <PBXWizardSection
-              onPBXChange={data => {
-                // Store PBX data locally or send to parent as needed
-                // Example: setLocalPBXData(data);
-                if (typeof onChange === "function") {
-                  onChange({
-                    ...value,
-                    pbx: data,
-                  });
-                }
-              }}
-            />
-          )}
-        </div>
+            {localIncludePBX === null && (
+              <div className="text-red-600 text-sm mt-2">
+                Please select Yes or No to continue.
+              </div>
+            )}
+            {localIncludePBX === true && (
+              <PBXWizardSection
+                onPBXChange={data => {
+                  setPBXData(data);
+                  if (typeof onChange === "function") {
+                    onChange({
+                      ...value,
+                      pbx: data,
+                    });
+                  }
+                }}
+              />
+            )}
+          </div>
       )}
     </div>
   );
