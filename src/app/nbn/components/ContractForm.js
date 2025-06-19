@@ -236,7 +236,7 @@ export default function ContractForm({
           pbxPlanPrice = 30.0;
         }
         optionalFields.push({
-          key: `${extras.pbx.selectedPlan} x${extras.pbx.numUsers}`,
+          key: `${extras.pbx.selectedPlan}`,
           value: extras.pbx.numUsers,
           price: pbxPlanPrice,
         });
@@ -256,7 +256,7 @@ export default function ContractForm({
           const handset = pbxHandsets.find((h) => h.name === model);
           if (handset) {
             optionalFields.push({
-              key: `${model} x${qty}`,
+              key: `${model}`,
               value: qty,
               price: handset.cost,
             });
