@@ -27,6 +27,11 @@ export default function Home() {
   const [extras, setExtras] = useState({ modems: [], phone: null });
   const [formSubmitted, setFormSubmitted] = useState(false);
 
+  // Scroll to top on step change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [step]);
+
   // Persist extras to localStorage on change
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -277,6 +282,13 @@ export default function Home() {
                     setExtras({ modems: [], phone: null });
                   }}
                   onRestart={() => {
+                    // Clear all cache/localStorage data
+                    if (typeof window !== "undefined") {
+                      localStorage.removeItem("extras");
+                      localStorage.removeItem("pbx_include");
+                      localStorage.removeItem("pbx_config");
+                      localStorage.removeItem("userChoices");
+                    }
                     setStep(0);
                     setSelectedTech(null);
                     setSelectedPackage(null);
