@@ -47,6 +47,8 @@ export default function ContractForm({
     phoneServicePrice: 0,
   });
 
+  
+
 
   let pbxPlanPrice = 0;
   let pbxHandsetsPrice = 0;
@@ -405,6 +407,8 @@ export default function ContractForm({
         ? "bg-[--primary] text-white shadow-md hover:bg-opacity-90"
         : "bg-gray-200 text-gray-600 hover:bg-gray-300"
     }`;
+
+    
 
   return (
     <form

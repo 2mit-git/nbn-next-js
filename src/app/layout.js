@@ -20,21 +20,34 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {/* PostMessage script to send height to parent */}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {/* Auto height postMessage to parent page for iframe resizing */}
         <Script id="iframe-height-post" strategy="afterInteractive">
           {`
+            let resizeTimeout;
             function sendHeight() {
-              const height = document.documentElement.scrollHeight;
-              window.parent.postMessage({ iframeHeight: height }, "*");
+              clearTimeout(resizeTimeout);
+              resizeTimeout = setTimeout(() => {
+                const height = document.documentElement.scrollHeight;
+                window.parent.postMessage({ iframeHeight: height }, "*");
+              }, 100);
             }
 
+            // Send on initial load and resize
             window.addEventListener("load", sendHeight);
             window.addEventListener("resize", sendHeight);
+
+            // Observe changes in DOM that might affect height
             const observer = new MutationObserver(sendHeight);
-            observer.observe(document.body, { childList: true, subtree: true });
+            observer.observe(document.body, {
+              childList: true,
+              subtree: true,
+              attributes: true,
+              characterData: true
+            });
+
+            // Initial send
+            sendHeight();
           `}
         </Script>
 

@@ -8,6 +8,7 @@ import Image from "next/image";
 function PBXWizardSection({ onPBXChange, value }) {
   // PBX config cache key
   const PBX_CACHE_KEY = "pbx_config";
+  
 
   // Handset list (static)
   const handsets = [
@@ -190,6 +191,7 @@ function PBXWizardSection({ onPBXChange, value }) {
     monthlyTotal,
     upfrontTotal,
   ]);
+  
 
   // Render all PBX fields at once, with improved design
   return (

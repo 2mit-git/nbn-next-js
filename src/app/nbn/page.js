@@ -79,6 +79,11 @@ export default function Home() {
     if (selectedPackage) next();
   }, [selectedPackage]);
 
+  
+useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+  
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-grow w-full">

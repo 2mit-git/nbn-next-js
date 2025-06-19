@@ -29,7 +29,10 @@ export default function NbnAddressLookup({
   setSuggestions,
   submitButton,
   setSelectedTab, // ✅ NEW PROP
-}) {
+})
+
+
+{
   // Clear cache on full reload
   useEffect(() => {
     const handleUnload = () => {
@@ -179,6 +182,9 @@ export default function NbnAddressLookup({
     }
   }, [canUpgrade, onCanUpgradeChange]);
 
+
+  
+
   return (
     <div className="space-y-4 max-w-4xl mx-auto px-4">
       {/* Search Box */}
@@ -270,7 +276,7 @@ export default function NbnAddressLookup({
                 }}
                 className={`flex flex-col items-center border rounded-lg p-4 cursor-pointer transform hover:scale-105 transition ${
                   pendingPackage === (canUpgrade ? "skip" : "connect")
-                    ? "border-4 border-[#1DA6DF] bg-white"
+                    ? "bg-[#1DA6DF] text-white border-[#1DA6DF]"
                     : "border border-[#1DA6DF] bg-gray-50"
                 }`}
               >
@@ -279,20 +285,21 @@ export default function NbnAddressLookup({
 
               {canUpgrade && (
                 <div
-                  role="button"
-                  onClick={() => {
-                    onTechChange("FTTP_Upgrade");
-                    setPendingPackage("fibre");
-                    setSelectedTab?.("upgrade"); // ✅ NEW: set upgrade tab
-                  }}
-                  className={`flex flex-col items-center rounded-lg p-4 cursor-pointer transform hover:scale-105 transition ${
-                    pendingPackage === "fibre"
-                      ? "border-4 border-[#1DA6DF] bg-white text-[#1DA6DF]"
-                      : "border border-transparent bg-[#1DA6DF] bg-opacity-80 text-white"
-                  }`}
-                >
-                  Upgrade Now
-                </div>
+  role="button"
+  onClick={() => {
+    onTechChange("FTTP_Upgrade");
+    setPendingPackage("fibre");
+    setSelectedTab?.("upgrade");
+  }}
+  className={`flex flex-col items-center rounded-lg p-4 cursor-pointer transform transition hover:scale-105 ${
+    pendingPackage === "fibre"
+      ? "bg-[#1DA6DF] text-white border-[#1DA6DF]"
+      : "border border-[#1DA6DF] bg-gray-50 shadow-[0_0_15px_#1DA6DF] hover:shadow-[0_0_25px_#1DA6DF]"
+  }`}
+>
+  Upgrade Now
+</div>
+
               )}
             </div>
 
