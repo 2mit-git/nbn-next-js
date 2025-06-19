@@ -959,11 +959,60 @@ export default function ContractForm({
                         phoneServicePrice = 10;
                       }
                     }
-                    return `$${(
+                    // PBX plan price
+                    let pbxPlanPrice = 0;
+                    if (extras?.pbx && extras.pbx.selectedPlan && extras.pbx.numUsers > 0) {
+                      if (extras.pbx.selectedPlan === "Hosted PAYG") {
+                        pbxPlanPrice = extras.pbx.numUsers * 5.5;
+                      } else if (extras.pbx.selectedPlan === "Hosted UNLIMITED") {
+                        pbxPlanPrice = extras.pbx.numUsers * 30.0;
+                      }
+                    }
+                    // PBX handsets price
+                    let pbxHandsetsPrice = 0;
+                    if (extras?.pbx && extras.pbx.handsets) {
+                      const pbxHandsets = [
+                        {
+                          name: "Yealink T31G",
+                          cost: 129,
+                        },
+                        {
+                          name: "Yealink T43U",
+                          cost: 259,
+                        },
+                        {
+                          name: "Yealink T54W",
+                          cost: 399,
+                        },
+                        {
+                          name: "Yealink WH62 Mono",
+                          cost: 205,
+                        },
+                        {
+                          name: "Yealink WH62 Dual",
+                          cost: 235,
+                        },
+                        {
+                          name: "Yealink BH72",
+                          cost: 355,
+                        },
+                      ];
+                      pbxHandsetsPrice = Object.entries(extras.pbx.handsets)
+                        .filter(([_, qty]) => qty > 0)
+                        .reduce((sum, [model, qty]) => {
+                          const handset = pbxHandsets.find((h) => h.name === model);
+                          const price = handset ? handset.cost : 0;
+                          return sum + price * qty;
+                        }, 0);
+                    }
+                    // Final total
+                    const total =
                       planPrice +
                       modemPrice +
-                      phoneServicePrice
-                    ).toFixed(2)}`;
+                      phoneServicePrice +
+                      pbxPlanPrice +
+                      pbxHandsetsPrice;
+                    return `$${total.toFixed(2)}`;
                   })()}
                 </span>
               </div>
