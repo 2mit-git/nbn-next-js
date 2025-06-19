@@ -48,6 +48,8 @@ export default function ContractForm({
   });
 
 
+  let pbxPlanPrice = 0;
+  let pbxHandsetsPrice = 0;
 
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
@@ -173,70 +175,120 @@ export default function ContractForm({
       {
         id: "modem",
         title: "Gigabit WiFi-6 MESH 1800Mbps Modem",
-        subtitle: "(valued at $200)",
-        price: "$170 / Upfront",
-        note: "(Free shipping)",
+        price: 170,
       },
       {
         id: "extender",
         title: "Gigabit WiFi-6 MESH 1800Mbps Extender",
-        subtitle: "(valued at $150)",
-        price: "$120 / Upfront",
-        note: "(Free shipping)",
+        price: 120,
       },
     ];
     const phoneOptions = [
       {
         id: "payg",
         title: "Pay-as-you-go call rates",
+        price: 0,
       },
       {
         id: "pack",
         title: "$10/mth Unlimited call pack",
+        price: 10,
       },
     ];
 
-    // Get selected modem object (first selected)
-    const modemId = extras?.modems?.length ? extras.modems[0] : null;
-    const modem = modemOptions.find((m) => m.id === modemId) || null;
+    // Build optionalFields array in fixed order
+    const optionalFields = [];
 
-    // Parse modem price string to number
-    let modemPrice = 0;
-    let modemModel = "";
-    if (modem) {
-      modemModel = modem.title;
-      const match = modem.price && modem.price.match(/\$([\d.]+)/);
-      if (match) {
-        modemPrice = Number(match[1]);
+    // Modems (all selected, in order)
+    if (extras?.modems?.length) {
+      extras.modems.forEach((modemId) => {
+        const modem = modemOptions.find((m) => m.id === modemId);
+        if (modem) {
+          optionalFields.push({
+            key: modem.title,
+            value: 1,
+            price: modem.price,
+          });
+        }
+      });
+    }
+
+    // Phone service
+    if (extras?.phone) {
+      const phone = phoneOptions.find((p) => p.id === extras.phone);
+      if (phone) {
+        optionalFields.push({
+          key: phone.title,
+          value: 1,
+          price: phone.price,
+        });
       }
     }
 
-    // Get selected phone object
-    const phoneId = extras?.phone || null;
-    const phoneService = phoneOptions.find((p) => p.id === phoneId) || null;
-
-    // Phone service price logic
-    let phoneServicePrice = 0;
-    let phoneServiceName = "";
-    if (phoneService) {
-      phoneServiceName = phoneService.title;
-      if (phoneServiceName === "Pay-as-you-go call rates") {
-        phoneServicePrice = 0;
-      } else if (phoneServiceName === "$10/mth Unlimited call pack") {
-        phoneServicePrice = 10;
+    // PBX plan and handsets (if present)
+    if (extras?.pbx) {
+      // PBX Plan
+      if (extras.pbx.selectedPlan && extras.pbx.numUsers > 0) {
+        let pbxPlanPrice = 0;
+        if (extras.pbx.selectedPlan === "Hosted PAYG") {
+          pbxPlanPrice = 5.5;
+        } else if (extras.pbx.selectedPlan === "Hosted UNLIMITED") {
+          pbxPlanPrice = 30.0;
+        }
+        optionalFields.push({
+          key: `${extras.pbx.selectedPlan} x${extras.pbx.numUsers}`,
+          value: extras.pbx.numUsers,
+          price: pbxPlanPrice,
+        });
       }
+      // PBX Handsets
+      const pbxHandsets = [
+        { name: "Yealink T31G", cost: 129 },
+        { name: "Yealink T43U", cost: 259 },
+        { name: "Yealink T54W", cost: 399 },
+        { name: "Yealink WH62 Mono", cost: 205 },
+        { name: "Yealink WH62 Dual", cost: 235 },
+        { name: "Yealink BH72", cost: 355 },
+      ];
+      Object.entries(extras.pbx.handsets || {})
+        .filter(([_, qty]) => qty > 0)
+        .forEach(([model, qty]) => {
+          const handset = pbxHandsets.find((h) => h.name === model);
+          if (handset) {
+            optionalFields.push({
+              key: `${model} x${qty}`,
+              value: qty,
+              price: handset.cost,
+            });
+          }
+        });
     }
 
-    // Use correct price fields
+    // Use correct price fields for plan
     const packagePrice =
       typeof plan.discountPrice !== "undefined"
         ? Number(plan.discountPrice)
         : typeof plan.price !== "undefined"
         ? Number(plan.price)
         : 0;
-    const totalPrice = packagePrice + modemPrice + phoneServicePrice;
 
-    const finalData = {
+    // Add plan as the first item in optionalFields
+    if (plan && (plan.discountPrice || plan.price)) {
+      optionalFields.unshift({
+        key: plan.subtitle || plan.name || "Plan",
+        value: 1,
+        price: packagePrice,
+      });
+    }
+
+    // Calculate total price
+    const totalPrice = optionalFields.reduce(
+      (sum, item) => sum + item.price * item.value,
+      0
+    );
+
+    // Build the payload for webhook, preserving order
+    const payload = {
       contactDetails: {
         title: form.title,
         firstName: form.firstName,
@@ -256,39 +308,35 @@ export default function ContractForm({
         deliveryAddress: deliveryAddressValue,
         deliveryName: form.deliveryName,
         companyName: form.companyName,
-        modem: modem
-          ? {
-              id: modem.id,
-              model: modemModel,
-              price: modemPrice,
-            }
-          : null,
       },
       phoneDetails: {
         keepPhone: form.keepPhone,
         phoneNumber: form.phoneNumber,
         transferVoip: form.transferVoip,
         accountNumber: form.accountNumber,
-        phoneService: phoneService
-          ? {
-              id: phoneService.id,
-              name: phoneServiceName,
-              price: phoneServicePrice,
-            }
-          : null,
       },
       pricing: {
-        packagePrice,
-        modemPrice,
-        phoneServicePrice,
         total: totalPrice,
       },
-      rawForm: form, // for reference, includes all fields
+      rawForm: form,
       rawSelections: {
         selectedPlan,
         extras,
       },
     };
+
+    // Inject order items as data1, data2, ... in order
+    optionalFields
+      .filter((f) => f.value > 0)
+      .slice(0, 10)
+      .forEach((item, i) => {
+        const idx = i + 1;
+        const subtotal = parseFloat((item.price * item.value).toFixed(2));
+        payload[`data${idx}`] = item.key;
+        payload[`data${idx}Value`] = item.value;
+        payload[`data${idx}Price`] = item.price;
+        payload[`data${idx}Subtotal`] = subtotal;
+      });
 
     // Submit contract data to backend API, which will handle the webhook
     try {
@@ -299,7 +347,7 @@ export default function ContractForm({
       const res = await fetch(apiRoute, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(finalData),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         setSubmitSuccess(true);
@@ -839,13 +887,9 @@ export default function ContractForm({
                       </span>
                       <span>
                         {extras.pbx.selectedPlan === "Hosted PAYG"
-                          ? `$${(
-                              extras.pbx.numUsers * 5.50
-                            ).toFixed(2)}`
+                          ? `$${(extras.pbx.numUsers * 5.5).toFixed(2)}`
                           : extras.pbx.selectedPlan === "Hosted UNLIMITED"
-                          ? `$${(
-                              extras.pbx.numUsers * 30.00
-                            ).toFixed(2)}`
+                          ? `$${(extras.pbx.numUsers * 33.0).toFixed(2)}`
                           : ""}
                       </span>
                     </div>
@@ -960,16 +1004,22 @@ export default function ContractForm({
                       }
                     }
                     // PBX plan price
-                    let pbxPlanPrice = 0;
-                    if (extras?.pbx && extras.pbx.selectedPlan && extras.pbx.numUsers > 0) {
+                   
+                    if (
+                      extras?.pbx &&
+                      extras.pbx.selectedPlan &&
+                      extras.pbx.numUsers > 0
+                    ) {
                       if (extras.pbx.selectedPlan === "Hosted PAYG") {
                         pbxPlanPrice = extras.pbx.numUsers * 5.5;
-                      } else if (extras.pbx.selectedPlan === "Hosted UNLIMITED") {
+                      } else if (
+                        extras.pbx.selectedPlan === "Hosted UNLIMITED"
+                      ) {
                         pbxPlanPrice = extras.pbx.numUsers * 30.0;
                       }
                     }
                     // PBX handsets price
-                    let pbxHandsetsPrice = 0;
+                   
                     if (extras?.pbx && extras.pbx.handsets) {
                       const pbxHandsets = [
                         {
@@ -1000,7 +1050,9 @@ export default function ContractForm({
                       pbxHandsetsPrice = Object.entries(extras.pbx.handsets)
                         .filter(([_, qty]) => qty > 0)
                         .reduce((sum, [model, qty]) => {
-                          const handset = pbxHandsets.find((h) => h.name === model);
+                          const handset = pbxHandsets.find(
+                            (h) => h.name === model
+                          );
                           const price = handset ? handset.cost : 0;
                           return sum + price * qty;
                         }, 0);
@@ -1016,6 +1068,11 @@ export default function ContractForm({
                   })()}
                 </span>
               </div>
+              {extras?.pbx && (
+                <div className="text-sm text-gray-500 mt-2">
+                  <p>*For PBX plan Monthly Price ${pbxPlanPrice} & First Month Upfront Total ${pbxHandsetsPrice+pbxPlanPrice}</p>
+                </div>
+              )}
             </div>
           </div>
         </>
