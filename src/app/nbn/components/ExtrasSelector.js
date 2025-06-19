@@ -683,18 +683,27 @@ export default function ExtrasSelector({
   // Whenever anything changes we notify parent (only for local state)
   useEffect(() => {
     if (typeof onChange === "function") {
-      onChange({
+      // Only include PBX fields if connectionType is "business"
+      const base = {
         ...value,
         includeModem,
         selectedModems,
         includePhone,
         selectedPhone,
-        includePBX: localIncludePBX,
         modems: includeModem === true ? selectedModems : [],
         phone: includePhone === true ? selectedPhone : null,
-      });
+      };
+      if (connectionType === "business") {
+        base.includePBX = localIncludePBX;
+        // pbx field is set via PBXWizardSection below
+      } else {
+        // Remove PBX fields if present
+        delete base.includePBX;
+        delete base.pbx;
+      }
+      onChange(base);
     }
-  }, [includeModem, selectedModems, includePhone, selectedPhone, localIncludePBX]);
+  }, [includeModem, selectedModems, includePhone, selectedPhone, localIncludePBX, connectionType]);
 console.log(connectionType)
   // handlers
   const toggleModem = (id) => {
@@ -1012,7 +1021,7 @@ console.log(connectionType)
                   if (typeof window !== "undefined") {
                     localStorage.setItem("pbx_include", "true");
                   }
-                  if (typeof onChange === "function") {
+                  if (typeof onChange === "function" && connectionType === "business") {
                     onChange({
                       ...value,
                       includePBX: true,
@@ -1034,7 +1043,7 @@ console.log(connectionType)
                   if (typeof window !== "undefined") {
                     localStorage.setItem("pbx_include", "false");
                   }
-                  if (typeof onChange === "function") {
+                  if (typeof onChange === "function" && connectionType === "business") {
                     onChange({
                       ...value,
                       includePBX: false,
@@ -1056,7 +1065,7 @@ console.log(connectionType)
                 value={value.pbx}
                 onPBXChange={data => {
                   setPBXData(data);
-                  if (typeof onChange === "function") {
+                  if (typeof onChange === "function" && connectionType === "business") {
                     onChange({
                       ...value,
                       includePBX: true,
