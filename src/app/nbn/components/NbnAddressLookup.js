@@ -1,4 +1,3 @@
-// File: src/components/NbnAddressLookup.js
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
@@ -19,7 +18,7 @@ export default function NbnAddressLookup({
   onAddressChange,
   onPackageSelect,
   onCanUpgradeChange,
-  onConnectionTypeChange, // New prop
+  onConnectionTypeChange,
   query,
   setQuery,
   nbnResult,
@@ -28,26 +27,52 @@ export default function NbnAddressLookup({
   setSelectedAddr,
   suggestions,
   setSuggestions,
-  submitButton, // New prop for submit button
+  submitButton,
 }) {
-  // New state for pending package selection
-  const [pendingPackage, setPendingPackage] = useState(null);
-  const [selectedConnectionType, setSelectedConnectionType] = useState(null);
-
-  // State to control which tab is selected in TabProductGrid
-  const [selectedTab, setSelectedTab] = useState("regular");
-
-  // Notify parent of connection type change
+  // Clear cache ONLY on full page reload
   useEffect(() => {
-    if (typeof onConnectionTypeChange === "function" && selectedConnectionType) {
+    const handleUnload = () => {
+      localStorage.removeItem("nbn_pendingPackage");
+      localStorage.removeItem("nbn_connectionType");
+    };
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, []);
+
+  const [pendingPackage, setPendingPackage] = useState(() => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("nbn_pendingPackage") || null;
+  });
+  const [selectedConnectionType, setSelectedConnectionType] = useState(() => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("nbn_connectionType") || null;
+  });
+
+  useEffect(() => {
+    if (pendingPackage) {
+      localStorage.setItem("nbn_pendingPackage", pendingPackage);
+    } else {
+      localStorage.removeItem("nbn_pendingPackage");
+    }
+  }, [pendingPackage]);
+
+  useEffect(() => {
+    if (selectedConnectionType) {
+      localStorage.setItem("nbn_connectionType", selectedConnectionType);
+    } else {
+      localStorage.removeItem("nbn_connectionType");
+    }
+  }, [selectedConnectionType]);
+
+  useEffect(() => {
+    if (
+      typeof onConnectionTypeChange === "function" &&
+      selectedConnectionType
+    ) {
       onConnectionTypeChange(selectedConnectionType);
     }
   }, [selectedConnectionType, onConnectionTypeChange]);
-  const [selectedPackage, setSelectedPackage] = useState(null);
-  // PBX install step state
-  // (PBX install step removed)
 
-  // Use controlled props if provided, otherwise fallback to internal state
   const [internalQuery, internalSetQuery] = useState("");
   const [internalSuggestions, internalSetSuggestions] = useState([]);
   const [internalNbnResult, internalSetNbnResult] = useState(null);
@@ -58,32 +83,35 @@ export default function NbnAddressLookup({
 
   const controlledQuery = typeof query === "string" ? query : internalQuery;
   const controlledSetQuery = setQuery || internalSetQuery;
-  const controlledSuggestions = suggestions || internalSuggestions;
+  const controlledSuggestions = Array.isArray(suggestions)
+    ? suggestions
+    : internalSuggestions;
   const controlledSetSuggestions = setSuggestions || internalSetSuggestions;
-  const controlledNbnResult = nbnResult !== undefined ? nbnResult : internalNbnResult;
+  const controlledNbnResult =
+    nbnResult !== undefined ? nbnResult : internalNbnResult;
   const controlledSetNbnResult = setNbnResult || internalSetNbnResult;
   const controlledSelectedAddr = selectedAddr || internalSelectedAddr;
   const controlledSetSelectedAddr = setSelectedAddr || internalSetSelectedAddr;
 
   const debouncedQuery = useDebounce(controlledQuery);
-  const isTyping = controlledQuery.length >= 2 && controlledQuery !== debouncedQuery;
+  const isTyping =
+    controlledQuery.length >= 2 && controlledQuery !== debouncedQuery;
 
-  // Autocomplete effect
   useEffect(() => {
-    // Stop searching if an address has been selected and the input matches the selected address/result
     if (
       controlledNbnResult &&
-      (controlledQuery === controlledNbnResult.addressDetail?.formattedAddress ||
+      (controlledQuery ===
+        controlledNbnResult.addressDetail?.formattedAddress ||
         controlledQuery === controlledSelectedAddr)
     ) {
       return;
     }
 
-
     if (debouncedQuery === lastSelected.current) {
       lastSelected.current = null;
       return;
     }
+
     if (debouncedQuery.length < 2) {
       controlledSetSuggestions([]);
       return;
@@ -93,12 +121,15 @@ export default function NbnAddressLookup({
     inflightSuggestQueries.add(debouncedQuery);
 
     const controller = new AbortController();
-    const url = `/api/geocode?text=${encodeURIComponent(debouncedQuery)}`;
-
     setLoadingSuggest(true);
-    fetch(url, { signal: controller.signal })
+
+    fetch(`/api/geocode?text=${encodeURIComponent(debouncedQuery)}`, {
+      signal: controller.signal,
+    })
       .then((r) => r.json())
-      .then((data) => controlledSetSuggestions(data.features || []))
+      .then((data) => {
+        controlledSetSuggestions(data.features || []);
+      })
       .catch((err) => {
         if (err.name !== "AbortError") console.error(err);
       })
@@ -113,13 +144,12 @@ export default function NbnAddressLookup({
     };
   }, [
     debouncedQuery,
-    controlledSetSuggestions,
-    controlledNbnResult,
     controlledQuery,
+    controlledNbnResult,
     controlledSelectedAddr,
+    controlledSetSuggestions,
   ]);
 
-  // NBN lookup
   const handleSelect = async (feature) => {
     const addr = feature.properties.formatted;
     lastSelected.current = addr;
@@ -147,29 +177,25 @@ export default function NbnAddressLookup({
   };
 
   const handleSearchClick = () => {
-    const feature = controlledSuggestions.find((f) => f.properties.formatted === controlledQuery);
+    const feature = controlledSuggestions.find(
+      (f) => f.properties.formatted === controlledQuery
+    );
     if (feature) handleSelect(feature);
   };
 
-  const rawStatus = controlledNbnResult?.addressDetail?.techChangeStatus || "";
+  const rawStatus =
+    controlledNbnResult?.addressDetail?.techChangeStatus || "";
   const canUpgrade = rawStatus.trim().toLowerCase() === "eligible to order";
 
-  // Notify parent of canUpgrade status when nbnResult changes
   useEffect(() => {
     if (typeof onCanUpgradeChange === "function") {
       onCanUpgradeChange(canUpgrade);
     }
-    // Only run when nbnResult changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canUpgrade]);
+  }, [canUpgrade, onCanUpgradeChange]);
 
-  return (
-    <div className="space-y-4 max-w-4xl mx-auto px-4">
-      {/* Question and Connection Type Buttons */}
-      {/* Will be conditionally rendered after package selection */}
+  return  <div className="space-y-4 max-w-4xl mx-auto px-4">
       {/* Search box */}
-      <div className="relative bg-gray-100 rounded-2xl shadow-md p-1.5 transition-all duration-150 ease-in-out hover:scale-105 hover:shadow-lg border border-[#1DA6DF]">
-        {/* Icon */}
+      <div className="relative bg-gray-100 rounded-2xl shadow-md p-1.5 hover:scale-105 border border-[#1DA6DF] transition">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <svg
             className="h-5 w-5 text-[#1DA6DF]"
@@ -183,35 +209,31 @@ export default function NbnAddressLookup({
             />
           </svg>
         </div>
-        <div className="flex items-center">
-          <input
-            type="text"
-            className="w-full pl-10 py-2 sm:py-3 text-sm sm:text-base text-gray-700 bg-transparent rounded-lg focus:outline-none"
-            placeholder="Type your address..."
-            value={controlledQuery}
-            onChange={(e) => {
-              controlledSetQuery(e.target.value);
-              controlledSetNbnResult(null);
-              onTechChange(null);
-            }}
-          />
-          {(isTyping || loadingSuggest || loadingNbn) && (
-            <div className="flex items-center justify-center mx-2">
-              <div className="w-5 h-5 border-4 border-transparent border-t-blue-400 rounded-full animate-spin" />
-            </div>
-          )}
-        </div>
-
-        {/* Suggestions dropdown */}
+        <input
+          type="text"
+          className="w-full pl-10 py-2 text-gray-700 bg-transparent rounded-lg focus:outline-none"
+          placeholder="Type your address..."
+          value={controlledQuery}
+          onChange={(e) => {
+            controlledSetQuery(e.target.value);
+            controlledSetNbnResult(null);
+            onTechChange(null);
+          }}
+        />
+        {(isTyping || loadingSuggest || loadingNbn) && (
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <div className="w-5 h-5 border-4 border-t-blue-400 rounded-full animate-spin" />
+          </div>
+        )}
         {controlledSuggestions.length > 0 && !controlledNbnResult && (
-          <div className="absolute z-20 w-full mt-2 left-0 bg-white border rounded-2xl shadow-md">
+          <div className="absolute z-20 w-full mt-2 bg-white border rounded-2xl shadow-md">
             {controlledSuggestions.map((f) => (
               <div
                 key={f.properties.place_id}
-                className="px-4 py-2 hover:bg-[#1DA6DF] hover:text-white rounded-lg cursor-pointer flex items-center"
+                className="px-4 py-2 hover:bg-[#1DA6DF] hover:text-white flex items-center cursor-pointer"
                 onClick={() => handleSelect(f)}
               >
-                <span>{f.properties.formatted}</span>
+                {f.properties.formatted}
               </div>
             ))}
           </div>
@@ -220,18 +242,18 @@ export default function NbnAddressLookup({
 
       {/* Loading skeleton */}
       {loadingNbn && (
-        <div className="space-y-4 animate-pulse w-full">
-          <div className="h-4 w-full bg-gray-200 rounded"></div>
-          <div className="flex flex-col sm:flex-row gap-4">
+        <div className="space-y-4 animate-pulse">
+          <div className="h-4 bg-gray-200 rounded"></div>
+          <div className="flex gap-4">
             <div className="h-40 bg-gray-200 rounded-lg flex-1"></div>
             <div className="h-40 bg-gray-200 rounded-lg flex-1"></div>
           </div>
         </div>
       )}
 
-      {/* Results */}
+      {/* Results panel */}
       {controlledNbnResult && (
-        <div className="w-full bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-6">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-6">
           {/* Header */}
           <div className="flex items-center space-x-3">
             <svg
@@ -249,169 +271,121 @@ export default function NbnAddressLookup({
               />
             </svg>
             <h2 className="text-xl font-semibold text-gray-800">
-              {controlledNbnResult.addressDetail.formattedAddress || controlledSelectedAddr}
+              {controlledNbnResult.addressDetail.formattedAddress ||
+                controlledSelectedAddr}
             </h2>
           </div>
 
+          {/* Upgrade box */}
           <div className="bg-gray-100 rounded-2xl p-5">
             {canUpgrade ? (
-              <p className="text-center text-2xl  text-[#1DA6DF] mb-6 font-bold">
+              <p className="text-center text-2xl text-[#1DA6DF] font-bold mb-6">
                 You’re eligible for an nbn® Fibre Upgrade with $0 installation
               </p>
             ) : (
-              <p className="text-center text-2xl  text-[#1DA6DF] mb-6 font-bold">
-                {controlledNbnResult.addressDetail.techType.toUpperCase()} is available at your address
+              <p className="text-center text-2xl text-[#1DA6DF] font-bold mb-6">
+                {controlledNbnResult.addressDetail.techType.toUpperCase()} is
+                available at your address
               </p>
             )}
-            <div className={`grid grid-cols-1 ${canUpgrade ? "md:grid-cols-2" : "md:grid-cols-1"} gap-6`}>
-              {/* Connect Now / Skip Upgrade */}
+
+            <div
+              className={`grid gap-6 ${
+                canUpgrade ? "md:grid-cols-2" : "md:grid-cols-1"
+              }`}
+            >
               <div
                 role="button"
                 onClick={() => {
-                  setSelectedPackage("connect");
-                  setPendingPackage("connect");
-                  setSelectedTab("regular");
+                  const pkg = canUpgrade ? "skip" : "connect";
+                  setPendingPackage(pkg);
                 }}
-                className={`flex items-center justify-center flex-col border rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105 font-medium text-lg
-                  ${pendingPackage === "connect"
+                className={`flex flex-col items-center border rounded-lg p-4 cursor-pointer transform hover:scale-105 transition ${
+                  pendingPackage === (canUpgrade ? "skip" : "connect")
                     ? "border-4 border-[#1DA6DF] bg-white"
-                    : "border border-[#1DA6DF] bg-gray-50"}
-                `}
+                    : "border border-[#1DA6DF] bg-gray-50"
+                }`}
               >
-                {pendingPackage === "connect" && (
-                  <span className="mb-1">
-                    <svg className="w-5 h-5 inline text-[#1DA6DF]" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </span>
-                )}
-                {canUpgrade ? (
-                  <h3
-                    className="text-2xl font-medium text-center text-[#1DA6DF] mb-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedPackage("skip");
-                      setPendingPackage("skip");
-                      setSelectedTab("regular");
-                    }}
-                  >
-                    Skip Upgrade
-                  </h3>
-                ) : (
-                  <h3 className="text-2xl font-medium text-center text-[#1DA6DF] mb-1">
-                    Connect Now
-                  </h3>
-                )}
+                {canUpgrade ? "Skip Upgrade" : "Connect Now"}
               </div>
 
-              {/* Fibre Upgrade */}
               {canUpgrade && (
                 <div
                   role="button"
                   onClick={() => {
                     onTechChange("FTTP_Upgrade");
-                    setSelectedPackage("fibre");
                     setPendingPackage("fibre");
-                    setSelectedTab("upgrade");
                   }}
-                  className={`flex items-center justify-center flex-col rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105 font-medium text-lg
-                    ${pendingPackage === "fibre"
+                  className={`flex flex-col items-center rounded-lg p-4 cursor-pointer transform hover:scale-105 transition ${
+                    pendingPackage === "fibre"
                       ? "border-4 border-[#1DA6DF] bg-white text-[#1DA6DF]"
-                      : "border border-transparent bg-[#1DA6DF] bg-opacity-80 text-white"}
-                  `}
+                      : "border border-transparent bg-[#1DA6DF] bg-opacity-80 text-white"
+                  }`}
                 >
-                  {pendingPackage === "fibre" && (
-                    <span className="mb-1">
-                      <svg className="w-5 h-5 inline text-[#1DA6DF]" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </span>
-                  )}
-                  <h3 className="text-2xl font-medium text-center mb-1">
-                    Upgrade Now
-                  </h3>
+                  Upgrade Now
                 </div>
               )}
             </div>
-            {canUpgrade && (<p className="text-sm text-gray-600 mt-4">
-              $0 Fibre Upgrade available for standard installations only. Offer valid with eligible high-speed plans. A compatible high-speed modem is required — additional charges may apply. According to nbn®, installation may take approximately 2 to 6 weeks to complete.
-            </p>)}
+
+            {canUpgrade && (
+              <p className="text-sm text-gray-600 mt-4">
+                $0 Fibre Upgrade available for standard installations only.
+                Offer valid with eligible high-speed plans. A compatible
+                high-speed modem is required — additional charges may apply.
+                According to nbn®, installation may take approximately 2 to 6
+                weeks to complete.
+              </p>
+            )}
           </div>
 
-          {/* business/Residential selection after package action */}
+          {/* Business vs Residential */}
           {pendingPackage && (
-            <div className="mb-4 mt-6">
-              <div className="text-lg font-semibold mb-2">You are looking for connection in</div>
+            <div className="mt-6">
+              <div className="text-lg font-semibold mb-2">
+                You are looking for connection in
+              </div>
               <div className="flex gap-4 flex-col md:flex-row">
-                <button
-                  type="button"
-                  className={`flex-1 flex items-center justify-center flex-col border rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105 font-medium text-lg
-                    ${selectedConnectionType === "business"
-                      ? "bg-[#1DA6DF] text-white border-[#1DA6DF]"
-                      : "bg-gray-50 text-[#1DA6DF] border-[#1DA6DF]"}
-                  `}
-                  onClick={() => setSelectedConnectionType("business")}
-                >
-                  {selectedConnectionType === "business" && (
-                    <span className="mb-1">
-                      <svg className="w-5 h-5 inline text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </span>
-                  )}
-                  Business
-                </button>
-                <button
-                  type="button"
-                  className={`flex-1 flex items-center justify-center flex-col border rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105 font-medium text-lg
-                    ${selectedConnectionType === "residential"
-                      ? "bg-[#1DA6DF] text-white border-[#1DA6DF]"
-                      : "bg-gray-50 text-[#1DA6DF] border-[#1DA6DF]"}
-                  `}
-                  onClick={() => setSelectedConnectionType("residential")}
-                >
-                  {selectedConnectionType === "residential" && (
-                    <span className="mb-1">
-                      <svg className="w-5 h-5 inline text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </span>
-                  )}
-                  Residential
-                </button>
+                {["business", "residential"].map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setSelectedConnectionType(type)}
+                    className={`flex-1 flex flex-col items-center border rounded-lg p-4 cursor-pointer transform hover:scale-105 transition font-medium text-lg ${
+                      selectedConnectionType === type
+                        ? "bg-[#1DA6DF] text-white border-[#1DA6DF]"
+                        : "bg-gray-50 text-[#1DA6DF] border-[#1DA6DF]"
+                    }`}
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </button>
+                ))}
               </div>
               <div className="flex justify-end mt-4">
                 <button
                   type="button"
-                  className={`px-6 py-2 rounded-lg font-semibold transition ${
-                    selectedConnectionType
-                      ? "bg-[#1DA6DF] text-white hover:bg-[#178ac0] cursor-pointer"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  }`}
                   disabled={!selectedConnectionType}
                   onClick={() => {
-                    if (selectedConnectionType === "business" || selectedConnectionType === "residential") {
-                      onPackageSelect && onPackageSelect(pendingPackage, selectedConnectionType);
-                      setPendingPackage(null);
-                      setSelectedConnectionType(null);
+                    if (pendingPackage && selectedConnectionType) {
+                      onPackageSelect(pendingPackage, selectedConnectionType);
                     }
                   }}
+                  className={`px-6 py-2 rounded-lg font-semibold transition ${
+                    selectedConnectionType
+                      ? "bg-[#1DA6DF] text-white hover:bg-[#178ac0]"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
                 >
                   Continue
                 </button>
               </div>
             </div>
           )}
-          {/* PBX install step for Business */}
-          {/* (PBX install step removed) */}
         </div>
       )}
-      {/* Render submit button if provided */}
+
+      {/* Optional submit button */}
       {submitButton && (
-        <div className="mt-6 flex justify-center">
-          {submitButton}
-        </div>
+        <div className="mt-6 flex justify-center">{submitButton}</div>
       )}
     </div>
-  );
 }
