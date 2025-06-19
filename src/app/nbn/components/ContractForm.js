@@ -15,8 +15,6 @@ export default function ContractForm({
   onSubmitSuccess,
   connectionType, // "business" or "residential"
 }) {
-
-  
   // Today's date in YYYY-MM-DD format for max attribute
   const today = new Date().toISOString().split("T")[0];
 
@@ -48,6 +46,9 @@ export default function ContractForm({
     modemPrice: 0,
     phoneServicePrice: 0,
   });
+
+
+
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   // sync serviceAddress prop
@@ -289,8 +290,6 @@ export default function ContractForm({
       },
     };
 
-    
-
     // Submit contract data to backend API, which will handle the webhook
     try {
       const apiRoute =
@@ -369,11 +368,29 @@ export default function ContractForm({
       {loading && !submitSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-70">
           <div className="flex flex-col items-center">
-            <svg className="animate-spin h-10 w-10 text-[#1DA6DF] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="#1DA6DF" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="#1DA6DF" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            <svg
+              className="animate-spin h-10 w-10 text-[#1DA6DF] mb-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="#1DA6DF"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="#1DA6DF"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              ></path>
             </svg>
-            <span className="text-[#1DA6DF] font-semibold text-lg">Submitting...</span>
+            <span className="text-[#1DA6DF] font-semibold text-lg">
+              Submitting...
+            </span>
           </div>
         </div>
       )}
@@ -483,7 +500,8 @@ export default function ContractForm({
                   disabled={otpSent && !otpVerified}
                 />
                 <span className="text-xs text-gray-500">
-                  Enter your number without country code (e.g. 412345678 or 0412345678).
+                  Enter your number without country code (e.g. 412345678 or
+                  0412345678).
                 </span>
               </div>
               {/* Date of Birth */}
@@ -650,7 +668,7 @@ export default function ContractForm({
                   >
                     Yes
                   </button>
-                  
+
                   <button
                     type="button"
                     onClick={() => setForm((f) => ({ ...f, keepPhone: true }))}
@@ -662,8 +680,6 @@ export default function ContractForm({
                   >
                     No
                   </button>
-
-                  
                 </div>
               </div>
               {/* Porting */}
@@ -762,7 +778,8 @@ export default function ContractForm({
                   return extras.modems.map((modemId) => {
                     const modem = modemOptions.find((m) => m.id === modemId);
                     if (!modem) return null;
-                    const match = modem.price && modem.price.match(/\$([\d.]+)/);
+                    const match =
+                      modem.price && modem.price.match(/\$([\d.]+)/);
                     const modemPrice = match ? Number(match[1]) : 0;
                     return (
                       <div className="flex justify-between" key={modemId}>
@@ -817,33 +834,23 @@ export default function ContractForm({
                   )}
                   {extras.pbx.numUsers > 0 && (
                     <div className="flex justify-between">
-                      <span className="font-medium">PBX Users</span>
-                      <span>{extras.pbx.numUsers}</span>
-                    </div>
-                  )}
-                  {extras.pbx.ivrCount > 0 && (
-                    <div className="flex justify-between">
-                      <span className="font-medium">PBX IVR</span>
-                      <span>{extras.pbx.ivrCount}</span>
-                    </div>
-                  )}
-                  {extras.pbx.queueCount > 0 && (
-                    <div className="flex justify-between">
-                      <span className="font-medium">PBX Queues</span>
-                      <span>{extras.pbx.queueCount}</span>
-                    </div>
-                  )}
-                  {extras.pbx.callRecording && (
-                    <div className="flex justify-between">
-                      <span className="font-medium">PBX Call Recording</span>
+                      <span className="font-medium">
+                        {extras.pbx.selectedPlan} x{extras.pbx.numUsers}
+                      </span>
                       <span>
-                        Yes
-                        {extras.pbx.callRecordingQty > 1
-                          ? ` (${extras.pbx.callRecordingQty})`
+                        {extras.pbx.selectedPlan === "Hosted PAYG"
+                          ? `$${(
+                              extras.pbx.numUsers * 5.50
+                            ).toFixed(2)}`
+                          : extras.pbx.selectedPlan === "Hosted UNLIMITED"
+                          ? `$${(
+                              extras.pbx.numUsers * 30.00
+                            ).toFixed(2)}`
                           : ""}
                       </span>
                     </div>
                   )}
+
                   {/* PBX Handset prices from ExtrasSelector.js */}
                   {(() => {
                     const pbxHandsets = [
@@ -875,15 +882,17 @@ export default function ContractForm({
                     return Object.entries(extras.pbx.handsets || {})
                       .filter(([_, qty]) => qty > 0)
                       .map(([model, qty]) => {
-                        const handset = pbxHandsets.find((h) => h.name === model);
+                        const handset = pbxHandsets.find(
+                          (h) => h.name === model
+                        );
                         const price = handset ? handset.cost : 0;
                         return (
                           <div className="flex justify-between" key={model}>
-                            <span className="font-medium">{model} x{qty}</span>
+                            <span className="font-medium">
+                              {model} x{qty}
+                            </span>
                             <span>
-                              {price > 0
-                                ? `$${(price * qty).toFixed(2)}`
-                                : ""}
+                              {price > 0 ? `$${(price * qty).toFixed(2)}` : ""}
                             </span>
                           </div>
                         );
@@ -917,9 +926,12 @@ export default function ContractForm({
                     let modemPrice = 0;
                     if (extras?.modems?.length) {
                       modemPrice = extras.modems.reduce((sum, modemId) => {
-                        const modem = modemOptions.find((m) => m.id === modemId);
+                        const modem = modemOptions.find(
+                          (m) => m.id === modemId
+                        );
                         if (!modem) return sum;
-                        const match = modem.price && modem.price.match(/\$([\d.]+)/);
+                        const match =
+                          modem.price && modem.price.match(/\$([\d.]+)/);
                         return sum + (match ? Number(match[1]) : 0);
                       }, 0);
                     }

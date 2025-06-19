@@ -393,7 +393,7 @@ function PBXWizardSection({ onPBXChange, value }) {
                   {isSelected ? (
                     <div className="flex items-center gap-2">
                       <button
-                        className="px-2 py-1 rounded-full bg-gray-100 border border-gray-300 text-lg font-bold text-[#1da6df] hover:bg-[#e6f7fd] transition"
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 border border-gray-300 text-lg font-bold text-[#1da6df] hover:bg-[#e6f7fd] transition"
                         onClick={e => {
                           e.stopPropagation();
                           handleHandsetQty(h.name, -1);
@@ -450,7 +450,7 @@ function PBXWizardSection({ onPBXChange, value }) {
                     </div>
                   ) : (
                     <button
-                      className="px-4 py-1 rounded-lg border-2 border-[#1da6df] text-[#1da6df] font-semibold bg-white hover:bg-[#e6f7fd] transition"
+                      className="py-3 px-8 text-base font-bold min-w-[120px] rounded-xl border-2 border-[#1da6df] text-[#1da6df] font-semibold bg-white hover:bg-[#e6f7fd] transition"
                       onClick={e => {
                         e.stopPropagation();
                         // Enforce limit for the three models
@@ -699,17 +699,37 @@ console.log(connectionType)
   // handlers
   const toggleModem = (id) => {
     if (value.selectedModems !== undefined && typeof onChange === "function") {
-      const prev = selectedModems;
-      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      let prev = selectedModems;
+      let next;
+      if (prev.includes(id)) {
+        // Deselecting
+        next = prev.filter((x) => x !== id);
+        // If modem is being deselected, also remove extender
+        if (id === "modem") {
+          next = next.filter((x) => x !== "extender");
+        }
+      } else {
+        // Selecting
+        next = [...prev, id];
+      }
       onChange({
         ...value,
         selectedModems: next,
         includeModem,
       });
     } else {
-      setLocalSelectedModems((prev) =>
-        prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-      );
+      setLocalSelectedModems((prev) => {
+        let next;
+        if (prev.includes(id)) {
+          next = prev.filter((x) => x !== id);
+          if (id === "modem") {
+            next = next.filter((x) => x !== "extender");
+          }
+        } else {
+          next = [...prev, id];
+        }
+        return next;
+      });
     }
   };
   const pickPhone = (id) => {
@@ -734,7 +754,7 @@ console.log(connectionType)
         </h2>
         <div className="grid grid-cols-2 gap-4">
           <button
-            className={`py-4 px-8 text-lg font-bold rounded-xl shadow-lg transition-all duration-150 border-2 ${
+            className={`py-3 px-8 text-base font-bold min-w-[120px] rounded-xl shadow-lg transition-all duration-150 border-2 ${
               includeModem === true
                 ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
                 : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
@@ -752,7 +772,7 @@ console.log(connectionType)
             Yes
           </button>
           <button
-            className={`py-4 px-8 text-lg font-bold rounded-xl shadow-lg transition-all duration-150 border-2 ${
+            className={`py-3 px-8 text-base font-bold min-w-[120px] rounded-xl shadow-lg transition-all duration-150 border-2 ${
               includeModem === false
                 ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
                 : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
@@ -783,13 +803,21 @@ console.log(connectionType)
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {modemOptions.map((m) => {
               const isSel = selectedModems.includes(m.id);
+              // Only allow extender if modem is selected
+              const isModemSelected = selectedModems.includes("modem");
+              const isExtender = m.id === "extender";
+              const extenderDisabled = isExtender && !isModemSelected;
               return (
                 <div
                   key={m.id}
-                  className={`card card-side bg-base-100 shadow-sm cursor-pointer border-2 ${
+                  className={`card card-side bg-base-100 shadow-sm border-2 transition-all duration-150 ${
                     isSel ? "border-[#1DA6DF]" : "border-base-200"
-                  }`}
-                  onClick={() => toggleModem(m.id)}
+                  } ${extenderDisabled ? "opacity-50 pointer-events-none select-none grayscale" : "cursor-pointer"}`}
+                  onClick={() => {
+                    if (extenderDisabled) return;
+                    toggleModem(m.id);
+                  }}
+                  aria-disabled={extenderDisabled}
                 >
                   <figure className="p-4">
                     <Image
@@ -844,6 +872,12 @@ console.log(connectionType)
               Please select at least one modem or extender to continue.
             </div>
           )}
+          {/* Show info if extender is disabled */}
+          {includeModem === true && !selectedModems.includes("modem") && (
+            <div className="text-gray-500 text-xs mt-1">
+              Select the modem first to enable the extender option.
+            </div>
+          )}
         </div>
       )}
       {/* --- Phone service selection (exclusive) --- */}
@@ -851,7 +885,7 @@ console.log(connectionType)
         <h2 className="text-xl font-bold">Do you want a phone service?</h2>
         <div className="grid grid-cols-2 gap-4">
           <button
-            className={`py-4 px-8 text-lg font-bold rounded-xl shadow-lg transition-all duration-150 border-2 ${
+            className={`py-3 px-8 text-base font-bold min-w-[120px] rounded-xl shadow-lg transition-all duration-150 border-2 ${
               includePhone === true
                 ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
                 : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
@@ -870,7 +904,7 @@ console.log(connectionType)
             Yes
           </button>
           <button
-            className={`py-4 px-8 text-lg font-bold rounded-xl shadow-lg transition-all duration-150 border-2 ${
+            className={`py-3 px-8 text-base font-bold min-w-[120px] rounded-xl shadow-lg transition-all duration-150 border-2 ${
               includePhone === false
                 ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
                 : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
@@ -968,7 +1002,7 @@ console.log(connectionType)
             <h3 className="text-lg font-semibold">Do you want a PBX?</h3>
             <div className="grid grid-cols-2 gap-4 mt-2">
               <button
-                className={`py-2 px-6 text-base font-bold rounded-xl shadow transition-all duration-150 border-2 ${
+                className={`py-3 px-8 text-base font-bold min-w-[120px] rounded-xl shadow-lg transition-all duration-150 border-2 ${
                   localIncludePBX === true
                     ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
                     : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
@@ -990,7 +1024,7 @@ console.log(connectionType)
                 Yes
               </button>
               <button
-                className={`py-2 px-6 text-base font-bold rounded-xl shadow transition-all duration-150 border-2 ${
+                className={`py-3 px-8 text-base font-bold min-w-[120px] rounded-xl shadow-lg transition-all duration-150 border-2 ${
                   localIncludePBX === false
                     ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
                     : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"

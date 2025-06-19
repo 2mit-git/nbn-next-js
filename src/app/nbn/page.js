@@ -48,6 +48,51 @@ export default function Home() {
   // Track canUpgrade status
   const [canUpgrade, setCanUpgrade] = useState(false);
 
+  // Add these new states
+  const [userChoice, setUserChoice] = useState({
+    upgradeChoice: null,  // 'skip', 'upgrade', 'connect'
+    customerType: null    // 'business', 'residential'
+  });
+
+  const [userChoices, setUserChoices] = useState({
+    customerType: null,    // 'residential' or 'business'
+    connectionChoice: null // 'skip-upgrade', 'upgrade-now', or 'connect-now'
+  });
+
+  // Load saved choices on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedChoices = localStorage.getItem('userChoices');
+      const saved = localStorage.getItem('userChoices');
+      if (savedChoices) {
+        setUserChoice(JSON.parse(savedChoices));
+      }
+      if (saved) {
+        setUserChoices(JSON.parse(saved));
+      }
+    }
+  }, []);
+
+  // Save choices whenever they change
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem('userChoices', JSON.stringify(userChoice));
+      localStorage.setItem('userChoices', JSON.stringify(userChoices));
+    }
+  }, [userChoice, userChoices]);
+
+  // Handler to update choices
+  const handleUserChoice = (type, value) => {
+    setUserChoice(prev => ({
+      ...prev,
+      [type]: value
+    }));
+    setUserChoices(prev => ({
+      ...prev,
+      [type]: value
+    }));
+  };
+
   const next = () => setStep((s) => Math.min(s + 1, 3));
   const back = () => {
     setSelectedPackage(null);
@@ -156,6 +201,9 @@ export default function Home() {
                   suggestions={addressSuggestions}
                   setSuggestions={setAddressSuggestions}
                   onConnectionTypeChange={setConnectionType}
+                  userChoice={userChoice}
+                  onChoiceChange={handleUserChoice}
+                  userChoices={userChoices}
                 />
               </div>
             )}
