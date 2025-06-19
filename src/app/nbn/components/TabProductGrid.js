@@ -9,23 +9,25 @@ export default function TabProductGrid({
   onLoadingChange,
   back,
   productGridLoading,
-  selectedTab, // new prop
-  setSelectedTab, // new prop
+  selectedTab,      // external tab (controlled)
+  setSelectedTab,   // external tab setter
 }) {
-  // Determine initial tab: if selectedTech is FTTP_Upgrade, start on upgrade tab, else regular
-  const initialTab =
-    selectedTech === "FTTP_Upgrade" ? "upgrade" : "regular";
+  // Determine initial tab
+  const initialTab = selectedTech === "FTTP_Upgrade" ? "upgrade" : "regular";
   const [internalTab, setInternalTab] = useState(initialTab);
 
-  // Use controlled tab if provided, otherwise fallback to internal state
-  const activeTab = selectedTab || internalTab;
-  const handleSetTab = setSelectedTab || setInternalTab;
+  // Decide which tab is currently active (external or internal)
+  const activeTab = selectedTab ?? internalTab;
+  const handleSetTab = setSelectedTab ?? setInternalTab;
 
-  // If selectedTech changes (user comes from address step), update tab (only for uncontrolled)
+  // Update internal tab when selectedTech changes (only if not controlled)
   useEffect(() => {
     if (!selectedTab) {
-      if (selectedTech === "FTTP_Upgrade") setInternalTab("upgrade");
-      else if (selectedTech && selectedTech !== "FTTP_Upgrade") setInternalTab("regular");
+      if (selectedTech === "FTTP_Upgrade") {
+        setInternalTab("upgrade");
+      } else if (selectedTech) {
+        setInternalTab("regular");
+      }
     }
   }, [selectedTech, selectedTab]);
 
@@ -56,12 +58,14 @@ export default function TabProductGrid({
           Upgrade Packages
         </button>
       </div>
-      {/* ProductGrid */}
+
+      {/* Product Grid */}
       <ProductGrid
         tech={activeTab === "upgrade" ? "FTTP_Upgrade" : originalTech}
         onSelectPlan={onSelectPlan}
         onLoadingChange={onLoadingChange}
       />
+
       {/* Back Button */}
       {!productGridLoading && (
         <button className="btn btn-neutral mt-6" onClick={back}>

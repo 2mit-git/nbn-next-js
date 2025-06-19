@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
-// Debounce hook (default delay 1000ms)
+// Debounce hook
 function useDebounce(value, delay = 1000) {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -28,8 +28,9 @@ export default function NbnAddressLookup({
   suggestions,
   setSuggestions,
   submitButton,
+  setSelectedTab, // ✅ NEW PROP
 }) {
-  // Clear cache ONLY on full page reload
+  // Clear cache on full reload
   useEffect(() => {
     const handleUnload = () => {
       localStorage.removeItem("nbn_pendingPackage");
@@ -43,6 +44,7 @@ export default function NbnAddressLookup({
     if (typeof window === "undefined") return null;
     return localStorage.getItem("nbn_pendingPackage") || null;
   });
+
   const [selectedConnectionType, setSelectedConnectionType] = useState(() => {
     if (typeof window === "undefined") return null;
     return localStorage.getItem("nbn_connectionType") || null;
@@ -65,10 +67,7 @@ export default function NbnAddressLookup({
   }, [selectedConnectionType]);
 
   useEffect(() => {
-    if (
-      typeof onConnectionTypeChange === "function" &&
-      selectedConnectionType
-    ) {
+    if (typeof onConnectionTypeChange === "function" && selectedConnectionType) {
       onConnectionTypeChange(selectedConnectionType);
     }
   }, [selectedConnectionType, onConnectionTypeChange]);
@@ -83,25 +82,20 @@ export default function NbnAddressLookup({
 
   const controlledQuery = typeof query === "string" ? query : internalQuery;
   const controlledSetQuery = setQuery || internalSetQuery;
-  const controlledSuggestions = Array.isArray(suggestions)
-    ? suggestions
-    : internalSuggestions;
+  const controlledSuggestions = Array.isArray(suggestions) ? suggestions : internalSuggestions;
   const controlledSetSuggestions = setSuggestions || internalSetSuggestions;
-  const controlledNbnResult =
-    nbnResult !== undefined ? nbnResult : internalNbnResult;
+  const controlledNbnResult = nbnResult !== undefined ? nbnResult : internalNbnResult;
   const controlledSetNbnResult = setNbnResult || internalSetNbnResult;
   const controlledSelectedAddr = selectedAddr || internalSelectedAddr;
   const controlledSetSelectedAddr = setSelectedAddr || internalSetSelectedAddr;
 
   const debouncedQuery = useDebounce(controlledQuery);
-  const isTyping =
-    controlledQuery.length >= 2 && controlledQuery !== debouncedQuery;
+  const isTyping = controlledQuery.length >= 2 && controlledQuery !== debouncedQuery;
 
   useEffect(() => {
     if (
       controlledNbnResult &&
-      (controlledQuery ===
-        controlledNbnResult.addressDetail?.formattedAddress ||
+      (controlledQuery === controlledNbnResult.addressDetail?.formattedAddress ||
         controlledQuery === controlledSelectedAddr)
     ) {
       return;
@@ -176,15 +170,7 @@ export default function NbnAddressLookup({
     }
   };
 
-  const handleSearchClick = () => {
-    const feature = controlledSuggestions.find(
-      (f) => f.properties.formatted === controlledQuery
-    );
-    if (feature) handleSelect(feature);
-  };
-
-  const rawStatus =
-    controlledNbnResult?.addressDetail?.techChangeStatus || "";
+  const rawStatus = controlledNbnResult?.addressDetail?.techChangeStatus || "";
   const canUpgrade = rawStatus.trim().toLowerCase() === "eligible to order";
 
   useEffect(() => {
@@ -193,15 +179,12 @@ export default function NbnAddressLookup({
     }
   }, [canUpgrade, onCanUpgradeChange]);
 
-  return  <div className="space-y-4 max-w-4xl mx-auto px-4">
-      {/* Search box */}
+  return (
+    <div className="space-y-4 max-w-4xl mx-auto px-4">
+      {/* Search Box */}
       <div className="relative bg-gray-100 rounded-2xl shadow-md p-1.5 hover:scale-105 border border-[#1DA6DF] transition">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg
-            className="h-5 w-5 text-[#1DA6DF]"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
+          <svg className="h-5 w-5 text-[#1DA6DF]" viewBox="0 0 20 20" fill="currentColor">
             <path
               fillRule="evenodd"
               clipRule="evenodd"
@@ -240,7 +223,7 @@ export default function NbnAddressLookup({
         )}
       </div>
 
-      {/* Loading skeleton */}
+      {/* Loading Skeleton */}
       {loadingNbn && (
         <div className="space-y-4 animate-pulse">
           <div className="h-4 bg-gray-200 rounded"></div>
@@ -251,32 +234,21 @@ export default function NbnAddressLookup({
         </div>
       )}
 
-      {/* Results panel */}
+      {/* NBN Result */}
       {controlledNbnResult && (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-6">
-          {/* Header */}
           <div className="flex items-center space-x-3">
-            <svg
-              className="w-8 h-8 text-[#1DA6DF]"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 22s-7-4.5-7-10a7 7 0 1114 0c0 5.5-7 10-7 10z"
-              />
+            <svg className="w-8 h-8 text-[#1DA6DF]" xmlns="http://www.w3.org/2000/svg" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M12 22s-7-4.5-7-10a7 7 0 1114 0c0 5.5-7 10-7 10z"/>
             </svg>
             <h2 className="text-xl font-semibold text-gray-800">
-              {controlledNbnResult.addressDetail.formattedAddress ||
-                controlledSelectedAddr}
+              {controlledNbnResult.addressDetail.formattedAddress || controlledSelectedAddr}
             </h2>
           </div>
 
-          {/* Upgrade box */}
+          {/* Upgrade Options */}
           <div className="bg-gray-100 rounded-2xl p-5">
             {canUpgrade ? (
               <p className="text-center text-2xl text-[#1DA6DF] font-bold mb-6">
@@ -284,21 +256,17 @@ export default function NbnAddressLookup({
               </p>
             ) : (
               <p className="text-center text-2xl text-[#1DA6DF] font-bold mb-6">
-                {controlledNbnResult.addressDetail.techType.toUpperCase()} is
-                available at your address
+                {controlledNbnResult.addressDetail.techType.toUpperCase()} is available at your address
               </p>
             )}
 
-            <div
-              className={`grid gap-6 ${
-                canUpgrade ? "md:grid-cols-2" : "md:grid-cols-1"
-              }`}
-            >
+            <div className={`grid gap-6 ${canUpgrade ? "md:grid-cols-2" : "md:grid-cols-1"}`}>
               <div
                 role="button"
                 onClick={() => {
                   const pkg = canUpgrade ? "skip" : "connect";
                   setPendingPackage(pkg);
+                  setSelectedTab?.("regular"); // ✅ NEW: set regular tab
                 }}
                 className={`flex flex-col items-center border rounded-lg p-4 cursor-pointer transform hover:scale-105 transition ${
                   pendingPackage === (canUpgrade ? "skip" : "connect")
@@ -315,6 +283,7 @@ export default function NbnAddressLookup({
                   onClick={() => {
                     onTechChange("FTTP_Upgrade");
                     setPendingPackage("fibre");
+                    setSelectedTab?.("upgrade"); // ✅ NEW: set upgrade tab
                   }}
                   className={`flex flex-col items-center rounded-lg p-4 cursor-pointer transform hover:scale-105 transition ${
                     pendingPackage === "fibre"
@@ -329,16 +298,14 @@ export default function NbnAddressLookup({
 
             {canUpgrade && (
               <p className="text-sm text-gray-600 mt-4">
-                $0 Fibre Upgrade available for standard installations only.
-                Offer valid with eligible high-speed plans. A compatible
-                high-speed modem is required — additional charges may apply.
-                According to nbn®, installation may take approximately 2 to 6
-                weeks to complete.
+                $0 Fibre Upgrade available for standard installations only. Offer valid with eligible high-speed plans.
+                A compatible high-speed modem is required — additional charges may apply.
+                Installation may take approximately 2 to 6 weeks.
               </p>
             )}
           </div>
 
-          {/* Business vs Residential */}
+          {/* Business/Residential */}
           {pendingPackage && (
             <div className="mt-6">
               <div className="text-lg font-semibold mb-2">
@@ -388,4 +355,5 @@ export default function NbnAddressLookup({
         <div className="mt-6 flex justify-center">{submitButton}</div>
       )}
     </div>
+  );
 }
