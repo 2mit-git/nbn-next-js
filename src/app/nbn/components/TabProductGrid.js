@@ -16,6 +16,7 @@ export default function TabProductGrid({
   const initialTab = selectedTech === "FTTP_Upgrade" ? "upgrade" : "regular";
   const [internalTab, setInternalTab] = useState(initialTab);
 
+  console.log(selectedTab, internalTab, selectedTech);
   // Decide which tab is currently active (external or internal)
   const activeTab = selectedTab ?? internalTab;
   const handleSetTab = setSelectedTab ?? setInternalTab;

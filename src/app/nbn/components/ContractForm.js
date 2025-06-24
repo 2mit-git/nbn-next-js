@@ -235,7 +235,7 @@ export default function ContractForm({
         if (extras.pbx.selectedPlan === "Hosted PAYG") {
           pbxPlanPrice = 5.5;
         } else if (extras.pbx.selectedPlan === "Hosted UNLIMITED") {
-          pbxPlanPrice = 30.0;
+          pbxPlanPrice = 33.0;
         }
         optionalFields.push({
           key: `${extras.pbx.selectedPlan}`,
@@ -1019,7 +1019,7 @@ export default function ContractForm({
                       } else if (
                         extras.pbx.selectedPlan === "Hosted UNLIMITED"
                       ) {
-                        pbxPlanPrice = extras.pbx.numUsers * 30.0;
+                        pbxPlanPrice = extras.pbx.numUsers * 33.0;
                       }
                     }
                     // PBX handsets price

@@ -179,23 +179,42 @@ useEffect(() => {
 
             {step === 1 && (
               <div className="space-y-6">
-                <h3 className="font-bold w-full text-center text-xl sm:text-2xl md:text-3xl mt-10 mb-10 px-4">
-                  Select your unlimited data{" "}
-                  <span className="text-[#1DA6DF] ms-2">nbn plan.</span>
-                </h3>
-                <TabProductGrid
-                  selectedTech={selectedTech}
-                  originalTech={originalTech}
-                  onSelectPlan={(plan) => {
-                    setSelectedPlan(plan);
-                    next();
-                  }}
-                  onLoadingChange={setProductGridLoading}
-                  back={back}
-                  productGridLoading={productGridLoading}
-                  selectedTab={selectedTab} // 🔹 NEW
-                  setSelectedTab={setSelectedTab} // 🔹 NEW
-                />
+                {canUpgrade ? (
+                  // --------– Upgrade-eligible: show tabs ------------
+                  <TabProductGrid
+                    selectedTech={selectedTech}
+                    originalTech={originalTech}
+                    onSelectPlan={(plan) => {
+                      setSelectedPlan(plan);
+                      next();
+                    }}
+                    onLoadingChange={setProductGridLoading}
+                    back={back}
+                    productGridLoading={productGridLoading}
+                    selectedTab={selectedTab}
+                    setSelectedTab={setSelectedTab}
+                  />
+                ) : (
+                  // ----- Connect-only: skip tabs, show single grid -----
+                  <>
+                    <ProductGrid
+                      tech={selectedTech}
+                      onSelectPlan={(plan) => {
+                        setSelectedPlan(plan);
+                        next();
+                      }}
+                      onLoadingChange={setProductGridLoading}
+                    />
+                    {!productGridLoading && (
+                      <button
+                        className="btn btn-neutral mt-6"
+                        onClick={back}
+                      >
+                        ← Back
+                      </button>
+                    )}
+                  </>
+                )}
               </div>
             )}
 
