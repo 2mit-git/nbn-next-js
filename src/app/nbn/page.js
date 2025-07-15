@@ -149,10 +149,10 @@ useEffect(() => {
           <section>
             {step === 0 && (
               <>
-                <h3 className="font-bold w-full text-center text-xl sm:text-2xl md:text-3xl mt-10 mb-10 px-4">
+                {/* <h3 className="font-bold w-full text-center text-xl sm:text-2xl md:text-3xl mt-10 mb-10 px-4">
                   See which nbn plans are available for
                   <span className="text-[#1DA6DF] ms-1">your address.</span>
-                </h3>
+                </h3> */}
                 <NbnAddressLookup
                   onTechChange={(tech) => {
                     setSelectedTech(tech);

@@ -548,7 +548,7 @@ export default function ContractForm({
                   value={form.contactNumber}
                   onChange={handleChange("contactNumber")}
                   required
-                  placeholder="e.g. 412345678 (AU) "
+                  placeholder="e.g. 0412345678 (AU) "
                   disabled={otpSent && !otpVerified}
                 />
                 <span className="text-xs text-gray-500">

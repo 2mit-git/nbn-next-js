@@ -8,7 +8,6 @@ import Image from "next/image";
 function PBXWizardSection({ onPBXChange, value }) {
   // PBX config cache key
   const PBX_CACHE_KEY = "pbx_config";
-  
 
   // Handset list (static)
   const handsets = [
@@ -93,7 +92,6 @@ function PBXWizardSection({ onPBXChange, value }) {
       handsets.reduce((acc, h) => ({ ...acc, [h.name]: 0 }), {})
   );
 
-
   // Pricing logic
   const planPrices = {
     "Hosted UNLIMITED": 33.0,
@@ -106,14 +104,17 @@ function PBXWizardSection({ onPBXChange, value }) {
   };
   const userPrice = planPrices[selectedPlan] || 0;
   const userSubtotal = userPrice * numUsers;
-  const callRecSubtotal = callRecording ? callRecordingQty * costs.callRecording : 0;
+  const callRecSubtotal = callRecording
+    ? callRecordingQty * costs.callRecording
+    : 0;
   const ivrSubtotal = ivrCount * costs.ivr;
   const queueSubtotal = queueCount * costs.queue;
   const handsetSubtotal = handsets.reduce(
     (sum, h) => sum + (handsetSelections[h.name] || 0) * h.cost,
     0
   );
-  const monthlyTotal = userSubtotal + callRecSubtotal + ivrSubtotal + queueSubtotal;
+  const monthlyTotal =
+    userSubtotal + callRecSubtotal + ivrSubtotal + queueSubtotal;
   const upfrontTotal = monthlyTotal + handsetSubtotal;
 
   // Handset limit logic for T31G, T43U, T54W
@@ -191,7 +192,6 @@ function PBXWizardSection({ onPBXChange, value }) {
     monthlyTotal,
     upfrontTotal,
   ]);
-  
 
   // Render all PBX fields at once, with improved design
   return (
@@ -209,7 +209,9 @@ function PBXWizardSection({ onPBXChange, value }) {
             }`}
             onClick={() => setSelectedPlan("Hosted UNLIMITED")}
           >
-            <h4 className="text-lg font-bold mb-2 text-[#1da6df]">Hosted UNLIMITED</h4>
+            <h4 className="text-lg font-bold mb-2 text-[#1da6df]">
+              Hosted UNLIMITED
+            </h4>
             <p className="text-gray-600 mb-2">
               Best for businesses with high call volume, e.g. call centres.
             </p>
@@ -221,7 +223,10 @@ function PBXWizardSection({ onPBXChange, value }) {
               </li>
             </ul>
             <div className="text-2xl font-bold text-[#1da6df]">
-              $33.00 <span className="text-base font-normal text-gray-600">/user/mo</span>
+              $33.00{" "}
+              <span className="text-base font-normal text-gray-600">
+                /user/mo
+              </span>
             </div>
           </div>
           {/* Hosted PAYG */}
@@ -233,7 +238,9 @@ function PBXWizardSection({ onPBXChange, value }) {
             }`}
             onClick={() => setSelectedPlan("Hosted PAYG")}
           >
-            <h4 className="text-lg font-bold mb-2 text-[#1da6df]">Hosted PAYG</h4>
+            <h4 className="text-lg font-bold mb-2 text-[#1da6df]">
+              Hosted PAYG
+            </h4>
             <p className="text-gray-600 mb-2">
               Cost-saving for businesses with low outbound traffic.
             </p>
@@ -242,7 +249,10 @@ function PBXWizardSection({ onPBXChange, value }) {
               <li>Inbound calls to local/national DIDs are free.</li>
             </ul>
             <div className="text-2xl font-bold text-[#1da6df]">
-              $5.50 <span className="text-base font-normal text-gray-600">/user/mo</span>
+              $5.50{" "}
+              <span className="text-base font-normal text-gray-600">
+                /user/mo
+              </span>
             </div>
           </div>
         </div>
@@ -253,65 +263,92 @@ function PBXWizardSection({ onPBXChange, value }) {
       {/* User/Addons */}
       <div>
         <h3 className="text-xl font-bold mb-4 text-[#1da6df]">PBX Options</h3>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <div>
-            <label className="font-semibold mb-1 block text-gray-700">Number of Users</label>
-            <input
-              type="number"
-              min={1}
-              className="fancy-input border-2 border-gray-200 rounded-lg p-2 w-full focus:border-[#1da6df] focus:ring-2 focus:ring-[#1da6df] transition"
-              value={numUsers}
-              onChange={e => setNumUsers(Math.max(1, Number(e.target.value)))}
-            />
-            <small className="text-gray-400">Enter at least 1 user.</small>
-          </div>
-          <div>
-            <div className="flex mt-5 items-center gap-4">
-              <label className="font-semibold mb-1 block text-gray-700">Call recordings?</label>
-            <button
-              className={`px-4 py-2 rounded-lg border-2 font-semibold transition ${
-                callRecording
-                  ? "bg-[#1da6df] text-white border-[#1da6df]"
-                  : "bg-white text-[#1da6df] border-[#1da6df] hover:bg-[#e6f7fd]"
-              }`}
-              onClick={() => setCallRecording(v => !v)}
-              type="button"
-            >
-              {callRecording ? "YES" : "NO"}
-            </button>
-            </div>
-            {callRecording && (
-              <div className="mt-2">
-                <label className="block mb-1 text-gray-700">Call recording Qty</label>
-                <input
-                  type="number"
-                  min={1}
-                  className="fancy-input border-2 border-gray-200 rounded-lg p-2 w-24 focus:border-[#1da6df] focus:ring-2 focus:ring-[#1da6df] transition"
-                  value={callRecordingQty}
-                  onChange={e => setCallRecordingQty(Math.max(1, Number(e.target.value)))}
-                />
-                <small className="text-gray-400">Number of users to have call recording</small>
+              <div class="flex items-center mb-1">
+                <label for="users" class="font-semibold text-gray-700 mr-1">
+                  Number of Users
+                </label>
+                <div class="tooltip tooltip-right" data-tip="Enter the total number of users for your PBX system.">
+                  <button class="btn btn-circle btn-xs bg-[#1DA6DF] text-white hover:bg-[#178FCC]">
+                    i
+                  </button>
+                </div>
               </div>
-            )}
-          </div>
+
+              <input
+                type="number"
+                min={1}
+                className="fancy-input border-2 border-gray-200 rounded-lg p-2 w-full focus:border-[#1da6df] focus:ring-2 focus:ring-[#1da6df] transition"
+                value={numUsers}
+                onChange={(e) =>
+                  setNumUsers(Math.max(1, Number(e.target.value)))
+                }
+              />
+              <small className="text-gray-400">Enter at least 1 user.</small>
+            </div>
+            <div>
+              <div className="flex mt-5 items-center gap-4">
+                <label className="font-semibold mb-1 block text-gray-700">
+                  Call recordings?
+                </label>
+                <button
+                  className={`px-4 py-2 rounded-lg border-2 font-semibold transition ${
+                    callRecording
+                      ? "bg-[#1da6df] text-white border-[#1da6df]"
+                      : "bg-white text-[#1da6df] border-[#1da6df] hover:bg-[#e6f7fd]"
+                  }`}
+                  onClick={() => setCallRecording((v) => !v)}
+                  type="button"
+                >
+                  {callRecording ? "No" : "Yes"}
+                </button>
+              </div>
+              {callRecording && (
+                <div className="mt-2">
+                  <label className="block mb-1 text-gray-700">
+                    Call recording Qty
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    className="fancy-input border-2 border-gray-200 rounded-lg p-2 w-24 focus:border-[#1da6df] focus:ring-2 focus:ring-[#1da6df] transition"
+                    value={callRecordingQty}
+                    onChange={(e) =>
+                      setCallRecordingQty(Math.max(1, Number(e.target.value)))
+                    }
+                  />
+                  <small className="text-gray-400">
+                    Number of users to have call recording
+                  </small>
+                </div>
+              )}
+            </div>
           </div>
           <div>
-            <label className="font-semibold mb-1 block text-gray-700">IVR</label>
+            <label className="font-semibold mb-1 block text-gray-700">
+              IVR
+            </label>
             <input
               type="number"
               min={0}
               className="fancy-input border-2 border-gray-200 rounded-lg p-2 w-full focus:border-[#1da6df] focus:ring-2 focus:ring-[#1da6df] transition"
               value={ivrCount}
-              onChange={e => setIVRCount(Math.max(0, Number(e.target.value)))}
+              onChange={(e) => setIVRCount(Math.max(0, Number(e.target.value)))}
             />
-            <label className="font-semibold mb-1 block mt-4 text-gray-700">Queues</label>
+            <label className="font-semibold mb-1 block mt-4 text-gray-700">
+              Queues
+            </label>
             <input
               type="number"
               min={0}
               className="fancy-input border-2 border-gray-200 rounded-lg p-2 w-full focus:border-[#1da6df] focus:ring-2 focus:ring-[#1da6df] transition"
               value={queueCount}
-              onChange={e => setQueueCount(Math.max(0, Number(e.target.value)))}
+              onChange={(e) =>
+                setQueueCount(Math.max(0, Number(e.target.value)))
+              }
             />
           </div>
         </div>
@@ -323,7 +360,7 @@ function PBXWizardSection({ onPBXChange, value }) {
       <div>
         <h3 className="mb-4 font-bold text-xl text-[#1da6df]">PBX Handsets</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {handsets.map(h => {
+          {handsets.map((h) => {
             const isSelected = handsetSelections[h.name] > 0;
             return (
               <div
@@ -333,7 +370,7 @@ function PBXWizardSection({ onPBXChange, value }) {
                     ? "border-[#1da6df] ring-2 ring-[#1da6df] bg-[#f0faff]"
                     : "border-gray-200"
                 }`}
-                onClick={e => {
+                onClick={(e) => {
                   // Only toggle selection if the click is not on a button or input
                   if (
                     e.target.tagName === "BUTTON" ||
@@ -352,7 +389,7 @@ function PBXWizardSection({ onPBXChange, value }) {
                     return;
                   }
                   setHandsetLimitError("");
-                  setHandsetSelections(prev => ({
+                  setHandsetSelections((prev) => ({
                     ...prev,
                     [h.name]: isSelected ? 0 : 1,
                   }));
@@ -384,41 +421,51 @@ function PBXWizardSection({ onPBXChange, value }) {
                     style={{ maxHeight: 140, maxWidth: 140 }}
                   />
                 </div>
-                <div className="font-bold text-lg mb-1 text-[#1da6df]">{h.name}</div>
+                <div className="font-bold text-lg mb-1 text-[#1da6df]">
+                  {h.name}
+                </div>
                 <ul className="text-sm text-gray-600 mb-2">
-                  {h.features.map(f => (
+                  {h.features.map((f) => (
                     <li key={f}>{f}</li>
                   ))}
                 </ul>
                 <div className="flex items-center justify-between mt-auto">
-                  <div className="text-[#1da6df] font-bold text-lg">${h.cost}</div>
+                  <div className="text-[#1da6df] font-bold text-lg">
+                    ${h.cost}
+                  </div>
                   {isSelected ? (
                     <div className="flex items-center gap-2">
                       <button
                         className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 border border-gray-300 text-lg font-bold text-[#1da6df] hover:bg-[#e6f7fd] transition"
-                        onClick={e => {
+                        onClick={(e) => {
                           e.stopPropagation();
                           handleHandsetQty(h.name, -1);
                         }}
                         disabled={handsetSelections[h.name] === 0}
                         type="button"
-                      >-</button>
+                      >
+                        -
+                      </button>
                       <input
                         type="number"
                         className="w-12 text-center border rounded-lg"
                         min={0}
                         max={
                           handsetLimitModels.includes(h.name)
-                            ? (handsetSelections[h.name] || 0) + (maxHandsets - currentHandsetSum)
+                            ? (handsetSelections[h.name] || 0) +
+                              (maxHandsets - currentHandsetSum)
                             : undefined
                         }
                         value={handsetSelections[h.name]}
-                        onChange={e => {
+                        onChange={(e) => {
                           let val = Math.max(0, Number(e.target.value));
                           if (handsetLimitModels.includes(h.name)) {
                             const otherSum = handsetLimitModels
                               .filter((m) => m !== h.name)
-                              .reduce((sum, m) => sum + (handsetSelections[m] || 0), 0);
+                              .reduce(
+                                (sum, m) => sum + (handsetSelections[m] || 0),
+                                0
+                              );
                             if (val + otherSum > maxHandsets) {
                               val = Math.max(0, maxHandsets - otherSum);
                               setHandsetLimitError(
@@ -428,13 +475,16 @@ function PBXWizardSection({ onPBXChange, value }) {
                               setHandsetLimitError("");
                             }
                           }
-                          setHandsetSelections(prev => ({ ...prev, [h.name]: val }));
+                          setHandsetSelections((prev) => ({
+                            ...prev,
+                            [h.name]: val,
+                          }));
                         }}
-                        onClick={e => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
                       />
                       <button
                         className="px-2 py-1 rounded-full bg-gray-100 border border-gray-300 text-lg font-bold text-[#1da6df] hover:bg-[#e6f7fd] transition"
-                        onClick={e => {
+                        onClick={(e) => {
                           e.stopPropagation();
                           if (
                             handsetLimitModels.includes(h.name) &&
@@ -448,12 +498,14 @@ function PBXWizardSection({ onPBXChange, value }) {
                           handleHandsetQty(h.name, 1);
                         }}
                         type="button"
-                      >+</button>
+                      >
+                        +
+                      </button>
                     </div>
                   ) : (
                     <button
                       className="py-3 px-8 text-base font-bold min-w-[120px] rounded-xl border-2 border-[#1da6df] text-[#1da6df] font-semibold bg-white hover:bg-[#e6f7fd] transition"
-                      onClick={e => {
+                      onClick={(e) => {
                         e.stopPropagation();
                         // Enforce limit for the three models
                         if (
@@ -466,7 +518,7 @@ function PBXWizardSection({ onPBXChange, value }) {
                           return;
                         }
                         setHandsetLimitError("");
-                        setHandsetSelections(prev => ({
+                        setHandsetSelections((prev) => ({
                           ...prev,
                           [h.name]: 1,
                         }));
@@ -486,19 +538,30 @@ function PBXWizardSection({ onPBXChange, value }) {
             className="fixed bottom-4 right-4 z-50"
             style={{ minWidth: 320, maxWidth: 400 }}
           >
-            <div role="alert" className="alert alert-warning shadow-lg flex items-center gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <div
+              role="alert"
+              className="alert alert-warning shadow-lg flex items-center gap-3"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 shrink-0 stroke-current"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
               </svg>
               <span className="font-semibold">{handsetLimitError}</span>
             </div>
           </div>
         )}
-        
       </div>
 
       {/* Save Button */}
-      
     </div>
   );
 }
@@ -552,14 +615,18 @@ export default function ExtrasSelector({
 
   // Sync localIncludeModem and localSelectedModems with value prop
   useEffect(() => {
-    if (value.includeModem !== undefined && value.includeModem !== localIncludeModem) {
+    if (
+      value.includeModem !== undefined &&
+      value.includeModem !== localIncludeModem
+    ) {
       setLocalIncludeModem(value.includeModem);
     }
   }, [value.includeModem]);
   useEffect(() => {
     if (
       value.selectedModems !== undefined &&
-      JSON.stringify(value.selectedModems) !== JSON.stringify(localSelectedModems)
+      JSON.stringify(value.selectedModems) !==
+        JSON.stringify(localSelectedModems)
     ) {
       setLocalSelectedModems(value.selectedModems);
     }
@@ -586,7 +653,8 @@ export default function ExtrasSelector({
 
   // clear selections when modems turned off (only for local state)
   useEffect(() => {
-    if (value.includeModem === undefined && localIncludeModem === false) setLocalSelectedModems([]);
+    if (value.includeModem === undefined && localIncludeModem === false)
+      setLocalSelectedModems([]);
   }, [localIncludeModem, value.includeModem]);
 
   // --- phone state (exclusive) ---
@@ -629,7 +697,10 @@ export default function ExtrasSelector({
 
   // Sync localIncludePhone and localSelectedPhone with value prop
   useEffect(() => {
-    if (value.includePhone !== undefined && value.includePhone !== localIncludePhone) {
+    if (
+      value.includePhone !== undefined &&
+      value.includePhone !== localIncludePhone
+    ) {
       setLocalIncludePhone(value.includePhone);
     }
   }, [value.includePhone]);
@@ -655,7 +726,10 @@ export default function ExtrasSelector({
 
   // Sync localIncludePBX with value.includePBX when prop changes
   useEffect(() => {
-    if (value.includePBX !== undefined && value.includePBX !== localIncludePBX) {
+    if (
+      value.includePBX !== undefined &&
+      value.includePBX !== localIncludePBX
+    ) {
       setLocalIncludePBX(value.includePBX);
     }
   }, [value.includePBX]);
@@ -705,8 +779,15 @@ export default function ExtrasSelector({
       }
       onChange(base);
     }
-  }, [includeModem, selectedModems, includePhone, selectedPhone, localIncludePBX, connectionType]);
-console.log(connectionType)
+  }, [
+    includeModem,
+    selectedModems,
+    includePhone,
+    selectedPhone,
+    localIncludePBX,
+    connectionType,
+  ]);
+  console.log(connectionType);
   // handlers
   const toggleModem = (id) => {
     if (value.selectedModems !== undefined && typeof onChange === "function") {
@@ -757,7 +838,6 @@ console.log(connectionType)
 
   return (
     <div className="space-y-12">
-      
       {/* --- Modem include toggle --- */}
       <div className="space-y-2">
         <h2 className="text-xl font-bold">
@@ -771,7 +851,10 @@ console.log(connectionType)
                 : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
             }`}
             onClick={() => {
-              if (value.includeModem !== undefined && typeof onChange === "function") {
+              if (
+                value.includeModem !== undefined &&
+                typeof onChange === "function"
+              ) {
                 onChange({ ...value, includeModem: true });
               } else {
                 setLocalIncludeModem(true);
@@ -789,7 +872,10 @@ console.log(connectionType)
                 : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
             }`}
             onClick={() => {
-              if (value.includeModem !== undefined && typeof onChange === "function") {
+              if (
+                value.includeModem !== undefined &&
+                typeof onChange === "function"
+              ) {
                 onChange({ ...value, includeModem: false });
               } else {
                 setLocalIncludeModem(false);
@@ -823,7 +909,11 @@ console.log(connectionType)
                   key={m.id}
                   className={`card card-side bg-base-100 shadow-sm border-2 transition-all duration-150 ${
                     isSel ? "border-[#1DA6DF]" : "border-base-200"
-                  } ${extenderDisabled ? "opacity-50 pointer-events-none select-none grayscale" : "cursor-pointer"}`}
+                  } ${
+                    extenderDisabled
+                      ? "opacity-50 pointer-events-none select-none grayscale"
+                      : "cursor-pointer"
+                  }`}
                   onClick={() => {
                     if (extenderDisabled) return;
                     toggleModem(m.id);
@@ -902,8 +992,15 @@ console.log(connectionType)
                 : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
             }`}
             onClick={() => {
-              if (value.includePhone !== undefined && typeof onChange === "function") {
-                onChange({ ...value, includePhone: true, selectedPhone: phoneOptions[0].id });
+              if (
+                value.includePhone !== undefined &&
+                typeof onChange === "function"
+              ) {
+                onChange({
+                  ...value,
+                  includePhone: true,
+                  selectedPhone: phoneOptions[0].id,
+                });
               } else {
                 setLocalIncludePhone(true);
                 setLocalSelectedPhone(phoneOptions[0].id);
@@ -921,7 +1018,10 @@ console.log(connectionType)
                 : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
             }`}
             onClick={() => {
-              if (value.includePhone !== undefined && typeof onChange === "function") {
+              if (
+                value.includePhone !== undefined &&
+                typeof onChange === "function"
+              ) {
                 onChange({ ...value, includePhone: false });
               } else {
                 setLocalIncludePhone(false);
@@ -971,7 +1071,6 @@ console.log(connectionType)
                               <li className="text-right">{rate}</li>
                             </React.Fragment>
                           ))}
-                          
                         </ul>
                       ) : (
                         <>
@@ -996,7 +1095,6 @@ console.log(connectionType)
                               </li>
                             ))}
                           </ul>
-                          
                         </>
                       )}
                     </div>
@@ -1009,75 +1107,84 @@ console.log(connectionType)
       </div>
       {/* --- PBX --- */}
       {connectionType === "business" && (
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold">Do you want a PBX?</h3>
-            <div className="grid grid-cols-2 gap-4 mt-2">
-              <button
-                className={`py-3 px-8 text-base font-bold min-w-[120px] rounded-xl shadow-lg transition-all duration-150 border-2 ${
-                  localIncludePBX === true
-                    ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
-                    : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
-                }`}
-                onClick={() => {
-                  setLocalIncludePBX(true);
-                  if (typeof window !== "undefined") {
-                    localStorage.setItem("pbx_include", "true");
-                  }
-                  if (typeof onChange === "function" && connectionType === "business") {
-                    onChange({
-                      ...value,
-                      includePBX: true,
-                    });
-                  }
-                }}
-                aria-pressed={localIncludePBX === true}
-              >
-                Yes
-              </button>
-              <button
-                className={`py-3 px-8 text-base font-bold min-w-[120px] rounded-xl shadow-lg transition-all duration-150 border-2 ${
-                  localIncludePBX === false
-                    ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
-                    : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
-                }`}
-                onClick={() => {
-                  setLocalIncludePBX(false);
-                  if (typeof window !== "undefined") {
-                    localStorage.setItem("pbx_include", "false");
-                  }
-                  if (typeof onChange === "function" && connectionType === "business") {
-                    onChange({
-                      ...value,
-                      includePBX: false,
-                    });
-                  }
-                }}
-                aria-pressed={localIncludePBX === false}
-              >
-                No
-              </button>
-            </div>
-            {localIncludePBX === null && (
-              <div className="text-red-600 text-sm mt-2">
-                Please select Yes or No to continue.
-              </div>
-            )}
-            {localIncludePBX === true && (
-              <PBXWizardSection
-                value={value.pbx}
-                onPBXChange={data => {
-                  setPBXData(data);
-                  if (typeof onChange === "function" && connectionType === "business") {
-                    onChange({
-                      ...value,
-                      includePBX: true,
-                      pbx: data,
-                    });
-                  }
-                }}
-              />
-            )}
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold">Do you want a PBX?</h3>
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <button
+              className={`py-3 px-8 text-base font-bold min-w-[120px] rounded-xl shadow-lg transition-all duration-150 border-2 ${
+                localIncludePBX === true
+                  ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
+                  : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
+              }`}
+              onClick={() => {
+                setLocalIncludePBX(true);
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("pbx_include", "true");
+                }
+                if (
+                  typeof onChange === "function" &&
+                  connectionType === "business"
+                ) {
+                  onChange({
+                    ...value,
+                    includePBX: true,
+                  });
+                }
+              }}
+              aria-pressed={localIncludePBX === true}
+            >
+              Yes
+            </button>
+            <button
+              className={`py-3 px-8 text-base font-bold min-w-[120px] rounded-xl shadow-lg transition-all duration-150 border-2 ${
+                localIncludePBX === false
+                  ? "bg-[#1DA6DF] text-white border-[#1DA6DF] scale-105"
+                  : "bg-white text-[#1DA6DF] border-[#1DA6DF] hover:bg-[#e6f7fd]"
+              }`}
+              onClick={() => {
+                setLocalIncludePBX(false);
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("pbx_include", "false");
+                }
+                if (
+                  typeof onChange === "function" &&
+                  connectionType === "business"
+                ) {
+                  onChange({
+                    ...value,
+                    includePBX: false,
+                  });
+                }
+              }}
+              aria-pressed={localIncludePBX === false}
+            >
+              No
+            </button>
           </div>
+          {localIncludePBX === null && (
+            <div className="text-red-600 text-sm mt-2">
+              Please select Yes or No to continue.
+            </div>
+          )}
+          {localIncludePBX === true && (
+            <PBXWizardSection
+              value={value.pbx}
+              onPBXChange={(data) => {
+                setPBXData(data);
+                if (
+                  typeof onChange === "function" &&
+                  connectionType === "business"
+                ) {
+                  onChange({
+                    ...value,
+                    includePBX: true,
+                    pbx: data,
+                  });
+                }
+              }}
+            />
+          )}
+        </div>
       )}
     </div>
   );
