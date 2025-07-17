@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from "react";
 const PRIMARY = "#1DA6DF";
 
-export default function leadform() {
+export default function LeadForm() {
   // NEW: store the embedding page URL or referrer
   const [pageUrl, setPageUrl] = useState("");
 
