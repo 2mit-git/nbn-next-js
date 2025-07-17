@@ -3,8 +3,10 @@
 
 import React, { useState, useEffect } from "react";
 const PRIMARY = "#1DA6DF";
+export default function Leadform() {
+  // Today's date in YYYY-MM-DD format for max attribute
+  const today = new Date().toISOString().split("T")[0];
 
-export default function LeadForm() {
   // NEW: store the embedding page URL or referrer
   const [pageUrl, setPageUrl] = useState("");
 
@@ -140,7 +142,7 @@ export default function LeadForm() {
         contactNumber: form.contactNumber,
       },
       meta: {
-        pageUrl, // NEW: where form was embedded
+        pageUrl,               // NEW: where form was embedded
         submittedAt: new Date().toISOString(),
       },
     };
@@ -208,9 +210,7 @@ export default function LeadForm() {
                 d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
               />
             </svg>
-            <span className="text-[#1DA6DF] font-semibold text-lg">
-              Submitting...
-            </span>
+            <span className="text-[#1DA6DF] font-semibold text-lg">Submitting...</span>
           </div>
         </div>
       )}
@@ -221,7 +221,7 @@ export default function LeadForm() {
           </div>
         </div>
       )}
-      {!submitSuccess && (
+       {!submitSuccess && (
         <>
           {/* Section Card */}
           {/** Wrap each fieldset in a card-like container **/}
@@ -290,11 +290,11 @@ export default function LeadForm() {
                 <span className="text-xs text-gray-500">
                   Enter your number without country code (e.g. 412345678).
                 </span>
-                {error && !otpSent && (
-                  <div className="text-red-500 mt-2 text-right">
-                    Please use a active number
-                  </div>
-                )}
+                 {error && !otpSent && (
+        
+        <div className="text-red-500 mt-2 text-right">Please use a active number</div>
+        
+      )}
               </div>
             </div>
           </div>
@@ -302,7 +302,7 @@ export default function LeadForm() {
       )}
 
       {/* OTP Verification UI */}
-      {otpSent && !otpVerified && (
+      {otpSent && !otpVerified &&(
         <div className="bg-white border-1 border-[#1DA6DF] rounded-2xl shadow p-6 space-y-4">
           <div className="flex items-center justify-between gap-10">
             <input
