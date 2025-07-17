@@ -5,8 +5,8 @@ import React, { useState, useEffect } from "react";
 const PRIMARY = "#1DA6DF";
 
 export default function leadform() {
-  // Today's date in YYYY-MM-DD format for max attribute
-  const today = new Date().toISOString().split("T")[0];
+  // NEW: store the embedding page URL or referrer
+  const [pageUrl, setPageUrl] = useState("");
 
   const [form, setForm] = useState({
     firstName: "",
@@ -32,6 +32,20 @@ export default function leadform() {
   const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [error, setError] = useState("");
+
+  // NEW: grab pageUrl from query or referrer
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const fromParam = params.get("parentUrl");
+      if (fromParam) {
+        setPageUrl(decodeURIComponent(fromParam));
+      } else {
+        const ref = document.referrer;
+        setPageUrl(ref && ref !== "" ? ref : window.location.href);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     let timer;
@@ -60,7 +74,6 @@ export default function leadform() {
     setLoading(true);
     setError("");
     try {
-      // Normalize phone number for AU/BD
       let normalizedPhone = normalizePhoneNumber(form.contactNumber);
       const res = await fetch("/api/contract-send-otp", {
         method: "POST",
@@ -84,7 +97,6 @@ export default function leadform() {
     setLoading(true);
     setError("");
     try {
-      // Normalize phone number for AU/BD
       let normalizedPhone = normalizePhoneNumber(form.contactNumber);
       const res = await fetch("/api/contract-verify-otp", {
         method: "POST",
@@ -106,7 +118,6 @@ export default function leadform() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!otpSent) {
-      // First step: send OTP to the contact number
       if (!form.contactNumber || form.contactNumber.trim().length < 6) {
         setError("Please enter a valid contact number before verifying.");
         return;
@@ -118,10 +129,9 @@ export default function leadform() {
       setError("Please verify the OTP sent to your contact number.");
       return;
     }
-    // Final submit
     setLoading(true);
 
-    // Build the payload for webhook, preserving order
+    // Build the payload for webhook, preserving order + pageUrl
     const payload = {
       contactDetails: {
         firstName: form.firstName,
@@ -129,9 +139,12 @@ export default function leadform() {
         email: form.email,
         contactNumber: form.contactNumber,
       },
+      meta: {
+        pageUrl, // NEW: where form was embedded
+        submittedAt: new Date().toISOString(),
+      },
     };
 
-    // Submit contract data to backend API, which will handle the webhook
     try {
       const res = await fetch("/api/contract", {
         method: "POST",
@@ -140,12 +153,7 @@ export default function leadform() {
       });
       if (res.ok) {
         setSubmitSuccess(true);
-        setForm({
-          firstName: "",
-          lastName: "",
-          email: "",
-          contactNumber: "",
-        });
+        setForm({ firstName: "", lastName: "", email: "", contactNumber: "" });
         setOtpSent(false);
         setOtp("");
         setOtpVerified(false);
@@ -193,12 +201,12 @@ export default function leadform() {
                 r="10"
                 stroke="#1DA6DF"
                 strokeWidth="4"
-              ></circle>
+              />
               <path
                 className="opacity-75"
                 fill="#1DA6DF"
                 d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-              ></path>
+              />
             </svg>
             <span className="text-[#1DA6DF] font-semibold text-lg">
               Submitting...
@@ -206,13 +214,13 @@ export default function leadform() {
           </div>
         </div>
       )}
-      {submitSuccess ? (
+      {submitSuccess && (
         <div className="flex flex-col items-center justify-center mt-10">
           <div className="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded text-center font-semibold mb-6">
             Form submit complete
           </div>
         </div>
-      ) : null}
+      )}
       {!submitSuccess && (
         <>
           {/* Section Card */}
@@ -282,6 +290,11 @@ export default function leadform() {
                 <span className="text-xs text-gray-500">
                   Enter your number without country code (e.g. 412345678).
                 </span>
+                {error && !otpSent && (
+                  <div className="text-red-500 mt-2 text-right">
+                    Please use a active number
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -289,7 +302,7 @@ export default function leadform() {
       )}
 
       {/* OTP Verification UI */}
-      {otpSent && !otpVerified &&(
+      {otpSent && !otpVerified && (
         <div className="bg-white border-1 border-[#1DA6DF] rounded-2xl shadow p-6 space-y-4">
           <div className="flex items-center justify-between gap-10">
             <input
@@ -335,10 +348,10 @@ export default function leadform() {
       )}
 
       {!submitSuccess && (
-        <div className="text-right">
+        <div className="w-full text-center">
           <button
             type="submit"
-            className={`px-8 py-3 rounded-lg font-semibold transition ${
+            className={`w-full px-8 py-3 rounded-lg font-semibold transition ${
               loading || (otpSent && !otpVerified)
                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                 : "bg-[#1DA6DF] text-white hover:bg-[#199CCF]"
@@ -354,10 +367,6 @@ export default function leadform() {
               : "Verify & Submit"}
           </button>
         </div>
-      )}
-
-      {error && !otpSent && (
-        <div className="text-red-500 mt-2 text-right">{error}</div>
       )}
     </form>
   );

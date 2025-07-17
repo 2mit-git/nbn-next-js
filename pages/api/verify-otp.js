@@ -66,3 +66,113 @@ export default async function handler(req, res) {
   // 5) Done
   return res.status(200).json({ ok: true });
 }
+  res.setHeader("Set-Cookie", serialize("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: (10*60) * 60, // 1 hour
+  }));
+
+  // 5) Done
+  return res.status(200).json({ ok: true });
+}
+  res.setHeader("Set-Cookie", serialize("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: (10*60) * 60, // 1 hour
+  }));
+
+  // 5) Done
+  return res.status(200).json({ ok: true });
+}
+  res.setHeader("Set-Cookie", serialize("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: (10*60) * 60, // 1 hour
+  }));
+
+  // 5) Done
+  return res.status(200).json({ ok: true });
+}
+  res.setHeader("Set-Cookie", serialize("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: (10*60) * 60, // 1 hour
+  }));
+
+  // 5) Done
+  return res.status(200).json({ ok: true });
+}
+  res.setHeader("Set-Cookie", serialize("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: (10*60) * 60, // 1 hour
+  }));
+
+  // 5) Done
+  return res.status(200).json({ ok: true });
+}
+  res.setHeader("Set-Cookie", serialize("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: (10*60) * 60, // 1 hour
+  }));
+
+  // 5) Done
+  return res.status(200).json({ ok: true });
+}
+  res.setHeader("Set-Cookie", serialize("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: (10*60) * 60, // 1 hour
+  }));
+
+  // 5) Done
+  return res.status(200).json({ ok: true });
+}
+  res.setHeader("Set-Cookie", serialize("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: (10*60) * 60, // 1 hour
+  }));
+
+  // 5) Done
+  return res.status(200).json({ ok: true });
+}
+  res.setHeader("Set-Cookie", serialize("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: (10*60) * 60, // 1 hour
+  }));
+
+  // 5) Done
+  return res.status(200).json({ ok: true });
+}
+  res.setHeader("Set-Cookie", serialize("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: (10*60) * 60, // 1 hour
+  }));
+
+  // 5) Done
+  return res.status(200).json({ ok: true });
+}
