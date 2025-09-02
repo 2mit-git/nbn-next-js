@@ -54,6 +54,7 @@ export default async function handler(req, res) {
     }
     const {
       categories,
+      types,
       speed,
       title,
       subtitle,
@@ -63,23 +64,28 @@ export default async function handler(req, res) {
       recommendation,
     } = req.body;
 
+    // Minimal validation (added `types`)
     if (
       !categories ||
       !Array.isArray(categories) ||
       categories.length === 0 ||
+      !types ||
+      !Array.isArray(types) ||
+      types.length === 0 ||
       !speed ||
       !title ||
       actualPrice == null ||  // allow zero
       !Array.isArray(termsAndConditions)
     ) {
       return res.status(400).json({
-        error: "categories, speed, title and actualPrice are required."
+        error: "categories, types, speed, title and actualPrice are required."
       });
     }
 
     try {
       const created = await Product.create({
         categories,
+        types,
         speed,
         title,
         subtitle,
@@ -103,6 +109,7 @@ export default async function handler(req, res) {
     const {
       id,
       categories,
+      types,
       speed,
       title,
       subtitle,
@@ -121,6 +128,7 @@ export default async function handler(req, res) {
         id,
         {
           categories,
+          types,
           speed,
           title,
           subtitle,

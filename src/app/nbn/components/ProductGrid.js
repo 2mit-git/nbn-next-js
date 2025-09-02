@@ -66,8 +66,6 @@ export default function ProductGrid({ tech, onSelectPlan, onLoadingChange }) {
   if (error) return <p className="m-10 text-red-500">{error}</p>;
 
   // Only show plans matching the selected tech, sorted by price (low to high)
-
-  // inside your component render/body
   const list = tech
     ? all
         .filter((p) => {
@@ -129,128 +127,184 @@ export default function ProductGrid({ tech, onSelectPlan, onLoadingChange }) {
     return min;
   }, Infinity);
 
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-6 items-stretch">
-      {list.map((p) => (
-        // ⬅️ CHANGED: Using Uiverse-style card design
-        <div
-          key={
-            typeof p._id === "object" && p._id.$oid ? p._id.$oid : String(p._id)
-          }
-          className="rounded-2xl shadow-lg p-3 bg-[#1DA6DF] text-gray-600 mx-auto max-w-xs w-full h-full flex"
-        >
-          <div className="relative flex flex-col justify-between items-stretch p-5 pt-20 pb-6 bg-[#c1e4f5] rounded-xl min-h-[500px] h-full w-full">
-            {/* Price badge */}
-            {(() => {
-              const { down, up } = getSpeeds(p.speed);
+  // CircularProgress component
+  const CircularProgress = ({ speed }) => {
+    const { down } = getSpeeds(speed);
+    const percentage = Math.min((down / 1000) * 100, 100); // Assuming 1000 Mbps as max
+    const circumference = 2 * Math.PI * 45; // radius = 45
+    const strokeDasharray = circumference;
+    const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
-              // Show "Best Deal" only if down is 100 and up is the minimum for 100Mbps plans
-              if (down === 100 && up === minUpFor100) {
-                return (
-                  <div className="mt-[-12px] me-[-12px] absolute top-0 right-0 flex flex-col items-center bg-primary rounded-l-full rounded-tr-2xl py-2 px-3 text-xl sm:text-2xl">
-                    <div>
-                      <span className="font-bold text-[#FFFFFF]">
-                        <p className="text-xs font-bold text-[#FFFFFF] text-end w-full">Best Deal</p>${p.discountPrice}
-                        <small className="text-xs ml-1 text-[#FFFFFF]">
-                          / month
-                        </small>
-                      </span>
-                    </div>
-                    <div className="flex w-full justify-end">
-                      <small className="block m-0 p-0 text-[11px] text-[#FFFFFF] leading-none text-end">
-                        For the first 6 months
-                        <br />
-                        after that <strong>{p.actualPrice}</strong>/mth
-                      </small>
-                    </div>
-                  </div>
-                );
-              }
-              // Default badge for other plans
-              return (
-                <div className="mt-[-12px] me-[-12px] absolute top-0 right-0 flex flex-col items-center bg-[#0B3559] rounded-l-full rounded-tr-2xl py-2 px-3 text-xl sm:text-2xl">
-                  <div>
-                    <span className="font-bold text-white">
-                      ${p.discountPrice}
-                      <small className="text-xs ml-1 text-white">/ month</small>
+    return (
+      <div className="relative flex items-center justify-center w-32 h-32">
+        <svg className="transform -rotate-90 w-32 h-32" viewBox="0 0 100 100">
+          {/* Background circle */}
+          <circle
+            cx="50"
+            cy="50"
+            r="45"
+            stroke="#E5E7EB"
+            strokeWidth="8"
+            fill="transparent"
+          />
+          {/* Progress circle */}
+          <circle
+            cx="50"
+            cy="50"
+            r="45"
+            stroke="#1DA6DF"
+            strokeWidth="8"
+            fill="transparent"
+            strokeDasharray={strokeDasharray}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            className="transition-all duration-300"
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-2xl font-bold text-gray-800">{down}</span>
+          <span className="text-sm text-gray-600">Mbps</span>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {list.map((p) => {
+        const { down, up } = getSpeeds(p.speed);
+        const isBestDeal = down === 100 && up === minUpFor100;
+
+        return (
+          <div
+            key={
+              typeof p._id === "object" && p._id.$oid
+                ? p._id.$oid
+                : String(p._id)
+            }
+            className="relative bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col h-full"
+          >
+            {/* Best Deal Badge */}
+            {isBestDeal && (
+              <div className="absolute top-0 left-0 right-0 bg-[#1DA6DF] text-white text-center py-2 text-sm font-semibold z-10">
+                BEST DEAL
+              </div>
+            )}
+
+            <div
+              className={`pt-10 flex flex-col h-full ${
+                isBestDeal ? "pt-10" : ""
+              }`}
+            >
+              {/* Header */}
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-2">
+                  {(() => {
+                    const words = p.title.split(" ");
+                    const first = words[0];
+                    const rest = words.slice(1).join(" ");
+                    return (
+                      <>
+                        {first} <span className="text-[#1DA6DF]">{rest}</span>
+                      </>
+                    );
+                  })()}
+                </h3>
+              </div>
+
+              {/* Circular Progress */}
+              <div className="flex justify-center mb-6">
+                <CircularProgress speed={p.speed} />
+              </div>
+
+              {/* Speed indicators */}
+              <div className="mb-4 px-4">
+                <div className="text-center flex justify-evenly w-full">
+                  <div className="flex items-center justify-center mb-1 w-50">
+                    <svg
+                      className="w-4 h-4 text-[#1DA6DF] mr-1"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium text-gray-700">
+                      {down} Mbps
                     </span>
                   </div>
-                  <div className="flex w-full justify-end">
-                    <small className="block m-0 p-0 text-[11px] text-white leading-none text-end">
-                      For the first 6 months
-                      <br />
-                      after that <strong>{p.actualPrice}</strong>/mth
-                    </small>
+                  <div className="flex items-center justify-center mb-1 w-50">
+                    <svg
+                      className="w-4 h-4 text-[#1DA6DF] mr-1 transform rotate-180"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium text-gray-700">
+                      {up} Mbps
+                    </span>
                   </div>
                 </div>
-              );
-            })()}
+                <div className="text-center">
+                  <span className="text-xs text-gray-500">{p.subtitle}</span>
+                </div>
+              </div>
 
-            {/* Main content */}
-            <div className="flex flex-col flex-1 justify-between items-stretch">
-              {/* Top: Title + Subtitle */}
-              <div
-                className="flex flex-col items-stretch mb-2"
-                style={{ minHeight: 90 }}
-              >
-                <p className="text-2xl md:text-base  sm:text-xl font-bold text-white bg-[#1DA6DF] px-3 py-2 rounded-lg text-center mb-2">
-                  {p.speed}
-                </p>
-
-                <p className="text-center text-base  text-gray-700 font-medium min-h-[32px] flex items-center justify-center">
-                  {p.subtitle}
+              {/* Price */}
+              <div className="text-center mb-6 text-[#1DA6DF]">
+                <div className="text-3xl font-bold ">
+                  ${p.discountPrice}
+                  <span className="text-lg font-normal">/Month</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  for first 6 months, then ${p.actualPrice}/month
                 </p>
               </div>
-              {/* Features list (T&C) */}
-              <div
-                className="flex flex-col justify-start"
-                style={{ minHeight: 110 }}
-              >
-                <div className="divider my-2"></div>
-                <ul className="flex flex-col space-y-2 mt-2 w-full">
-                  {p.termsAndConditions.map((t, i) => (
-                    <li key={i} className="flex items-center space-x-2">
-                      <span className="flex items-center justify-center w-5 h-5 bg-teal-500 text-white rounded-full">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          width="14"
-                          height="14"
-                        >
-                          <path fill="none" d="M0 0h24v24H0z" />
-                          <path
-                            d="M10 15.172l9.192-9.193 1.415 1.414L10 18l-6.364-6.364 1.414-1.414z"
-                            fill="currentColor"
-                          />
-                        </svg>
-                      </span>
-                      <span className="text-gray-800 text-sm">{t}</span>
-                    </li>
-                  ))}
-                </ul>
+
+              <div className="bg-[#1DA6DF] text-white p-4   flex-grow flex flex-col">
+                {/* Features */}
+                <div className="flex-1">
+                  <h4 className="font-extrabold mb-3">Key Features</h4>
+                  <ul >
+                    {p.termsAndConditions.map((feature, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="text-white mr-2">•</span>
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                {/* Recommendation */}
+                <div className="mt-6">
+                  <hr />
+                  <h4 className="font-extrabold mb-2">Recommended for</h4>
+                  <p className="text-sm">{p.recommendation}</p>
+                </div>
+
+                {/* Select Plan Button */}
+                <button
+                  className={`w-full p-3 mt-5 rounded-lg font-semibold text-black transition-colors ${
+                    isBestDeal
+                      ? "bg-white hover:bg-[#d4d4d4]"
+                      : "bg-white  hover:bg-[#d4d4d4]"
+                  }`}
+                  onClick={() => onSelectPlan(p)}
+                >
+                  Select Plan
+                </button>
               </div>
-              {/* Recommended for */}
-              <div
-                className="flex flex-col w-full text-[14px] text-black mb-2 mt-2"
-                style={{ minHeight: 56 }}
-              >
-                <div className="divider my-2"></div>
-                <strong className="mb-1">Recommended for:</strong>
-                <p className="min-h-[24px]">{p.recommendation}</p>
-              </div>
-            </div>
-            {/* Action button */}
-            <div className="w-full flex mt-4">
-              <button
-                className="w-full py-2 sm:py-3 text-center text-white bg-[#0B3559] rounded-lg font-semibold text-base sm:text-lg hover:bg-[#000000] focus:outline-none transition-all"
-                onClick={() => onSelectPlan(p)}
-              >
-                Select plan
-              </button>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

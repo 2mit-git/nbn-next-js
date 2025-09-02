@@ -6,7 +6,11 @@ export default function DashboardProduct() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [alert, setAlert] = useState({ show: false, type: "success", message: "" });
+  const [alert, setAlert] = useState({
+    show: false,
+    type: "success",
+    message: "",
+  });
   const alertTimeoutRef = React.useRef(null);
 
   const [sortKey, setSortKey] = useState(null);
@@ -18,15 +22,17 @@ export default function DashboardProduct() {
     speed: "",
     actualPrice: 0,
     discountPrice: 0,
-    termsAndConditions: "",   // single string in form
+    termsAndConditions: "", // single string in form
     recommendation: "",
-    categories: []
+    categories: [],
+    types: [],
   });
 
   const [editingId, setEditingId] = useState(null);
   const [edited, setEdited] = useState({});
 
-  const categories = ["All", "FTTP", "HFC", "FTTN","FTTC","FTTB", "Wireless"];
+  const categories = ["All", "FTTP", "HFC", "FTTN", "FTTC", "FTTB", "Wireless"];
+  const types = ["Business", "Residential"];
 
   // Cache key
   const CACHE_KEY = "nbn_products_cache";
@@ -58,18 +64,23 @@ export default function DashboardProduct() {
     } catch (e) {}
     if (!usedCache) {
       fetch("/api/products")
-        .then(res => res.ok ? res.json() : Promise.reject("Failed to fetch products"))
-        .then(data => {
+        .then((res) =>
+          res.ok ? res.json() : Promise.reject("Failed to fetch products")
+        )
+        .then((data) => {
           setProducts(data.products || []);
           setLoading(false);
           if (typeof window !== "undefined") {
             localStorage.setItem(
               CACHE_KEY,
-              JSON.stringify({ products: data.products, updatedAt: data.updatedAt || new Date().toISOString() })
+              JSON.stringify({
+                products: data.products,
+                updatedAt: data.updatedAt || new Date().toISOString(),
+              })
             );
           }
         })
-        .catch(err => {
+        .catch((err) => {
           setError("Failed to load products from API.");
           setLoading(false);
         });
@@ -83,12 +94,11 @@ export default function DashboardProduct() {
       ...newProduct,
       termsAndConditions: newProduct.termsAndConditions
         .split("\n")
-        .map(l => l.trim())
-        .filter(l => l),
+        .map((l) => l.trim())
+        .filter((l) => l),
       actualPrice: Number(newProduct.actualPrice),
       discountPrice: Number(newProduct.discountPrice),
     };
-    
 
     try {
       const res = await fetch("/api/products", {
@@ -108,11 +118,19 @@ export default function DashboardProduct() {
         discountPrice: 0,
         termsAndConditions: "",
         recommendation: "",
-        categories: []
+        categories: [],
+        types: [],
       });
       if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
-      setAlert({ show: true, type: "success", message: "Product has been created successfully!" });
-      alertTimeoutRef.current = setTimeout(() => setAlert(a => ({ ...a, show: false })), 6000);
+      setAlert({
+        show: true,
+        type: "success",
+        message: "Product has been created successfully!",
+      });
+      alertTimeoutRef.current = setTimeout(
+        () => setAlert((a) => ({ ...a, show: false })),
+        6000
+      );
       // After add, fetch fresh and update cache
       if (typeof window !== "undefined") {
         try {
@@ -122,7 +140,10 @@ export default function DashboardProduct() {
             setProducts(data.products || []);
             localStorage.setItem(
               CACHE_KEY,
-              JSON.stringify({ products: data.products, updatedAt: data.updatedAt })
+              JSON.stringify({
+                products: data.products,
+                updatedAt: data.updatedAt,
+              })
             );
           }
         } catch (e) {}
@@ -148,7 +169,6 @@ export default function DashboardProduct() {
       actualPrice: Number(edited.actualPrice),
       discountPrice: Number(edited.discountPrice),
     };
-    
 
     try {
       const res = await fetch("/api/products", {
@@ -157,12 +177,20 @@ export default function DashboardProduct() {
         body: JSON.stringify(payload),
       });
       const body = await res.json();
-      if (!res.ok) throw new Error(body.message || "Server rejected the update");
+      if (!res.ok)
+        throw new Error(body.message || "Server rejected the update");
 
       setEditingId(null);
       if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
-      setAlert({ show: true, type: "success", message: "Product has been updated successfully!" });
-      alertTimeoutRef.current = setTimeout(() => setAlert(a => ({ ...a, show: false })), 6000);
+      setAlert({
+        show: true,
+        type: "success",
+        message: "Product has been updated successfully!",
+      });
+      alertTimeoutRef.current = setTimeout(
+        () => setAlert((a) => ({ ...a, show: false })),
+        6000
+      );
       // After update, fetch fresh and update cache
       if (typeof window !== "undefined") {
         try {
@@ -172,7 +200,10 @@ export default function DashboardProduct() {
             setProducts(data.products || []);
             localStorage.setItem(
               CACHE_KEY,
-              JSON.stringify({ products: data.products, updatedAt: data.updatedAt })
+              JSON.stringify({
+                products: data.products,
+                updatedAt: data.updatedAt,
+              })
             );
           }
         } catch (e) {}
@@ -201,11 +232,21 @@ export default function DashboardProduct() {
             setProducts(data.products || []);
             localStorage.setItem(
               CACHE_KEY,
-              JSON.stringify({ products: data.products, updatedAt: data.updatedAt })
+              JSON.stringify({
+                products: data.products,
+                updatedAt: data.updatedAt,
+              })
             );
             if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
-            setAlert({ show: true, type: "danger", message: "Product has been deleted successfully!" });
-            alertTimeoutRef.current = setTimeout(() => setAlert(a => ({ ...a, show: false })), 6000);
+            setAlert({
+              show: true,
+              type: "danger",
+              message: "Product has been deleted successfully!",
+            });
+            alertTimeoutRef.current = setTimeout(
+              () => setAlert((a) => ({ ...a, show: false })),
+              6000
+            );
           }
         } catch (e) {}
       }
@@ -218,7 +259,8 @@ export default function DashboardProduct() {
   const filtered = useMemo(() => {
     if (filterCategory === "All") return products;
     return products.filter(
-      p => Array.isArray(p.categories) && p.categories.includes(filterCategory)
+      (p) =>
+        Array.isArray(p.categories) && p.categories.includes(filterCategory)
     );
   }, [products, filterCategory]);
 
@@ -246,17 +288,37 @@ export default function DashboardProduct() {
             ${alert.type === "success" ? "alert-success" : "alert-error"}`}
         >
           {alert.type === "success" ? (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 shrink-0 stroke-current"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 shrink-0 stroke-current"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           )}
           <span>{alert.message}</span>
           <button
-            onClick={() => setAlert(a => ({ ...a, show: false }))}
+            onClick={() => setAlert((a) => ({ ...a, show: false }))}
             className="ml-auto text-lg font-bold px-2"
             aria-label="Close"
             type="button"
@@ -268,16 +330,24 @@ export default function DashboardProduct() {
       <div className="flex flex-wrap gap-4 mb-6">
         <select
           value={filterCategory}
-          onChange={e => setFilterCategory(e.target.value)}
+          onChange={(e) => setFilterCategory(e.target.value)}
           className="select"
         >
-          {categories.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
+          {categories.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
           ))}
         </select>
-        <button onClick={() => setSortKey("speed")} className="btn">Sort by Speed</button>
-        <button onClick={() => setSortKey("actualPrice")} className="btn">Sort by Price</button>
-        <button onClick={() => setSortKey(null)} className="btn">Clear Sort</button>
+        <button onClick={() => setSortKey("speed")} className="btn">
+          Sort by Speed
+        </button>
+        <button onClick={() => setSortKey("actualPrice")} className="btn">
+          Sort by Price
+        </button>
+        <button onClick={() => setSortKey(null)} className="btn">
+          Clear Sort
+        </button>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
           className="btn btn-primary ml-auto"
@@ -299,8 +369,8 @@ export default function DashboardProduct() {
                 type="text"
                 className="input w-full"
                 value={newProduct.title}
-                onChange={e =>
-                  setNewProduct(prev => ({ ...prev, title: e.target.value }))
+                onChange={(e) =>
+                  setNewProduct((prev) => ({ ...prev, title: e.target.value }))
                 }
                 required
               />
@@ -312,8 +382,11 @@ export default function DashboardProduct() {
                 type="text"
                 className="input w-full"
                 value={newProduct.subtitle}
-                onChange={e =>
-                  setNewProduct(prev => ({ ...prev, subtitle: e.target.value }))
+                onChange={(e) =>
+                  setNewProduct((prev) => ({
+                    ...prev,
+                    subtitle: e.target.value,
+                  }))
                 }
                 required
               />
@@ -325,8 +398,8 @@ export default function DashboardProduct() {
                 type="text"
                 className="input w-full"
                 value={newProduct.speed}
-                onChange={e =>
-                  setNewProduct(prev => ({ ...prev, speed: e.target.value }))
+                onChange={(e) =>
+                  setNewProduct((prev) => ({ ...prev, speed: e.target.value }))
                 }
                 placeholder="e.g. 100Mbps/20Mbps"
                 required
@@ -339,10 +412,11 @@ export default function DashboardProduct() {
                 type="number"
                 className="input w-full"
                 value={newProduct.actualPrice}
-                onChange={e =>
-                  setNewProduct(prev => ({
+                onChange={(e) =>
+                  setNewProduct((prev) => ({
                     ...prev,
-                    actualPrice: e.target.value === "" ? 0 : Number(e.target.value)
+                    actualPrice:
+                      e.target.value === "" ? 0 : Number(e.target.value),
                   }))
                 }
                 required
@@ -355,10 +429,11 @@ export default function DashboardProduct() {
                 type="number"
                 className="input w-full"
                 value={newProduct.discountPrice}
-                onChange={e =>
-                  setNewProduct(prev => ({
+                onChange={(e) =>
+                  setNewProduct((prev) => ({
                     ...prev,
-                    discountPrice: e.target.value === "" ? 0 : Number(e.target.value)
+                    discountPrice:
+                      e.target.value === "" ? 0 : Number(e.target.value),
                   }))
                 }
                 required
@@ -371,22 +446,27 @@ export default function DashboardProduct() {
                 type="text"
                 className="input w-full"
                 value={newProduct.recommendation}
-                onChange={e =>
-                  setNewProduct(prev => ({ ...prev, recommendation: e.target.value }))
+                onChange={(e) =>
+                  setNewProduct((prev) => ({
+                    ...prev,
+                    recommendation: e.target.value,
+                  }))
                 }
               />
             </div>
             {/* Terms & Conditions */}
             <div className="col-span-2">
-              <label className="block">Terms &amp; Conditions (one per line)</label>
+              <label className="block">
+                Terms &amp; Conditions (one per line)
+              </label>
               <textarea
                 className="textarea w-full"
                 rows={3}
                 value={newProduct.termsAndConditions}
-                onChange={e =>
-                  setNewProduct(prev => ({
+                onChange={(e) =>
+                  setNewProduct((prev) => ({
                     ...prev,
-                    termsAndConditions: e.target.value
+                    termsAndConditions: e.target.value,
                   }))
                 }
               />
@@ -395,19 +475,19 @@ export default function DashboardProduct() {
             <div className="col-span-2">
               <label className="block mb-1">Categories</label>
               <div className="flex flex-wrap space-x-4">
-                {categories.slice(1).map(cat => (
+                {categories.slice(1).map((cat) => (
                   <label key={cat} className="inline-flex items-center">
                     <input
                       type="checkbox"
                       className="checkbox"
                       checked={newProduct.categories.includes(cat)}
-                      onChange={e => {
+                      onChange={(e) => {
                         const checked = e.target.checked;
-                        setNewProduct(prev => ({
+                        setNewProduct((prev) => ({
                           ...prev,
                           categories: checked
                             ? [...prev.categories, cat]
-                            : prev.categories.filter(c => c !== cat)
+                            : prev.categories.filter((c) => c !== cat),
                         }));
                       }}
                     />
@@ -416,8 +496,36 @@ export default function DashboardProduct() {
                 ))}
               </div>
             </div>
+
+            {/* Type */}
+            <div className="col-span-2">
+              <label className="block mb-1">Type</label>
+              <div className="flex flex-wrap space-x-4">
+                {types.map((type) => (
+                  <label key={type} className="inline-flex items-center">
+                    <input
+                      type="checkbox"
+                      className="checkbox"
+                      checked={newProduct.types.includes(type)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setNewProduct((prev) => ({
+                          ...prev,
+                          types: checked
+                            ? [...prev.types, type]
+                            : prev.types.filter((t) => t !== type),
+                        }));
+                      }}
+                    />
+                    <span className="ml-2">{type}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
-          <button type="submit" className="btn btn-success">Save Package</button>
+          <button type="submit" className="btn btn-success">
+            Save Package
+          </button>
         </form>
       )}
 
@@ -434,6 +542,7 @@ export default function DashboardProduct() {
               <th>T&C</th>
               <th>Recommendation</th>
               <th>Categories</th>
+              <th>Types</th> {/* NEW */}
               <th>Actions</th>
             </tr>
           </thead>
@@ -441,16 +550,16 @@ export default function DashboardProduct() {
             {displayProducts.map((p, idx) => (
               <tr key={p._id}>
                 <th>{idx + 1}</th>
-                {["title", "subtitle", "speed"].map(field => (
+                {["title", "subtitle", "speed"].map((field) => (
                   <td key={field}>
                     {editingId === p._id ? (
                       <input
                         className="input input-sm w-full"
                         value={edited[field] || ""}
-                        onChange={e =>
-                          setEdited(prev => ({
+                        onChange={(e) =>
+                          setEdited((prev) => ({
                             ...prev,
-                            [field]: e.target.value
+                            [field]: e.target.value,
                           }))
                         }
                       />
@@ -459,17 +568,17 @@ export default function DashboardProduct() {
                     )}
                   </td>
                 ))}
-                {["actualPrice", "discountPrice"].map(field => (
+                {["actualPrice", "discountPrice"].map((field) => (
                   <td key={field}>
                     {editingId === p._id ? (
                       <input
                         type="number"
                         className="input input-sm w-full"
                         value={edited[field] || 0}
-                        onChange={e =>
-                          setEdited(prev => ({
+                        onChange={(e) =>
+                          setEdited((prev) => ({
                             ...prev,
-                            [field]: Number(e.target.value)
+                            [field]: Number(e.target.value),
                           }))
                         }
                       />
@@ -484,13 +593,13 @@ export default function DashboardProduct() {
                       className="textarea textarea-sm w-full"
                       rows={3}
                       value={(edited.termsAndConditions || []).join("\n")}
-                      onChange={e =>
-                        setEdited(prev => ({
+                      onChange={(e) =>
+                        setEdited((prev) => ({
                           ...prev,
                           termsAndConditions: e.target.value
                             .split("\n")
-                            .map(l => l.trim())
-                            .filter(l => l)
+                            .map((l) => l.trim())
+                            .filter((l) => l),
                         }))
                       }
                     />
@@ -508,10 +617,10 @@ export default function DashboardProduct() {
                     <input
                       className="input input-sm w-full"
                       value={edited.recommendation || ""}
-                      onChange={e =>
-                        setEdited(prev => ({
+                      onChange={(e) =>
+                        setEdited((prev) => ({
                           ...prev,
-                          recommendation: e.target.value
+                          recommendation: e.target.value,
                         }))
                       }
                     />
@@ -523,18 +632,26 @@ export default function DashboardProduct() {
                   {editingId === p._id ? (
                     <div className="flex flex-wrap gap-2">
                       {categories.slice(1).map((cat) => (
-                        <label key={cat} className="inline-flex items-center gap-1">
+                        <label
+                          key={cat}
+                          className="inline-flex items-center gap-1"
+                        >
                           <input
                             type="checkbox"
                             className="checkbox checkbox-xs"
-                            checked={Array.isArray(edited.categories) && edited.categories.includes(cat)}
-                            onChange={e => {
+                            checked={
+                              Array.isArray(edited.categories) &&
+                              edited.categories.includes(cat)
+                            }
+                            onChange={(e) => {
                               const checked = e.target.checked;
-                              setEdited(prev => ({
+                              setEdited((prev) => ({
                                 ...prev,
                                 categories: checked
                                   ? [...(prev.categories || []), cat]
-                                  : (prev.categories || []).filter(c => c !== cat)
+                                  : (prev.categories || []).filter(
+                                      (c) => c !== cat
+                                    ),
                               }));
                             }}
                           />
@@ -542,10 +659,50 @@ export default function DashboardProduct() {
                         </label>
                       ))}
                     </div>
+                  ) : Array.isArray(p.categories) ? (
+                    p.categories.join(", ")
                   ) : (
-                    Array.isArray(p.categories) ? p.categories.join(", ") : ""
+                    ""
                   )}
                 </td>
+
+                {/* Types column */}
+                <td>
+                  {editingId === p._id ? (
+                    <div className="flex flex-wrap gap-2">
+                      {types.map((type) => (
+                        <label
+                          key={type}
+                          className="inline-flex items-center gap-1"
+                        >
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-xs"
+                            checked={
+                              Array.isArray(edited.types) &&
+                              edited.types.includes(type)
+                            }
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setEdited((prev) => ({
+                                ...prev,
+                                types: checked
+                                  ? [...(prev.types || []), type]
+                                  : (prev.types || []).filter((t) => t !== type),
+                              }));
+                            }}
+                          />
+                          <span className="text-xs">{type}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : Array.isArray(p.types) ? (
+                    p.types.join(", ")
+                  ) : (
+                    ""
+                  )}
+                </td>
+
                 <td className="space-x-2 py-2">
                   {editingId === p._id ? (
                     <div className="flex gap-2">
@@ -589,11 +746,14 @@ export default function DashboardProduct() {
           border-collapse: separate;
           border-spacing: 0 0.25rem;
         }
-        table th, table td {
+        table th,
+        table td {
           padding: 0.5rem 0.75rem;
           vertical-align: middle;
         }
-        input.input, input[type="number"], textarea.textarea {
+        input.input,
+        input[type="number"],
+        textarea.textarea {
           min-width: 80px;
           padding: 0.25rem 0.5rem;
         }

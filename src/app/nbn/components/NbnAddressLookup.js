@@ -189,52 +189,71 @@ export default function NbnAddressLookup({
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto px-4">
-      {/* Search Box */}
-      <div className="relative bg-gray-100 rounded-2xl shadow-md p-1.5 hover:scale-105 border border-[#1DA6DF] transition">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg
-            className="h-5 w-5 text-[#1DA6DF]"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-            />
-          </svg>
+      <div className="flex w-full gap-5">
+        {/* Search Box */}
+        <div className="relative bg-gray-100 rounded-lg shadow-md p-1.5 hover:scale-105 border border-[#1DA6DF] transition w-full">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg
+              className="h-5 w-5 text-[#1DA6DF]"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+              />
+            </svg>
+          </div>
+          <input
+            type="text"
+            className="w-full pl-10 py-2 text-gray-700 bg-transparent rounded-lg focus:outline-none"
+            placeholder="Type your address..."
+            value={controlledQuery}
+            onChange={(e) => {
+              controlledSetQuery(e.target.value);
+              controlledSetNbnResult(null);
+              onTechChange(null);
+            }}
+          />
+          {(isTyping || loadingSuggest || loadingNbn) && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="w-5 h-5 border-4 border-t-blue-400 rounded-full animate-spin" />
+            </div>
+          )}
+          {controlledSuggestions.length > 0 && !controlledNbnResult && (
+            <div className="absolute z-20 w-full mt-2 bg-white border rounded-2xl shadow-md">
+              {controlledSuggestions.map((f) => (
+                <div
+                  key={f.properties.place_id}
+                  className="px-4 py-2 hover:bg-[#1DA6DF] hover:text-white flex items-center cursor-pointer"
+                  onClick={() => handleSelect(f)}
+                >
+                  {f.properties.formatted}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <input
-          type="text"
-          className="w-full pl-10 py-2 text-gray-700 bg-transparent rounded-lg focus:outline-none"
-          placeholder="Type your address..."
-          value={controlledQuery}
-          onChange={(e) => {
-            controlledSetQuery(e.target.value);
-            controlledSetNbnResult(null);
-            onTechChange(null);
-          }}
-        />
-        {(isTyping || loadingSuggest || loadingNbn) && (
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <div className="w-5 h-5 border-4 border-t-blue-400 rounded-full animate-spin" />
-          </div>
-        )}
-        {controlledSuggestions.length > 0 && !controlledNbnResult && (
-          <div className="absolute z-20 w-full mt-2 bg-white border rounded-2xl shadow-md">
-            {controlledSuggestions.map((f) => (
-              <div
-                key={f.properties.place_id}
-                className="px-4 py-2 hover:bg-[#1DA6DF] hover:text-white flex items-center cursor-pointer"
-                onClick={() => handleSelect(f)}
-              >
-                {f.properties.formatted}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
+        {/* Business/Residential */}
+        <div className="flex gap-4 flex-col md:flex-row">
+          {["business", "residential"].map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => setSelectedConnectionType(type)}
+              className={`flex-1 flex flex-col items-center border rounded-lg p-3 cursor-pointer transform hover:scale-105 transition font-medium text-lg ${
+                selectedConnectionType === type
+                  ? "bg-[#1DA6DF] text-white border-[#1DA6DF]"
+                  : "bg-gray-50 text-[#1DA6DF] border-[#1DA6DF]"
+              }`}
+            >
+              {type.charAt(0).toUpperCase() + type.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
       {/* Loading Skeleton */}
       {loadingNbn && (
         <div className="space-y-4 animate-pulse">
@@ -249,7 +268,7 @@ export default function NbnAddressLookup({
       {/* NBN Result */}
       {controlledNbnResult && (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-6">
-          <div className="flex items-center space-x-3">
+          {/* <div className="flex items-center space-x-3">
             <svg
               className="w-8 h-8 text-[#1DA6DF]"
               xmlns="http://www.w3.org/2000/svg"
@@ -268,112 +287,57 @@ export default function NbnAddressLookup({
               {controlledNbnResult.addressDetail.formattedAddress ||
                 controlledSelectedAddr}
             </h2>
-          </div>
+          </div> */}
 
-          {/* Upgrade Options */}
-          <div className="bg-gray-100 rounded-2xl p-5">
-            {canUpgrade ? (
-              <p className="text-center text-2xl text-[#1DA6DF] font-bold mb-6">
-                You’re eligible for an nbn® Fibre Upgrade with $0 installation
+          {/* Connect Now Section */}
+         
+            <h3 className="text-2xl font-bold text-gray-800 mb-3">
+              {canUpgrade ? "Connect now" : "Great news!"}
+            </h3>
+            <p className="text-gray-700 text-base leading-relaxed mb-4">
+              {canUpgrade
+                ? "Great news! Your address qualifies for high-speed broadband on the nbn network across a range of great plans."
+                : `High-speed broadband is available at your address. Your nbn connection is ${controlledNbnResult.addressDetail.techType.toUpperCase()} and it's available across a range of great plans.`}
+            </p>
+          
+
+          {/* Fibre Upgrade Section */}
+          {canUpgrade && (
+            <div>
+               <h3 className="text-2xl font-bold text-gray-800 mb-3">
+                Fibre Upgrade with FREE installation
+              </h3>
+              <p className="text-gray-700 text-base leading-relaxed mb-6">
+                Your address is eligible for a Fibre Upgrade with FREE
+                installation with speeds of up to 1000Mbps.
               </p>
-            ) : (
-              <p className="text-center text-2xl text-[#1DA6DF] font-bold mb-6">
-                {controlledNbnResult.addressDetail.techType.toUpperCase()} is
-                available at your address
-              </p>
-            )}
-
-            <div
-              className={`grid gap-6 ${
-                canUpgrade ? "md:grid-cols-2" : "md:grid-cols-1"
-              }`}
-            >
-              <div
-                role="button"
-                onClick={() => {
-                  const pkg = canUpgrade ? "skip" : "connect";
-                  setPendingPackage(pkg);
-                  setSelectedTab?.("regular"); // ✅ NEW: set regular tab
-                }}
-                className={`flex flex-col items-center border rounded-lg p-4 cursor-pointer transform hover:scale-105 transition ${
-                  pendingPackage === (canUpgrade ? "skip" : "connect")
-                    ? "bg-[#1DA6DF] text-white border-[#1DA6DF]"
-                    : "border border-[#1DA6DF] bg-gray-50"
-                }`}
-              >
-                {canUpgrade ? "Skip Upgrade" : "Connect Now"}
-              </div>
-
-              {canUpgrade && (
-                <div
-                  role="button"
-                  onClick={() => {
-                    onTechChange("FTTP_Upgrade");
-                    setPendingPackage("fibre");
-                    setSelectedTab?.("upgrade");
-                  }}
-                  className={`flex flex-col items-center rounded-lg p-4 cursor-pointer transform transition hover:scale-105 ${
-                    pendingPackage === "fibre"
-                      ? "bg-[#1DA6DF] text-white border-[#1DA6DF]"
-                      : "border border-[#1DA6DF] bg-gray-50 shadow-[0_0_15px_#1DA6DF] hover:shadow-[0_0_25px_#1DA6DF]"
-                  }`}
-                >
-                  Upgrade Now
-                </div>
-              )}
             </div>
+          )}
 
-            {canUpgrade && (
-              <p className="text-sm text-gray-600 mt-4">
-                $0 Fibre Upgrade available for standard installations only.
-                Offer valid with eligible high-speed plans. A compatible
-                high-speed modem is required — additional charges may apply.
-                Installation may take approximately 2 to 6 weeks.
-              </p>
-            )}
-          </div>
-
-          {/* Business/Residential */}
-          {pendingPackage && (
-            <div className="mt-6">
-              <div className="text-lg font-semibold mb-2">
-                You are looking for connection in
-              </div>
-              <div className="flex gap-4 flex-col md:flex-row">
-                {["business", "residential"].map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => setSelectedConnectionType(type)}
-                    className={`flex-1 flex flex-col items-center border rounded-lg p-4 cursor-pointer transform hover:scale-105 transition font-medium text-lg ${
-                      selectedConnectionType === type
-                        ? "bg-[#1DA6DF] text-white border-[#1DA6DF]"
-                        : "bg-gray-50 text-[#1DA6DF] border-[#1DA6DF]"
-                    }`}
-                  >
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </button>
-                ))}
-              </div>
-              <div className="flex justify-end mt-4">
-                <button
-                  type="button"
-                  disabled={!selectedConnectionType}
-                  onClick={() => {
-                    if (pendingPackage && selectedConnectionType) {
-                      onPackageSelect(pendingPackage, selectedConnectionType);
-                    }
-                  }}
-                  className={`px-6 py-2 rounded-lg font-semibold transition ${
-                    selectedConnectionType
-                      ? "bg-[#1DA6DF] text-white hover:bg-[#178ac0]"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  }`}
+          {/* Disclaimer */}
+          <button className="bg-[#1DA6DF] hover:bg-[#086085] cursor-pointer  text-white px-8 py-3 rounded-lg font-semibold text-base transition-all duration-200 flex items-center space-x-2 hover:shadow-lg">
+                <span>Get started</span>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  Continue
-                </button>
-              </div>
-            </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+          {canUpgrade && (
+            <p className="text-xs text-gray-500 leading-relaxed pt-4 border-t border-gray-100">
+              $0 Fibre Upgrade available for standard installations only. Offer
+              valid with eligible high-speed plans. A compatible high-speed
+              modem is required — additional charges may apply. Installation may
+              take approximately 2 to 6 weeks.
+            </p>
           )}
         </div>
       )}
