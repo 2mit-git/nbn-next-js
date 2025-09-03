@@ -1,7 +1,7 @@
 // File: src/app/nbnup/page.js
 "use client";
 import React, { useMemo, useState } from "react";
-import NbnAddressSearching from "./components/nbnAddressSearching";
+import NbnAddressSearching from "./components/NbnAddressSearching";
 import NbnProducts from "./components/NbnProducts";
 import Addons from "./components/Addons";
 import AddonsPbx from "./components/AddonsPbx";
