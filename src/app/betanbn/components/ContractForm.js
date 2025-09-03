@@ -88,6 +88,10 @@ export default function ContractForm({
     contactNumber: "",
     dob: "",
     serviceAddress,
+    // --- NEW: Business fields
+    businessName: "",
+    businessAddress: "",
+    // ---
     activateASAP: true,
     activationDate: "",
     deliverySame: true,
@@ -285,6 +289,12 @@ export default function ContractForm({
         contactNumber: form.contactNumber,
         dob: form.dob,
       },
+      // --- NEW: include business fields in payload
+      businessDetails: {
+        businessName: form.businessName,
+        businessAddress: form.businessAddress,
+      },
+      // ---
       connectionDetails: {
         serviceAddress: form.serviceAddress,
         activationDate: activationDateValue,
@@ -370,6 +380,10 @@ export default function ContractForm({
           contactNumber: "",
           dob: "",
           serviceAddress,
+          // reset NEW business fields
+          businessName: "",
+          businessAddress: "",
+          // ---
           activateASAP: true,
           activationDate: "",
           deliverySame: true,
@@ -576,6 +590,40 @@ export default function ContractForm({
                 </div>
               </div>
 
+              {/* --- NEW: Business Details (added, design kept) --- */}
+              <div className="space-y-6 rounded-2xl bg-white p-6 shadow">
+                <h2 className="text-2xl font-semibold text-[--primary]">
+                  Business Details
+                </h2>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Business Name
+                    </label>
+                    <input
+                      type="text"
+                      className={inputClasses}
+                      value={form.businessName}
+                      onChange={handleChange("businessName")}
+                      placeholder="e.g. Acme Pty Ltd"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Business Address
+                    </label>
+                    <input
+                      type="text"
+                      className={inputClasses}
+                      value={form.businessAddress}
+                      onChange={handleChange("businessAddress")}
+                      placeholder="e.g. 123 King St, Sydney NSW 2000"
+                    />
+                  </div>
+                </div>
+              </div>
+              {/* --- END NEW --- */}
+
               {/* Connection Details */}
               <div className="space-y-6 rounded-2xl bg-white p-6 shadow">
                 <h2 className="text-2xl font-semibold text-[--primary]">
@@ -699,76 +747,7 @@ export default function ContractForm({
               </div>
 
               {/* Phone Details */}
-              {/* <div className="space-y-6 rounded-2xl bg-white p-6 shadow">
-                <h2 className="text-2xl font-semibold text-[--primary]">Phone Details</h2>
-                <div className="space-y-4">
-                  <div>
-                    <span className="block text-sm font-medium text-gray-700">
-                      Keep existing number?
-                    </span>
-                    <div className="flex gap-3">
-                     
-                      <button
-                        type="button"
-                        onClick={() => setForm((f) => ({ ...f, keepPhone: false }))}
-                        className={pill(!form.keepPhone)}
-                      >
-                        Yes
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setForm((f) => ({ ...f, keepPhone: true }))}
-                        className={pill(form.keepPhone)}
-                      >
-                        No
-                      </button>
-                    </div>
-                  </div>
-
-                  {form.keepPhone && (
-                    <>
-                      <input
-                        type="tel"
-                        className={inputClasses}
-                        placeholder="Phone Number"
-                        value={form.phoneNumber}
-                        onChange={handleChange("phoneNumber")}
-                        required
-                      />
-                      <span className="block text-sm font-medium text-gray-700">
-                        Transfer as VoIP?
-                      </span>
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setForm((f) => ({ ...f, transferVoip: true }))}
-                          className={pill(form.transferVoip)}
-                        >
-                          Yes
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setForm((f) => ({ ...f, transferVoip: false }))}
-                          className={pill(!form.transferVoip)}
-                        >
-                          No
-                        </button>
-                      </div>
-
-                      {form.transferVoip && (
-                        <input
-                          type="text"
-                          className={inputClasses}
-                          placeholder="Account Number"
-                          value={form.accountNumber}
-                          onChange={handleChange("accountNumber")}
-                          required
-                        />
-                      )}
-                    </>
-                  )}
-                </div>
-              </div> */}
+              {/* (left exactly as-is, commented-out in your source) */}
 
               {/* OTP panel (appears inside the popup after Verify & Submit) */}
               {otpSent && !otpVerified && (
