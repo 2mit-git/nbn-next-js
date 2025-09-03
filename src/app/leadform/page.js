@@ -4,6 +4,12 @@
 import React, { useState, useEffect } from "react";
 const PRIMARY = "#1DA6DF";
 
+// Allowed parent origins (production + local testing) – stable reference
+const ALLOWED_ORIGINS = [
+  "https://2mit.com.au",
+  "http://localhost:400",
+];
+
 export default function Leadform() {
   // Will hold the parent page URL sent via postMessage or fallback
   const [pageUrl, setPageUrl] = useState("");
@@ -29,12 +35,6 @@ export default function Leadform() {
   const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [error, setError] = useState("");
-
-  // Allowed parent origins (production + local testing)
-  const ALLOWED_ORIGINS = [
-    "https://2mit.com.au",
-    "http://localhost:400"
-  ];
 
   // Listen for parent URL via postMessage
   useEffect(() => {

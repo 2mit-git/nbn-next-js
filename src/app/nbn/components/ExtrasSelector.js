@@ -614,7 +614,7 @@ export default function ExtrasSelector({
     ) {
       setLocalIncludeModem(value.includeModem);
     }
-  }, [value.includeModem]);
+  }, [value.includeModem, localIncludeModem]);
 
   useEffect(() => {
     if (
@@ -624,7 +624,7 @@ export default function ExtrasSelector({
     ) {
       setLocalSelectedModems(value.selectedModems);
     }
-  }, [value.selectedModems]);
+  }, [value.selectedModems, localSelectedModems]);
 
   const includeModem =
     value.includeModem !== undefined
@@ -690,7 +690,7 @@ export default function ExtrasSelector({
     ) {
       setLocalIncludePhone(value.includePhone);
     }
-  }, [value.includePhone]);
+  }, [value.includePhone, localIncludePhone]);
 
   useEffect(() => {
     if (
@@ -699,7 +699,7 @@ export default function ExtrasSelector({
     ) {
       setLocalSelectedPhone(value.selectedPhone);
     }
-  }, [value.selectedPhone]);
+  }, [value.selectedPhone, localSelectedPhone]);
 
   const includePhone =
     value.includePhone !== undefined
@@ -737,7 +737,7 @@ export default function ExtrasSelector({
     ) {
       setLocalIncludePBX(value.includePBX);
     }
-  }, [value.includePBX]);
+  }, [value.includePBX, localIncludePBX]);
 
   const [pbxData, setPBXData] = useState(null);
 
@@ -768,6 +768,8 @@ export default function ExtrasSelector({
     selectedPhone,
     localIncludePBX,
     connectionType,
+    onChange,
+    value,
   ]);
 
   /* ----- Helpers ----- */

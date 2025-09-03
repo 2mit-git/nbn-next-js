@@ -41,22 +41,27 @@ export default function Page() {
       phone: extras.includePhone ? extras.selectedPhone : null,
       pbx: pbxState.includePBX ? pbxState.pbx : null,
     };
-  }, [extras.includeModem, extras.selectedModems, extras.includePhone, extras.selectedPhone, pbxState.includePBX, pbxState.pbx]);
+  }, [
+    extras.includeModem,
+    extras.selectedModems,
+    extras.includePhone,
+    extras.selectedPhone,
+    pbxState.includePBX,
+    pbxState.pbx,
+  ]);
 
   return (
     <div className="m-20 space-y-8">
-       <div className="relative z-[60]">
+      <div className="relative z-[60]">
         <NbnAddressSearching onTechChange={handleTechChange} />
       </div>
 
       <NbnProducts
-        originalTech={addressTech}                         // filters Regular by the address tech
-        selectedTech={upgradeEligible ? "FTTP_Upgrade" : null} // show tabs only when eligible
-        // If your NbnProducts exposes a plan change callback, wire it up:
+        originalTech={addressTech}
+        selectedTech={upgradeEligible ? "FTTP_Upgrade" : null}
         onPlanChange={setSelectedPlan}
-        onSelectPlan={setSelectedPlan}     // (added aliases just in case your component uses a different prop name)
+        onSelectPlan={setSelectedPlan}
         onSelect={setSelectedPlan}
-        // You can also pass the current plan back in if NbnProducts wants to be controlled:
         selectedPlan={selectedPlan}
       />
 
@@ -64,11 +69,12 @@ export default function Page() {
       <AddonsPbx value={pbxState} onChange={setPbxState} />
 
       <OrderSummary
-        selectedPlan={selectedPlan}   // now defined
-        extras={mergedExtras}         // unified shape for summary
+        selectedPlan={selectedPlan}
+        extras={mergedExtras}
         title="Order Summary"
       />
-      <ContractForm></ContractForm>
+
+      <ContractForm />
     </div>
   );
 }

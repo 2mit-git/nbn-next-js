@@ -289,12 +289,16 @@ export default function NbnProducts({
 
                         {/* chips (only if data exists) */}
                         <div className="mt-2 flex flex-wrap justify-center gap-1.5">
-                          {(Array.isArray(p.categories) ? p.categories : []).slice(0, 3).map((c, i) => (
-                            <Chip key={`c-${i}`} children={String(c)} />
-                          ))}
-                          {(Array.isArray(p.types) ? p.types : []).slice(0, 2).map((t, i) => (
-                            <Chip key={`t-${i}`} variant="outline" children={String(t)} />
-                          ))}
+                          {(Array.isArray(p.categories) ? p.categories : [])
+                            .slice(0, 3)
+                            .map((c, i) => (
+                              <Chip key={`c-${i}`}>{String(c)}</Chip>
+                            ))}
+                          {(Array.isArray(p.types) ? p.types : [])
+                            .slice(0, 2)
+                            .map((t, i) => (
+                              <Chip key={`t-${i}`} variant="outline">{String(t)}</Chip>
+                            ))}
                         </div>
                       </div>
 

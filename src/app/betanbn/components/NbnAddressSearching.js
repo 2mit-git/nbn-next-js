@@ -165,7 +165,9 @@ export default function NbnAddressSearching({
             onFocus={() => {
               if (suggestions.length > 0) setOpened(true);
             }}
+            role="combobox"
             aria-autocomplete="list"
+            aria-haspopup="listbox"
             aria-expanded={opened}
             aria-controls="suggestions-listbox"
           />
@@ -195,6 +197,7 @@ export default function NbnAddressSearching({
                   onClick={() => handleSelect(f)}
                   className="flex w-full cursor-pointer items-start gap-2 px-4 py-2 text-left text-sm text-gray-800 transition hover:bg-[#1EA6DF] hover:text-white focus:bg-[#1EA6DF] focus:text-white"
                   role="option"
+                  aria-selected={false}
                 >
                   <span className="mt-[2px] inline-block h-1.5 w-1.5 rounded-full bg-[#1EA6DF] group-hover:bg-white" />
                   <span className="line-clamp-2">{f.properties.formatted}</span>

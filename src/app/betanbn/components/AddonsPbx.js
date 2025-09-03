@@ -447,6 +447,14 @@ function StatRow({ label, qty }) {
 }
 
 function PBXPreviewCard({ pbx, onEdit, onRemove }) {
+  // Hooks must run before any early returns
+  const handsetRows = useMemo(() => {
+    if (!pbx) return [];
+    return Object.entries(pbx.handsets || {})
+      .filter(([, qty]) => qty > 0)
+      .map(([label, qty]) => ({ label, qty }));
+  }, [pbx]);
+
   if (!pbx?.selectedPlan) return null;
 
   const isUnlimited = pbx.selectedPlan === "Hosted UNLIMITED";
@@ -468,14 +476,6 @@ function PBXPreviewCard({ pbx, onEdit, onRemove }) {
     { label: "Queues", qty: pbx.queueCount },
     ...(pbx.callRecording ? [{ label: "Call recording Qty", qty: pbx.callRecordingQty }] : []),
   ];
-
-  const handsetRows = useMemo(
-    () =>
-      Object.entries(pbx.handsets || {})
-        .filter(([, qty]) => qty > 0)
-        .map(([label, qty]) => ({ label, qty })),
-    [pbx]
-  );
 
   const planLabelBig = pbx.selectedPlan.replace("Hosted ", "");
 
