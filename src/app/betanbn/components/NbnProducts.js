@@ -21,16 +21,6 @@ const isUpgradePlan = (p) => {
   return down >= 100; // FTTP & 100+ Mbps
 };
 
-/**
- * Props:
- * - selectedTech?: "FTTP_Upgrade" | null
- * - originalTech?: "FTTC" | "FTTP" | "HFC" | "FTTN" | null
- * - onSelectPlan?: (product) => void
- * - onLoadingChange?: (loading: boolean) => void
- * - back?: () => void
- * - selectedTab?: "regular" | "upgrade"
- * - setSelectedTab?: (tab) => void
- */
 export default function NbnProducts({
   selectedTech,
   originalTech,
@@ -43,12 +33,11 @@ export default function NbnProducts({
   const [all, setAll] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedId, setSelectedId] = useState(null); // << NEW: track which card is selected
+  const [selectedId, setSelectedId] = useState(null);
 
   const upgradeEligible = selectedTech === "FTTP_Upgrade";
   const showTabs = upgradeEligible;
 
-  // Tabs (only when upgrade eligible)
   const [internalTab, setInternalTab] = useState(upgradeEligible ? "upgrade" : "regular");
   const activeTab = selectedTab ?? internalTab;
   const handleSetTab = setSelectedTab ?? setInternalTab;
@@ -57,7 +46,6 @@ export default function NbnProducts({
     setInternalTab(showTabs ? "upgrade" : "regular");
   }, [showTabs]);
 
-  // Fetch products
   useEffect(() => {
     let alive = true;
     setLoading(true);
@@ -79,7 +67,6 @@ export default function NbnProducts({
     onLoadingChange?.(loading);
   }, [loading, onLoadingChange]);
 
-  /* ------------ visible list (same logic) ------------ */
   const effectiveTab = showTabs ? activeTab : "regular";
 
   const visible = useMemo(() => {
@@ -89,7 +76,6 @@ export default function NbnProducts({
       list = list.filter(isUpgradePlan);
     } else if (originalTech) {
       list = list.filter((p) => hasCategory(p, originalTech));
-      // else (no address) -> show all
     }
 
     list.sort((a, b) => effectivePrice(a) - effectivePrice(b));
@@ -139,7 +125,7 @@ export default function NbnProducts({
     if (el) el.scrollTo({ left: 0, behavior: "smooth" });
   }, [visible, perView, effectiveTab]);
 
-  // update current page from scroll position (throttled with rAF, stable listener)
+  // update current page from scroll position (throttled with rAF)
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -148,7 +134,6 @@ export default function NbnProducts({
       if (raf) return;
       raf = requestAnimationFrame(() => {
         raf = null;
-        if (!el) return;
         const p = Math.round(el.scrollLeft / el.clientWidth);
         if (p !== pageRef.current) setPage(p);
       });
@@ -174,10 +159,10 @@ export default function NbnProducts({
   /* ------------ UI ------------ */
   if (loading) {
     return (
-      <div className="flex items-center justify-center gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 px-3 sm:px-0">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="w-80">
-            <div className="flex flex-col gap-4 rounded-2xl border border-gray-100/70 bg-white/70 p-4 shadow-sm backdrop-blur">
+          <div key={i} className="w-full sm:w-80 mx-auto">
+            <div className="flex flex-col gap-4 rounded-2xl border border-gray-100/70 bg-white/70 p-4 shadow-sm">
               <div className="skeleton h-32 w-full rounded-xl" />
               <div className="skeleton h-4 w-28 rounded" />
               <div className="skeleton h-4 w-full rounded" />
@@ -194,7 +179,7 @@ export default function NbnProducts({
   const showEmptyUpgrade = effectiveTab === "upgrade" && visible.length === 0;
 
   return (
-    <div className="relative">
+    <div className="relative px-3 sm:px-0">
       {/* Tabs only if upgrade eligible */}
       {showTabs && <TabStrip activeTab={activeTab} setTab={handleSetTab} />}
 
@@ -211,16 +196,13 @@ export default function NbnProducts({
       {/* Smooth slider */}
       {!showEmptyRegular && !showEmptyUpgrade && (
         <div className="relative">
-          {/* Edge fades (scroll affordance) */}
-          <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-8 bg-gradient-to-r from-white to-transparent" />
-          <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-8 bg-gradient-to-l from-white to-transparent" />
-
-          {/* Left arrow */}
+          {/* Edge fades removed to eliminate white haze on desktop */}
+          {/* Left arrow (no white bg/shadow on desktop) */}
           {page > 0 && (
             <button
               aria-label="Previous"
               onClick={prev}
-              className="absolute left-[-1.75rem] top-1/2 z-20 -translate-y-1/2 rounded-full border border-[#1DA6DF]/70 bg-white/70 p-2 text-[#1DA6DF] shadow-sm backdrop-blur transition hover:bg-white"
+              className="absolute left-[-1.75rem] top-1/2 z-20 hidden -translate-y-1/2 rounded-full border border-transparent bg-transparent p-2 text-[#1DA6DF] transition hover:bg-transparent sm:block"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M15 18l-6-6 6-6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -228,12 +210,12 @@ export default function NbnProducts({
             </button>
           )}
 
-          {/* Right arrow */}
+          {/* Right arrow (no white bg/shadow on desktop) */}
           {page < totalPages - 1 && (
             <button
               aria-label="Next"
               onClick={next}
-              className="absolute right-[-1.75rem] top-1/2 z-20 -translate-y-1/2 rounded-full border border-[#1DA6DF]/70 bg-white/70 p-2 text-[#1DA6DF] shadow-sm backdrop-blur transition hover:bg-white"
+              className="absolute right-[-1.75rem] top-1/2 z-20 hidden -translate-y-1/2 rounded-full border border-transparent bg-transparent p-2 text-[#1DA6DF] transition hover:bg-transparent sm:block"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M9 6l6 6-6 6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -241,7 +223,7 @@ export default function NbnProducts({
             </button>
           )}
 
-          {/* Track */}
+          {/* Track (keep gap at 16px to match width calc) */}
           <div
             ref={containerRef}
             className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory px-1"
@@ -261,12 +243,12 @@ export default function NbnProducts({
                 >
                   {/* CARD — design only */}
                   <div
-                    className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-gray-100 bg-gradient-to-b from-white to-gray-50/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-[#1DA6DF] focus-within:ring-offset-2"
+                    className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-gray-100 bg-gradient-to-b from-white to-gray-50/60 shadow-sm md:shadow-none transition hover:-translate-y-0.5 hover:shadow-md md:hover:shadow-none "
                     tabIndex={0}
                   >
                     {/* Ribbon */}
                     {isBestDeal && (
-                      <div className="pointer-events-none absolute right-[-60px] top-4 z-10 w-[200px] rotate-45 bg-[#1DA6DF] py-1.5 text-center text-[11px] font-bold uppercase tracking-wider text-white shadow">
+                      <div className="pointer-events-none absolute right-[-60px] top-4 z-10 w-[200px] rotate-45 bg-[#1DA6DF] py-1.5 text-center text-[11px] font-bold uppercase tracking-wider text-white">
                         Best Deal
                       </div>
                     )}
@@ -274,7 +256,7 @@ export default function NbnProducts({
                     {/* header */}
                     <div className="flex h-full flex-col pt-8">
                       <div className="mb-5 px-5 text-center">
-                        <h3 className="mb-1 text-[22px] font-extrabold tracking-tight text-gray-900">
+                        <h3 className="mb-1 text-lg md:text-[22px] font-extrabold tracking-tight text-gray-900">
                           {(() => {
                             const words = String(p.title || "").split(" ");
                             const first = words.shift() || "";
@@ -287,7 +269,7 @@ export default function NbnProducts({
                           })()}
                         </h3>
 
-                        {/* chips (only if data exists) */}
+                        {/* chips */}
                         <div className="mt-2 flex flex-wrap justify-center gap-1.5">
                           {(Array.isArray(p.categories) ? p.categories : [])
                             .slice(0, 3)
@@ -338,7 +320,7 @@ export default function NbnProducts({
 
                       {/* price */}
                       <div className="mb-6 text-center text-[#1DA6DF]">
-                        <div className="text-3xl font-extrabold tracking-tight">
+                        <div className="text-2xl md:text-3xl font-extrabold tracking-tight">
                           ${p.discountPrice}
                           <span className="ml-0.5 text-sm font-medium text-gray-500">/mo</span>
                         </div>
@@ -366,15 +348,14 @@ export default function NbnProducts({
                           <p className="text-sm/5 opacity-95">{p.recommendation}</p>
                         </div>
 
-                        {/* === Only change is below: track & show "Selected" === */}
                         {(() => {
                           const key =
                             typeof p._id === "object" && p._id?.$oid ? p._id.$oid : String(p._id);
                           const isSelected = selectedId === key;
                           return (
                             <button
-                              className={`mt-5 w-full rounded-lg p-3 font-semibold shadow-sm transition hover:bg-gray-100 active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10
-                                ${isSelected ? "bg-[#1DA6DF] text-white hover:bg-[#1DA6DF]/90" : "bg-white text-black"}`}
+                              className={`mt-5 w-full rounded-lg p-3 font-semibold shadow-sm transition active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10
+                                ${isSelected ? "bg-[#0f729d] text-white" : "bg-white text-black"}`}
                               onClick={() => {
                                 setSelectedId(key);
                                 onSelectPlan?.(p);
@@ -413,7 +394,7 @@ export default function NbnProducts({
 
       {typeof back === "function" && (
         <button
-          className="btn mt-6 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:-translate-y-[1px] hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1DA6DF] focus-visible:ring-offset-1"
+          className="btn mt-6 w-full sm:w-auto rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:-translate-y-[1px] hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1DA6DF] focus-visible:ring-offset-1"
           onClick={back}
         >
           ← Back
@@ -426,8 +407,8 @@ export default function NbnProducts({
 /* ---------------- UI helpers ---------------- */
 function TabStrip({ activeTab, setTab }) {
   return (
-    <div className="mb-6 flex w-full justify-center">
-      <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
+    <div className="mb-6 flex w-full justify-center px-3 sm:px-0">
+      <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1">
         <TabButton
           isActive={activeTab === "regular"}
           onClick={() => setTab("regular")}
@@ -448,7 +429,7 @@ function TabButton({ isActive, onClick, label }) {
     <button
       className={`relative rounded-lg px-4 py-2 text-sm font-semibold transition ${
         isActive
-          ? "bg-[#1DA6DF] text-white shadow-sm"
+          ? "bg-[#1DA6DF] text-white"
           : "text-gray-600 hover:bg-gray-50"
       } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1DA6DF]/50`}
       onClick={onClick}
@@ -478,9 +459,9 @@ function CircularProgress({ speed }) {
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <div className="relative h-32 w-32">
+    <div className="relative h-28 w-28 sm:h-32 sm:w-32">
       <div className="absolute inset-0 animate-pulse rounded-full bg-[#1DA6DF]/5 blur-[10px]" aria-hidden="true" />
-      <svg className="-rotate-90 h-32 w-32" viewBox="0 0 100 100" role="img" aria-label={`${down} Mbps`}>
+      <svg className="-rotate-90 h-full w-full" viewBox="0 0 100 100" role="img" aria-label={`${down} Mbps`}>
         <circle cx="50" cy="50" r={radius} stroke="#E5E7EB" strokeWidth="8" fill="transparent" />
         <circle
           cx="50" cy="50" r={radius}
@@ -490,7 +471,7 @@ function CircularProgress({ speed }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-extrabold text-gray-900">{down}</span>
+        <span className="text-xl sm:text-2xl font-extrabold text-gray-900">{down}</span>
         <span className="text-xs font-medium text-gray-600">Mbps</span>
       </div>
     </div>

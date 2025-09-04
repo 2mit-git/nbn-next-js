@@ -1,4 +1,3 @@
-// File: src/components/ContractForm.jsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -9,11 +8,7 @@ const PRIMARY = "#1DA6DF";
 
 const MODEM_OPTIONS = [
   { id: "modem", title: "Gigabit WiFi-6 MESH 1800Mbps Modem", price: 170 },
-  {
-    id: "extender",
-    title: "Gigabit WiFi-6 MESH 1800Mbps Extender",
-    price: 120,
-  },
+  { id: "extender", title: "Gigabit WiFi-6 MESH 1800Mbps Extender", price: 120 },
 ];
 
 const PHONE_OPTIONS = [
@@ -47,24 +42,20 @@ const Modal = ({ open, title, onClose, children }) =>
               ✕
             </button>
           </div>
-          <div className="max-h-[75vh] overflow-y-auto px-6 py-6">
-            {children}
-          </div>
+          <div className="max-h-[75vh] overflow-y-auto px-6 py-6">{children}</div>
         </div>
       </div>
     </div>
   );
 
-// Buttons that match your sample (“Selected / Remove / View details”)
+// Buttons that match your sample
 const btnPrimary =
   "inline-flex items-center justify-center rounded-lg bg-[--primary] text-white px-5 py-2.5 font-semibold shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[--primary]/40";
 const btnSecondary =
   "inline-flex items-center justify-center rounded-lg bg-white text-gray-800 border border-gray-300 px-5 py-2.5 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[--primary]/30";
 const pill = (active) =>
   `rounded-full px-5 py-2 font-medium transition ${
-    active
-      ? "bg-[--primary] text-white shadow-sm"
-      : "bg-white text-gray-800 border border-gray-300 hover:bg-gray-50"
+    active ? "bg-[--primary] text-white shadow-sm" : "bg-white text-gray-800 border border-gray-300 hover:bg-gray-50"
   }`;
 
 export default function ContractForm({
@@ -88,7 +79,7 @@ export default function ContractForm({
     contactNumber: "",
     dob: "",
     serviceAddress,
-    // --- NEW: Business fields
+    // NEW: Business fields
     businessName: "",
     businessAddress: "",
     // ---
@@ -118,25 +109,34 @@ export default function ContractForm({
   const [resendTimer, setResendTimer] = useState(0);
   const [error, setError] = useState("");
 
+  /* ---------- SYNC: serviceAddress prop → form.serviceAddress ---------- */
   useEffect(() => {
     setForm((f) => ({ ...f, serviceAddress }));
   }, [serviceAddress]);
 
+  /* ---------- SYNC: deliverySame + serviceAddress → deliveryAddress ---------- */
+  // 1) When serviceAddress changes, keep deliveryAddress in sync if deliverySame is on
   useEffect(() => {
-    let t;
-    if (resendTimer > 0)
-      t = setTimeout(() => setResendTimer((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [resendTimer]);
+    setForm((f) => {
+      if (!f.deliverySame) return f;
+      if (f.deliveryAddress === serviceAddress) return f;
+      return { ...f, deliveryAddress: serviceAddress || "" };
+    });
+  }, [serviceAddress]);
+
+  // 2) When user toggles deliverySame, copy the service address immediately on TRUE
+  const handleChange = (key) => (e) => {
+    const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    setForm((prev) => {
+      if (key !== "deliverySame") return { ...prev, [key]: value };
+      // If turning ON, mirror from latest serviceAddress prop (preferred) or current form value.
+      const nextDelivery = value ? (serviceAddress || prev.serviceAddress || "") : prev.deliveryAddress;
+      return { ...prev, deliverySame: value, deliveryAddress: nextDelivery };
+    });
+  };
 
   const inputClasses =
     "w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:border-[--primary] focus:ring-2 focus:ring-[--primary]/30";
-
-  const handleChange = (key) => (e) => {
-    const value =
-      e.target.type === "checkbox" ? e.target.checked : e.target.value;
-    setForm((f) => ({ ...f, [key]: value }));
-  };
 
   const normalizePhoneNumber = (input) => {
     let phone = (input || "").trim();
@@ -226,11 +226,9 @@ export default function ContractForm({
     // PBX plan
     if (extras?.pbx?.selectedPlan && Number(extras.pbx.numUsers) > 0) {
       const perUser =
-        extras.pbx.selectedPlan === "Hosted UNLIMITED"
-          ? 33.0
-          : extras.pbx.selectedPlan === "Hosted PAYG"
-          ? 5.5
-          : 0;
+        extras.pbx.selectedPlan === "Hosted UNLIMITED" ? 33.0 :
+        extras.pbx.selectedPlan === "Hosted PAYG"     ? 5.5  : 0;
+
       items.push({
         key: `${extras.pbx.selectedPlan}`,
         value: Number(extras.pbx.numUsers),
@@ -250,11 +248,9 @@ export default function ContractForm({
 
     // PBX notes for sticky bar
     let perUser =
-      extras?.pbx?.selectedPlan === "Hosted UNLIMITED"
-        ? 33
-        : extras?.pbx?.selectedPlan === "Hosted PAYG"
-        ? 5.5
-        : 0;
+      extras?.pbx?.selectedPlan === "Hosted UNLIMITED" ? 33 :
+      extras?.pbx?.selectedPlan === "Hosted PAYG"     ? 5.5 : 0;
+
     const monthly = (Number(extras?.pbx?.numUsers) || 0) * perUser;
     const upfront = Object.entries(extras?.pbx?.handsets || {}).reduce(
       (sum, [model, qty]) => {
@@ -289,12 +285,11 @@ export default function ContractForm({
         contactNumber: form.contactNumber,
         dob: form.dob,
       },
-      // --- NEW: include business fields in payload
+      // include business fields
       businessDetails: {
         businessName: form.businessName,
         businessAddress: form.businessAddress,
       },
-      // ---
       connectionDetails: {
         serviceAddress: form.serviceAddress,
         activationDate: activationDateValue,
@@ -360,10 +355,7 @@ export default function ContractForm({
     const payload = buildPayload();
 
     try {
-      const apiRoute =
-        connectionType === "business"
-          ? "/api/nbnpbx-contract"
-          : "/api/contract";
+      const apiRoute = connectionType === "business" ? "/api/nbnpbx-contract" : "/api/contract";
       const res = await fetch(apiRoute, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -380,10 +372,9 @@ export default function ContractForm({
           contactNumber: "",
           dob: "",
           serviceAddress,
-          // reset NEW business fields
+          // reset business fields
           businessName: "",
           businessAddress: "",
-          // ---
           activateASAP: true,
           activationDate: "",
           deliverySame: true,
@@ -425,11 +416,7 @@ export default function ContractForm({
       </div>
 
       {/* Modal with the full submit form */}
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Complete your order"
-      >
+      <Modal open={open} onClose={() => setOpen(false)} title="Complete your order">
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* loading overlay */}
           {loading && !submitSuccess && (
@@ -441,23 +428,10 @@ export default function ContractForm({
                   fill="none"
                   viewBox="0 0 24 24"
                 >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                  />
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
-                <span className="text-lg font-semibold text-[--primary]">
-                  Submitting…
-                </span>
+                <span className="text-lg font-semibold text-[--primary]">Submitting…</span>
               </div>
             </div>
           )}
@@ -479,11 +453,7 @@ export default function ContractForm({
                 >
                   Submit another one
                 </button>
-                <button
-                  type="button"
-                  className={btnSecondary}
-                  onClick={() => setOpen(false)}
-                >
+                <button type="button" className={btnSecondary} onClick={() => setOpen(false)}>
                   Close
                 </button>
               </div>
@@ -492,20 +462,11 @@ export default function ContractForm({
             <>
               {/* Contact Details */}
               <div className="space-y-6 rounded-2xl bg-white p-6 shadow">
-                <h2 className="text-2xl font-semibold text-[--primary]">
-                  Contact Details
-                </h2>
+                <h2 className="text-2xl font-semibold text-[--primary]">Contact Details</h2>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Title
-                    </label>
-                    <select
-                      className={inputClasses}
-                      value={form.title}
-                      onChange={handleChange("title")}
-                      disabled={otpSent && !otpVerified}
-                    >
+                    <label className="block text-sm font-medium text-gray-700">Title</label>
+                    <select className={inputClasses} value={form.title} onChange={handleChange("title")} disabled={otpSent && !otpVerified}>
                       {TITLES.map((t) => (
                         <option key={t} value={t}>
                           {t}
@@ -514,50 +475,20 @@ export default function ContractForm({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      className={inputClasses}
-                      value={form.firstName}
-                      onChange={handleChange("firstName")}
-                      required
-                      disabled={otpSent && !otpVerified}
-                    />
+                    <label className="block text-sm font-medium text-gray-700">First Name</label>
+                    <input type="text" className={inputClasses} value={form.firstName} onChange={handleChange("firstName")} required disabled={otpSent && !otpVerified} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      className={inputClasses}
-                      value={form.lastName}
-                      onChange={handleChange("lastName")}
-                      required
-                      disabled={otpSent && !otpVerified}
-                    />
+                    <label className="block text-sm font-medium text-gray-700">Last Name</label>
+                    <input type="text" className={inputClasses} value={form.lastName} onChange={handleChange("lastName")} required disabled={otpSent && !otpVerified} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      className={inputClasses}
-                      value={form.email}
-                      onChange={handleChange("email")}
-                      required
-                      disabled={otpSent && !otpVerified}
-                    />
+                    <label className="block text-sm font-medium text-gray-700">Email Address</label>
+                    <input type="email" className={inputClasses} value={form.email} onChange={handleChange("email")} required disabled={otpSent && !otpVerified} />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700">
-                      Contact Number{" "}
-                      <span className="text-xs text-gray-500">
-                        (Mobile or Home)
-                      </span>
+                      Contact Number <span className="text-xs text-gray-500">(Mobile or Home)</span>
                     </label>
                     <input
                       type="tel"
@@ -568,120 +499,59 @@ export default function ContractForm({
                       placeholder="e.g. 0412345678 (AU)"
                       disabled={otpSent && !otpVerified}
                     />
-                    <span className="text-xs text-gray-500">
-                      Enter your number without country code (e.g. 412345678 or
-                      0412345678).
-                    </span>
+                    <span className="text-xs text-gray-500">Enter your number without country code (e.g. 412345678 or 0412345678).</span>
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Date of Birth
-                    </label>
-                    <input
-                      type="date"
-                      className={inputClasses}
-                      value={form.dob}
-                      onChange={handleChange("dob")}
-                      required
-                      max={today}
-                      disabled={otpSent && !otpVerified}
-                    />
+                    <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
+                    <input type="date" className={inputClasses} value={form.dob} onChange={handleChange("dob")} required max={today} disabled={otpSent && !otpVerified} />
                   </div>
                 </div>
               </div>
 
-              {/* --- NEW: Business Details (added, design kept) --- */}
+              {/* Business Details */}
               <div className="space-y-6 rounded-2xl bg-white p-6 shadow">
-                <h2 className="text-2xl font-semibold text-[--primary]">
-                  Business Details
-                </h2>
+                <h2 className="text-2xl font-semibold text-[--primary]">Business Details</h2>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Business Name
-                    </label>
-                    <input
-                      type="text"
-                      className={inputClasses}
-                      value={form.businessName}
-                      onChange={handleChange("businessName")}
-                      placeholder="e.g. Acme Pty Ltd"
-                    />
+                    <label className="block text-sm font-medium text-gray-700">Business Name</label>
+                    <input type="text" className={inputClasses} value={form.businessName} onChange={handleChange("businessName")} placeholder="e.g. Acme Pty Ltd" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Business Address
-                    </label>
-                    <input
-                      type="text"
-                      className={inputClasses}
-                      value={form.businessAddress}
-                      onChange={handleChange("businessAddress")}
-                      placeholder="e.g. 123 King St, Sydney NSW 2000"
-                    />
+                    <label className="block text-sm font-medium text-gray-700">Business Address</label>
+                    <input type="text" className={inputClasses} value={form.businessAddress} onChange={handleChange("businessAddress")} placeholder="e.g. 123 King St, Sydney NSW 2000" />
                   </div>
                 </div>
               </div>
-              {/* --- END NEW --- */}
 
               {/* Connection Details */}
               <div className="space-y-6 rounded-2xl bg-white p-6 shadow">
-                <h2 className="text-2xl font-semibold text-[--primary]">
-                  Connection Details
-                </h2>
+                <h2 className="text-2xl font-semibold text-[--primary]">Connection Details</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Service Address
-                    </label>
-                    <input
-                      type="text"
-                      className={`${inputClasses} cursor-not-allowed bg-gray-100 text-black`}
-                      value={form.serviceAddress}
-                      readOnly
-                    />
+                    <label className="block text-sm font-medium text-gray-700">Service Address</label>
+                    <input type="text" className={`${inputClasses} cursor-not-allowed bg-gray-100 text-black`} value={form.serviceAddress} readOnly />
                   </div>
                   <div>
-                    <span className="block text-sm font-medium text-gray-700">
-                      Activate ASAP?
-                    </span>
+                    <span className="block text-sm font-medium text-gray-700">Activate ASAP?</span>
                     <div className="flex gap-3">
                       <button
                         type="button"
-                        onClick={() =>
-                          setForm((f) => ({ ...f, activateASAP: true }))
-                        }
-                        className={`rounded-md px-4 py-2 font-semibold ${
-                          form.activateASAP
-                            ? "bg-[#1DA6DF] text-white"
-                            : "bg-gray-200 text-gray-800"
-                        }`}
+                        onClick={() => setForm((f) => ({ ...f, activateASAP: true }))}
+                        className={`rounded-md px-4 py-2 font-semibold ${form.activateASAP ? "bg-[#1DA6DF] text-white" : "bg-gray-200 text-gray-800"}`}
                       >
                         ASAP
                       </button>
 
                       <button
                         type="button"
-                        onClick={() =>
-                          setForm((f) => ({ ...f, activateASAP: false }))
-                        }
-                        className={`rounded-md px-4 py-2 font-semibold ${
-                          !form.activateASAP
-                            ? "bg-[#1DA6DF] text-white"
-                            : "bg-gray-200 text-gray-800"
-                        }`}
+                        onClick={() => setForm((f) => ({ ...f, activateASAP: false }))}
+                        className={`rounded-md px-4 py-2 font-semibold ${!form.activateASAP ? "bg-[#1DA6DF] text-white" : "bg-gray-200 text-gray-800"}`}
                       >
                         Pick Date
                       </button>
                     </div>
                     {!form.activateASAP && (
-                      <input
-                        type="date"
-                        className={`${inputClasses} mt-2`}
-                        value={form.activationDate}
-                        onChange={handleChange("activationDate")}
-                        required
-                      />
+                      <input type="date" className={`${inputClasses} mt-2`} value={form.activationDate} onChange={handleChange("activationDate")} required />
                     )}
                   </div>
                 </div>
@@ -689,9 +559,7 @@ export default function ContractForm({
 
               {/* Delivery Details */}
               <div className="space-y-6 rounded-2xl bg-white p-6 shadow">
-                <h2 className="text-2xl font-semibold text-[--primary]">
-                  Delivery Details
-                </h2>
+                <h2 className="text-2xl font-semibold text-[--primary]">Delivery Details</h2>
                 <div className="space-y-4">
                   <div>
                     <label className="flex items-center gap-2">
@@ -701,10 +569,9 @@ export default function ContractForm({
                         checked={form.deliverySame}
                         onChange={handleChange("deliverySame")}
                       />
-                      <span className="text-gray-700">
-                        Same as Service Address
-                      </span>
+                      <span className="text-gray-700">Same as Service Address</span>
                     </label>
+
                     {!form.deliverySame && (
                       <input
                         type="text"
@@ -716,79 +583,39 @@ export default function ContractForm({
                       />
                     )}
                   </div>
+
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Full Name (Delivery)
-                      </label>
-                      <input
-                        type="text"
-                        className={inputClasses}
-                        value={form.deliveryName}
-                        onChange={handleChange("deliveryName")}
-                      />
+                      <label className="block text-sm font-medium text-gray-700">Full Name (Delivery)</label>
+                      <input type="text" className={inputClasses} value={form.deliveryName} onChange={handleChange("deliveryName")} />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
-                        Company Name{" "}
-                        <span className="text-xs text-gray-500">
-                          (Optional)
-                        </span>
+                        Company Name <span className="text-xs text-gray-500">(Optional)</span>
                       </label>
-                      <input
-                        type="text"
-                        className={inputClasses}
-                        value={form.companyName}
-                        onChange={handleChange("companyName")}
-                      />
+                      <input type="text" className={inputClasses} value={form.companyName} onChange={handleChange("companyName")} />
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Phone Details */}
-              {/* (left exactly as-is, commented-out in your source) */}
-
-              {/* OTP panel (appears inside the popup after Verify & Submit) */}
+              {/* OTP panel */}
               {otpSent && !otpVerified && (
                 <div className="rounded-2xl border border-[--primary]/30 bg-white p-6 shadow">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Enter OTP sent to your contact number
-                  </label>
-                  <input
-                    type="text"
-                    className={`${inputClasses} mt-2`}
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    placeholder="123456"
-                  />
+                  <label className="block text-sm font-medium text-gray-700">Enter OTP sent to your contact number</label>
+                  <input type="text" className={`${inputClasses} mt-2`} value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="123456" />
                   <div className="mt-3 flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={verifyOtp}
-                      className="rounded-md bg-[#1DA6DF] px-4 py-2 font-semibold text-white"
-                      disabled={loading || !otp.trim()}
-                    >
+                    <button type="button" onClick={verifyOtp} className="rounded-md bg-[#1DA6DF] px-4 py-2 font-semibold text-white" disabled={loading || !otp.trim()}>
                       {loading ? "Verifying…" : "Verify OTP"}
                     </button>
                     {resendTimer > 0 ? (
-                      <span className="text-sm text-gray-500">
-                        Resend in {resendTimer}s
-                      </span>
+                      <span className="text-sm text-gray-500">Resend in {resendTimer}s</span>
                     ) : (
                       <>
-                        <button
-                          type="button"
-                          onClick={() => sendOtp("sms")}
-                          className={btnSecondary}
-                        >
+                        <button type="button" onClick={() => sendOtp("sms")} className={btnSecondary}>
                           Resend via SMS
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => sendOtp("call")}
-                          className={btnSecondary}
-                        >
+                        <button type="button" onClick={() => sendOtp("call")} className={btnSecondary}>
                           Send via Call
                         </button>
                       </>
@@ -801,11 +628,9 @@ export default function ContractForm({
               {/* Sticky submit bar */}
               <div className=" bottom-0 z-10 -mx-6 mt-6 bg-white/90 px-6 py-4 backdrop-blur sm:mx-0 sm:rounded-xl sm:border sm:border-gray-200">
                 <div className="flex flex-col items-end gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  {extras?.pbx &&
-                  (pbxMonthlyPreview > 0 || pbxUpfrontPreview > 0) ? (
+                  {extras?.pbx && (pbxMonthlyPreview > 0 || pbxUpfrontPreview > 0) ? (
                     <div className="text-xs text-gray-600">
-                      * PBX monthly: ${pbxMonthlyPreview.toFixed(2)} | First
-                      month upfront: $
+                      * PBX monthly: ${pbxMonthlyPreview.toFixed(2)} | First month upfront: $
                       {(pbxMonthlyPreview + pbxUpfrontPreview).toFixed(2)}
                     </div>
                   ) : (
@@ -817,33 +642,17 @@ export default function ContractForm({
                       className="rounded-md bg-[#1DA6DF] px-4 py-2 font-semibold text-white"
                       disabled={loading || (otpSent && !otpVerified)}
                       title={
-                        !otpSent
-                          ? "Sends an OTP to your number"
-                          : otpVerified
-                          ? "Submit your contract"
-                          : "Verify the OTP to enable submission"
+                        !otpSent ? "Sends an OTP to your number" : otpVerified ? "Submit your contract" : "Verify the OTP to enable submission"
                       }
                     >
-                      {otpSent
-                        ? otpVerified
-                          ? "Submit Contract"
-                          : "Submit Contract"
-                        : "Verify & Submit"}
+                      {otpSent ? (otpVerified ? "Submit Contract" : "Submit Contract") : "Verify & Submit"}
                     </button>
-                    <button
-                      type="button"
-                      className={btnSecondary}
-                      onClick={() => setOpen(false)}
-                    >
+                    <button type="button" className={btnSecondary} onClick={() => setOpen(false)}>
                       Cancel
                     </button>
                   </div>
                 </div>
-                {error && !otpSent && (
-                  <div className="mt-2 text-right text-sm text-red-500">
-                    {error}
-                  </div>
-                )}
+                {error && !otpSent && <div className="mt-2 text-right text-sm text-red-500">{error}</div>}
               </div>
             </>
           )}

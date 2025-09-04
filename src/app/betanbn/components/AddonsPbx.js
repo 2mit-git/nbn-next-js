@@ -47,7 +47,10 @@ const HANDSETS = [
     img: "https://2mit.com.au/wp-content/uploads/2025/04/70963a5b-8c96-44ca-9045-35b2a52c3b0e.png",
   },
 ];
-const HANDSET_COST_BY_NAME = HANDSETS.reduce((m, h) => ((m[h.name] = h.cost), m), {});
+const HANDSET_COST_BY_NAME = HANDSETS.reduce(
+  (m, h) => ((m[h.name] = h.cost), m),
+  {}
+);
 
 const getCache = () => {
   if (typeof window === "undefined") return {};
@@ -57,28 +60,39 @@ const getCache = () => {
     return {};
   }
 };
-
 const clampNum = (v, min = 0) => Math.max(min, Number(v) || 0);
 
 /* ---------------- PBX wizard ---------------- */
 function PBXWizardSection({ value, onPBXChange }) {
   const cache = getCache();
 
-  const [selectedPlan, setSelectedPlan] = useState(value?.selectedPlan ?? cache.selectedPlan ?? null);
-  const [numUsers, setNumUsers] = useState(value?.numUsers ?? cache.numUsers ?? 1);
-  const [callRecording, setCallRecording] = useState(value?.callRecording ?? cache.callRecording ?? false);
-  const [callRecordingQty, setCallRecordingQty] = useState(value?.callRecordingQty ?? cache.callRecordingQty ?? 1);
-  const [ivrCount, setIVRCount] = useState(value?.ivrCount ?? cache.ivrCount ?? 0);
-  const [queueCount, setQueueCount] = useState(value?.queueCount ?? cache.queueCount ?? 0);
-
-  const [handsetSelections, setHandsetSelections] = useState(
-    value?.handsets ?? cache.handsetSelections ?? HANDSETS.reduce((acc, h) => ((acc[h.name] = 0), acc), {})
+  const [selectedPlan, setSelectedPlan] = useState(
+    value?.selectedPlan ?? cache.selectedPlan ?? null
+  );
+  const [numUsers, setNumUsers] = useState(
+    value?.numUsers ?? cache.numUsers ?? 1
+  );
+  const [callRecording, setCallRecording] = useState(
+    value?.callRecording ?? cache.callRecording ?? false
+  );
+  const [callRecordingQty, setCallRecordingQty] = useState(
+    value?.callRecordingQty ?? cache.callRecordingQty ?? 1
+  );
+  const [ivrCount, setIVRCount] = useState(
+    value?.ivrCount ?? cache.ivrCount ?? 0
+  );
+  const [queueCount, setQueueCount] = useState(
+    value?.queueCount ?? cache.queueCount ?? 0
   );
 
-  /* global limit warning (shows when a limited add is blocked or cap reached) */
+  const [handsetSelections, setHandsetSelections] = useState(
+    value?.handsets ??
+      cache.handsetSelections ??
+      HANDSETS.reduce((acc, h) => ((acc[h.name] = 0), acc), {})
+  );
+
   const [limitWarn, setLimitWarn] = useState("");
 
-  /* derived totals */
   const monthlyTotal = useMemo(() => {
     const userSubtotal = (PLAN_PRICES[selectedPlan] || 0) * numUsers;
     return (
@@ -87,7 +101,14 @@ function PBXWizardSection({ value, onPBXChange }) {
       ivrCount * COSTS.ivr +
       queueCount * COSTS.queue
     );
-  }, [selectedPlan, numUsers, callRecording, callRecordingQty, ivrCount, queueCount]);
+  }, [
+    selectedPlan,
+    numUsers,
+    callRecording,
+    callRecordingQty,
+    ivrCount,
+    queueCount,
+  ]);
 
   const handsetSubtotal = useMemo(() => {
     let sum = 0;
@@ -98,7 +119,10 @@ function PBXWizardSection({ value, onPBXChange }) {
     return sum;
   }, [handsetSelections]);
 
-  const upfrontTotal = useMemo(() => monthlyTotal + handsetSubtotal, [monthlyTotal, handsetSubtotal]);
+  const upfrontTotal = useMemo(
+    () => monthlyTotal + handsetSubtotal,
+    [monthlyTotal, handsetSubtotal]
+  );
 
   /* limits */
   const maxHandsets = numUsers + queueCount;
@@ -108,7 +132,6 @@ function PBXWizardSection({ value, onPBXChange }) {
   );
   const remainingLimited = Math.max(0, maxHandsets - currentLimitedSum);
 
-  /* clear the banner if room opens up */
   useEffect(() => {
     if (remainingLimited > 0 && limitWarn) setLimitWarn("");
   }, [remainingLimited, limitWarn]);
@@ -118,12 +141,15 @@ function PBXWizardSection({ value, onPBXChange }) {
       const isLimited = LIMITED_MODELS.includes(name);
       let nextQty = clampNum((prev[name] || 0) + delta);
       if (isLimited) {
-        const other = LIMITED_MODELS.filter((m) => m !== name).reduce((s, m) => s + (prev[m] || 0), 0);
+        const other = LIMITED_MODELS.filter((m) => m !== name).reduce(
+          (s, m) => s + (prev[m] || 0),
+          0
+        );
         if (other + nextQty > maxHandsets) {
           setLimitWarn(
             `Limit reached: Total of limited models (T31G/T43U/T54W) cannot exceed Users + Queues (${maxHandsets}).`
           );
-          return prev; // block
+          return prev;
         }
       }
       return { ...prev, [name]: nextQty };
@@ -173,12 +199,15 @@ function PBXWizardSection({ value, onPBXChange }) {
   return (
     <div className="space-y-8">
       {/* Totals / Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-        <div className="text-sm text-gray-600">
-          <span className="font-semibold text-[#1DA6DF]">Monthly:</span> ${monthlyTotal.toFixed(2)}{" "}
-          <span className="mx-2 text-gray-300">|</span>
-          <span className="font-semibold text-[#1DA6DF]">Upfront (with handsets):</span>{" "}
-        ${upfrontTotal.toFixed(2)}
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="text-sm md:text-base text-gray-600">
+          <span className="font-semibold text-[#1DA6DF]">Monthly:</span> $
+          {monthlyTotal.toFixed(2)}
+          <span className="mx-2 hidden sm:inline text-gray-300">|</span>
+          <span className="block sm:inline font-semibold text-[#1DA6DF] sm:ml-2">
+            Upfront (with handsets):
+          </span>{" "}
+          ${upfrontTotal.toFixed(2)}
         </div>
         {remainingLimited === 0 ? (
           <span className="inline-flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
@@ -186,32 +215,44 @@ function PBXWizardSection({ value, onPBXChange }) {
           </span>
         ) : (
           <span className="text-xs text-gray-500">
-            Limited models remaining: <span className="font-semibold text-[#1DA6DF]">{remainingLimited}</span>
+            Limited models remaining:{" "}
+            <span className="font-semibold text-[#1DA6DF]">
+              {remainingLimited}
+            </span>
           </span>
         )}
       </div>
 
       {/* Plan */}
       <section>
-        <h3 className="mb-4 text-xl font-bold text-[#1DA6DF]">PBX Plan</h3>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <h3 className="mb-3 sm:mb-4 text-lg sm:text-xl font-bold text-[#1DA6DF]">
+          PBX Plan
+        </h3>
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
           {Object.keys(PLAN_PRICES).map((plan) => (
             <button
               type="button"
               key={plan}
               onClick={() => setSelectedPlan(plan)}
-              className={`text-left rounded-2xl border-2 bg-white p-5 shadow-sm transition ${
-                selectedPlan === plan ? "border-[#1DA6DF] ring-2 ring-[#1DA6DF]" : "border-gray-200 hover:shadow-md"
+              className={`text-left rounded-2xl border-2 bg-white p-4 sm:p-5 shadow-sm transition ${
+                selectedPlan === plan
+                  ? "border-[#1DA6DF] ring-2 ring-[#1DA6DF]"
+                  : "border-gray-200 hover:shadow-md"
               }`}
             >
-              <h4 className="mb-1 text-lg font-extrabold text-[#1DA6DF]">{plan}</h4>
+              <h4 className="mb-1 text-base sm:text-lg font-extrabold text-[#1DA6DF]">
+                {plan}
+              </h4>
               <p className="text-sm text-gray-600">
                 {plan === "Hosted UNLIMITED"
                   ? "Best for high call volume (e.g. call centres)."
                   : "Cost-saving for businesses with low outbound traffic."}
               </p>
-              <div className="mt-3 text-2xl font-bold text-[#1DA6DF]">
-                ${PLAN_PRICES[plan].toFixed(2)} <span className="text-base font-normal text-gray-600">/user/mo</span>
+              <div className="mt-3 text-xl sm:text-2xl font-bold text-[#1DA6DF]">
+                ${PLAN_PRICES[plan].toFixed(2)}{" "}
+                <span className="text-xs sm:text-base font-normal text-gray-600">
+                  /user/mo
+                </span>
               </div>
             </button>
           ))}
@@ -220,8 +261,10 @@ function PBXWizardSection({ value, onPBXChange }) {
 
       {/* Options */}
       <section>
-        <h3 className="mb-4 text-xl font-bold text-[#1DA6DF]">PBX Options</h3>
-        <div className="grid gap-5 md:grid-cols-3">
+        <h3 className="mb-3 sm:mb-4 text-lg sm:text-xl font-bold text-[#1DA6DF]">
+          PBX Options
+        </h3>
+        <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
           <NumberField
             label="Number of Users"
             value={numUsers}
@@ -229,16 +272,28 @@ function PBXWizardSection({ value, onPBXChange }) {
             onChange={(v) => setNumUsers(clampNum(v, 1))}
             help="Enter at least 1 user."
           />
-          <NumberField label="IVR" value={ivrCount} min={0} onChange={(v) => setIVRCount(clampNum(v))} />
-          <NumberField label="Queues" value={queueCount} min={0} onChange={(v) => setQueueCount(clampNum(v))} />
+          <NumberField
+            label="IVR"
+            value={ivrCount}
+            min={0}
+            onChange={(v) => setIVRCount(clampNum(v))}
+          />
+          <NumberField
+            label="Queues"
+            value={queueCount}
+            min={0}
+            onChange={(v) => setQueueCount(clampNum(v))}
+          />
         </div>
 
         <div className="mt-4">
-          <label className="mb-1 block font-semibold text-gray-700">Call recordings?</label>
+          <label className="mb-1 block font-semibold text-gray-700">
+            Call recordings?
+          </label>
           <button
             type="button"
             onClick={() => setCallRecording((v) => !v)}
-            className={`rounded-lg border-2 px-4 py-2 font-semibold transition ${
+            className={`w-full sm:w-auto rounded-lg border-2 px-4 py-2 font-semibold transition ${
               callRecording
                 ? "border-[#1DA6DF] bg-[#1DA6DF] text-white"
                 : "border-[#1DA6DF] text-[#1DA6DF] hover:bg-[#e6f7fd]"
@@ -248,14 +303,18 @@ function PBXWizardSection({ value, onPBXChange }) {
           </button>
 
           {callRecording && (
-            <div className="mt-2">
-              <label className="mb-1 block text-gray-700">Call recording Qty</label>
+            <div className="mt-3 sm:mt-2">
+              <label className="mb-1 block text-gray-700">
+                Call recording Qty
+              </label>
               <input
                 type="number"
                 min={1}
                 value={callRecordingQty}
-                onChange={(e) => setCallRecordingQty(clampNum(e.target.value, 1))}
-                className="w-24 rounded-lg border-2 border-gray-200 p-2 focus:border-[#1DA6DF] focus:ring-2 focus:ring-[#1DA6DF]"
+                onChange={(e) =>
+                  setCallRecordingQty(clampNum(e.target.value, 1))
+                }
+                className="w-full sm:w-24 rounded-lg border-2 border-gray-200 p-2 focus:border-[#1DA6DF] focus:ring-2 focus:ring-[#1DA6DF]"
               />
             </div>
           )}
@@ -264,14 +323,16 @@ function PBXWizardSection({ value, onPBXChange }) {
 
       {/* Handsets */}
       <section>
-        <h3 className="mb-4 text-xl font-bold text-[#1DA6DF]">PBX Handsets</h3>
+        <h3 className="mb-3 sm:mb-4 text-lg sm:text-xl font-bold text-[#1DA6DF]">
+          PBX Handsets
+        </h3>
         {limitWarn && (
           <div className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200">
             {limitWarn}
           </div>
         )}
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {HANDSETS.map((h) => {
             const qty = handsetSelections[h.name] || 0;
             const isLimited = LIMITED_MODELS.includes(h.name);
@@ -280,46 +341,62 @@ function PBXWizardSection({ value, onPBXChange }) {
             return (
               <div
                 key={h.name}
-                className={`rounded-2xl border-2 bg-white p-4 shadow-sm transition ${
-                  qty > 0 ? "border-[#1DA6DF] ring-2 ring-[#1DA6DF]" : "border-gray-200 hover:shadow-md"
+                className={`flex flex-col justify-between rounded-2xl border-2 bg-white p-4 shadow-sm transition ${
+                  qty > 0
+                    ? "border-[#1DA6DF] ring-2 ring-[#1DA6DF]"
+                    : "border-gray-200 hover:shadow-md"
                 }`}
-                style={{ minHeight: 196 }}
+                style={{ minHeight: 260 }} // same baseline height for all
               >
-                <div className="flex items-center gap-4">
+                {/* Top: image + details */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-1">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={h.img} alt={h.name} className="h-24 w-24 rounded-xl bg-white object-contain" loading="lazy" />
-                  <div className="min-w-0">
-                    <div className="mb-1 flex items-center gap-2">
-                      <span className="truncate text-lg font-extrabold text-[#1DA6DF]">{h.name}</span>
+                  <img
+                    src={h.img}
+                    alt={h.name}
+                    className="h-20 w-40 sm:h-20 sm:w-30 rounded-xl bg-white object-contain mx-auto sm:mx-0"
+                    loading="lazy"
+                  />
+                  <div className="flex flex-col items-center sm:items-start text-center sm:text-left flex-1">
+                    <div className="mb-1 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                      <span className="truncate text-base sm:text-lg font-extrabold text-[#1DA6DF]">
+                        {h.name}
+                      </span>
                       {isLimited && (
                         <span className="whitespace-nowrap rounded-full bg-[#1DA6DF]/10 px-2 py-0.5 text-[10px] font-semibold text-[#1DA6DF]">
                           Limited model
                         </span>
                       )}
                     </div>
-                    <div className="text-sm text-gray-600">{h.features.slice(0, 2).join(" • ")}</div>
-                    <div className="mt-1 font-semibold text-[#1DA6DF]">${h.cost}</div>
+                    <div className="text-sm text-gray-600">
+                      {h.features.slice(0, 2).join(" • ")}
+                    </div>
+                    <div className="mt-1 font-semibold text-[#1DA6DF]">
+                      ${h.cost}
+                    </div>
                     {isLimited && (
                       <div className="mt-1 text-xs text-gray-500">
-                        Remaining for limited models: <span className="font-semibold text-[#1DA6DF]">{remainingLimited}</span>
+                        Remaining for limited models:{" "}
+                        <span className="font-semibold text-[#1DA6DF]">
+                          {remainingLimited}
+                        </span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="mt-3 flex items-center justify-end gap-2">
+                {/* Bottom: qty controls */}
+                <div className="mt-3 flex items-center justify-center sm:justify-end gap-2">
                   <button
                     className="h-9 w-9 rounded-full border border-gray-300 bg-gray-100 text-lg font-bold text-[#1DA6DF] disabled:opacity-40"
                     onClick={() => handleQty(h.name, -1)}
                     disabled={qty === 0}
-                    aria-label={`Decrease ${h.name}`}
-                    title={qty === 0 ? "Minimum reached" : "Decrease"}
                   >
                     -
                   </button>
 
                   <input
-                    className="w-16 rounded-lg border p-1 text-center"
+                    className="w-14 sm:w-16 rounded-lg border p-1 text-center"
                     type="number"
                     min={0}
                     value={qty}
@@ -327,8 +404,13 @@ function PBXWizardSection({ value, onPBXChange }) {
                       const next = clampNum(e.target.value);
                       setHandsetSelections((prev) => {
                         if (!isLimited) return { ...prev, [h.name]: next };
-                        const other = LIMITED_MODELS.filter((m) => m !== h.name).reduce((s, m) => s + (prev[m] || 0), 0);
-                        const capped = Math.min(next, Math.max(0, maxHandsets - other));
+                        const other = LIMITED_MODELS.filter(
+                          (m) => m !== h.name
+                        ).reduce((s, m) => s + (prev[m] || 0), 0);
+                        const capped = Math.min(
+                          next,
+                          Math.max(0, maxHandsets - other)
+                        );
                         if (capped < next) {
                           setLimitWarn(
                             `Limit reached: Total of limited models (T31G/T43U/T54W) cannot exceed Users + Queues (${maxHandsets}).`
@@ -337,15 +419,12 @@ function PBXWizardSection({ value, onPBXChange }) {
                         return { ...prev, [h.name]: capped };
                       });
                     }}
-                    aria-label={`${h.name} quantity`}
                   />
 
                   <button
                     className="h-9 w-9 rounded-full border border-gray-300 bg-gray-100 px-2 text-lg font-bold text-[#1DA6DF] disabled:opacity-40"
                     onClick={() => handleQty(h.name, 1)}
                     disabled={disabledInc}
-                    aria-label={`Increase ${h.name}`}
-                    title={disabledInc ? `Cap reached: Users + Queues = ${maxHandsets}` : "Increase"}
                   >
                     +
                   </button>
@@ -382,12 +461,14 @@ const EmptyTile = ({ label, onClick }) => (
     onClick={onClick}
     className="flex h-[180px] w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 bg-white shadow-sm transition hover:border-[#1DA6DF] hover:bg-[#f0faff]"
   >
-    <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-gray-300 text-xl">+</div>
+    <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-gray-300 text-xl">
+      +
+    </div>
     <div className="text-sm font-semibold text-gray-700">{label}</div>
   </button>
 );
 
-/* Modal: perfectly centered, no jump; fade/scale; scroll-locked body */
+/* Modal */
 const Modal = ({ open, onClose, title, children }) => {
   useEffect(() => {
     if (!open) return;
@@ -405,29 +486,50 @@ const Modal = ({ open, onClose, title, children }) => {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] grid place-items-center" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[60] grid place-items-center px-3 sm:px-0"
+      onClick={onClose}
+    >
       <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] animate-[fade_120ms_ease-out]" />
       <div
-        className="relative w-[96vw] max-w-5xl animate-[pop_140ms_ease-out_forwards] overflow-hidden rounded-2xl bg-white shadow-2xl"
+        className="relative w-full max-w-5xl animate-[pop_140ms_ease-out_forwards] overflow-hidden rounded-2xl bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b bg-gradient-to-r from-white to-[#f3fbff] px-5 py-4">
-          <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-          <button onClick={onClose} className="rounded-full p-2 text-gray-700 hover:bg-gray-100" aria-label="Close">
+        <div className="flex items-center justify-between border-b bg-gradient-to-r from-white to-[#f3fbff] px-4 sm:px-5 py-3 sm:py-4">
+          <h3 className="text-base sm:text-lg font-bold text-gray-900">
+            {title}
+          </h3>
+          <button
+            onClick={onClose}
+            className="rounded-full p-2 text-gray-700 hover:bg-gray-100"
+            aria-label="Close"
+          >
             ✕
           </button>
         </div>
 
-        <div className="max-h-[72vh] overflow-y-auto px-6 py-6">{children}</div>
+        <div className="max-h-[72vh] overflow-y-auto px-4 sm:px-6 py-5 sm:py-6">
+          {children}
+        </div>
 
         <style jsx>{`
           @keyframes pop {
-            from { opacity: 0; transform: scale(.98); }
-            to   { opacity: 1; transform: scale(1); }
+            from {
+              opacity: 0;
+              transform: scale(0.98);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1);
+            }
           }
           @keyframes fade {
-            from { opacity: 0; }
-            to   { opacity: 1; }
+            from {
+              opacity: 0;
+            }
+            to {
+              opacity: 1;
+            }
           }
         `}</style>
       </div>
@@ -447,7 +549,6 @@ function StatRow({ label, qty }) {
 }
 
 function PBXPreviewCard({ pbx, onEdit, onRemove }) {
-  // Hooks must run before any early returns
   const handsetRows = useMemo(() => {
     if (!pbx) return [];
     return Object.entries(pbx.handsets || {})
@@ -474,17 +575,23 @@ function PBXPreviewCard({ pbx, onEdit, onRemove }) {
     { label: "Number of Users", qty: pbx.numUsers },
     { label: "IVR", qty: pbx.ivrCount },
     { label: "Queues", qty: pbx.queueCount },
-    ...(pbx.callRecording ? [{ label: "Call recording Qty", qty: pbx.callRecordingQty }] : []),
+    ...(pbx.callRecording
+      ? [{ label: "Call recording Qty", qty: pbx.callRecordingQty }]
+      : []),
   ];
 
   const planLabelBig = pbx.selectedPlan.replace("Hosted ", "");
 
   return (
-    <div className="rounded-2xl border-2 border-[#1DA6DF]/60 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-6 md:flex-row md:items-start">
+    <div className="rounded-2xl border-2 border-[#1DA6DF]/60 bg-white p-5 sm:p-6 shadow-sm">
+      <div className="flex flex-col gap-5 md:flex-row md:items-start">
         <div className="shrink-0 text-center md:w-56 md:text-left">
-          <div className="text-sm uppercase tracking-wide text-gray-600">Hosted</div>
-          <div className="text-2xl font-extrabold text-[#1DA6DF]">{planLabelBig}</div>
+          <div className="text-sm uppercase tracking-wide text-gray-600">
+            Hosted
+          </div>
+          <div className="text-2xl font-extrabold text-[#1DA6DF]">
+            {planLabelBig}
+          </div>
           <div className="mt-3">
             <span className="text-2xl font-bold">${price}</span>
             <span className="ml-1 text-xs text-gray-500">/user/month</span>
@@ -502,12 +609,14 @@ function PBXPreviewCard({ pbx, onEdit, onRemove }) {
 
       <hr className="my-4 border-gray-200" />
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
         <div className="rounded-xl bg-gray-50 p-4">
           {leftRows.map((r) => (
             <StatRow key={r.label} label={r.label} qty={r.qty} />
           ))}
-          {leftRows.every((r) => !r.qty || r.qty <= 0) && <div className="text-sm text-gray-500">—</div>}
+          {leftRows.every((r) => !r.qty || r.qty <= 0) && (
+            <div className="text-sm text-gray-500">—</div>
+          )}
         </div>
 
         {handsetRows.length > 0 ? (
@@ -517,18 +626,33 @@ function PBXPreviewCard({ pbx, onEdit, onRemove }) {
             ))}
           </div>
         ) : (
-          <div className="rounded-xl bg-gray-50 p-4 text-sm text-gray-500">No handsets selected</div>
+          <div className="rounded-xl bg-gray-50 p-4 text-sm text-gray-500">
+            No handsets selected
+          </div>
         )}
       </div>
 
       <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row sm:justify-start">
-        <button type="button" className="cursor-default rounded-md bg-[#1DA6DF] px-5 py-2 font-semibold text-white" disabled aria-disabled>
+        <button
+          type="button"
+          className="cursor-default w-full rounded-md bg-[#1DA6DF] px-5 py-2 font-semibold text-white"
+          disabled
+          aria-disabled
+        >
           Selected
         </button>
-        <button type="button" className="rounded-md border border-gray-300 px-5 py-2" onClick={onRemove}>
+        <button
+          type="button"
+          className="w-full sm:w-auto rounded-md border border-gray-300 px-5 py-2"
+          onClick={onRemove}
+        >
           Remove
         </button>
-        <button type="button" className="rounded-md border border-gray-300 px-5 py-2" onClick={onEdit}>
+        <button
+          type="button"
+          className="w-full sm:w-auto rounded-md border border-gray-300 px-5 py-2"
+          onClick={onEdit}
+        >
           Edit
         </button>
       </div>
@@ -559,7 +683,7 @@ export default function AddonsPbx({ value = {}, onChange }) {
 
   const saveFromModal = () => {
     const data = draftRef.current;
-    if (!data?.selectedPlan) return; // must pick a plan
+    if (!data?.selectedPlan) return;
     if (onChange) emit({ includePBX: true, pbx: data });
     else {
       setLocalInclude(true);
@@ -579,18 +703,28 @@ export default function AddonsPbx({ value = {}, onChange }) {
   return (
     <div className="space-y-6">
       {includePBX && pbx ? (
-        <PBXPreviewCard pbx={pbx} onEdit={() => setOpen(true)} onRemove={removePBX} />
+        <PBXPreviewCard
+          pbx={pbx}
+          onEdit={() => setOpen(true)}
+          onRemove={removePBX}
+        />
       ) : (
         <EmptyTile label="Add PBX plan" onClick={() => setOpen(true)} />
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title="PBX plan">
         <PBXWizardSection value={pbx} onPBXChange={handlePBXChange} />
-        <div className="sticky bottom-0 mt-6 flex items-center justify-end gap-2 border-t bg-white px-1 pt-4">
-          <button className="rounded-md border px-4 py-2" onClick={() => setOpen(false)}>
+        <div className=" bottom-0 mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end border-t bg-white px-1 pt-4">
+          <button
+            className="rounded-md border px-4 py-2 w-full sm:w-auto"
+            onClick={() => setOpen(false)}
+          >
             Cancel
           </button>
-          <button className="rounded-md bg-[#1DA6DF] px-4 py-2 font-semibold text-white" onClick={saveFromModal}>
+          <button
+            className="rounded-md bg-[#1DA6DF] px-4 py-2 font-semibold text-white w-full sm:w-auto"
+            onClick={saveFromModal}
+          >
             {includePBX ? "Update PBX" : "Add PBX"}
           </button>
         </div>

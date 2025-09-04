@@ -60,17 +60,12 @@ const PHONE_OPTIONS = {
 };
 
 /* ---------- layout constants for consistent sizing ---------- */
-const CARD_MIN_H = 290; // overall minimum height for every card
-const IMG_BOX_H = 120;  // fixed image box height so cards don't jump
+const CARD_MIN_H = 290;
+const IMG_BOX_H = 120;
+const MODAL_IMG_H_MOBILE = IMG_BOX_H + 20;
+const MODAL_IMG_H_SM = IMG_BOX_H + 60;
 
-/**
- * Addons (Modem + Extender + Phone)
- * Props:
- *  - value?: { includeModem?, selectedModems?, includePhone?, selectedPhone? }
- *  - onChange?: (nextValue) => void
- */
 export default function Addons({ value = {}, onChange }) {
-  /* ---------- controlled / local state ---------- */
   const [localIncludeModem, setLocalIncludeModem] = useState(value.includeModem ?? null);
   const [localSelectedModems, setLocalSelectedModems] = useState(value.selectedModems ?? []);
   useEffect(() => {
@@ -83,7 +78,6 @@ export default function Addons({ value = {}, onChange }) {
   const includeModem = value.includeModem ?? localIncludeModem;
   const selectedModems = value.selectedModems ?? localSelectedModems;
 
-  // If includeModem toggled off externally, clear any selected modem/extender
   useEffect(() => {
     if (includeModem === false && selectedModems.length > 0) {
       if (onChange) onChange({ ...value, includeModem: false, selectedModems: [] });
@@ -104,40 +98,33 @@ export default function Addons({ value = {}, onChange }) {
   const includePhone = value.includePhone ?? localIncludePhone;
   const selectedPhone = value.selectedPhone ?? localSelectedPhone;
 
-  /* ---------- helpers ---------- */
   const isModemSelected = selectedModems.includes("modem");
   const isExtenderSelected = selectedModems.includes("extender");
 
-  const emit = (patch) => onChange && onChange({ ...value, ...patch });
-
-  // Unique, logic-preserving setter for modem selections
   const setSelectedModems = (next) => {
     const unique = Array.from(new Set(next));
     const hasAny = unique.length > 0;
     if (onChange) {
-      emit({ selectedModems: unique, includeModem: hasAny });
+      onChange({ ...value, selectedModems: unique, includeModem: hasAny });
     } else {
       setLocalSelectedModems(unique);
       setLocalIncludeModem(hasAny);
     }
   };
 
-  /* ---------- single modal controller ---------- */
-  // modal: null | "modem" | "extender" | "phone"
   const [modal, setModal] = useState(null);
   const closeModal = () => setModal(null);
 
-  // Close modal with ESC
-// Prevent body scroll while modal is open
-useEffect(() => {
-  if (!modal) return;
-  const { style } = document.body;
-  const prev = style.overflow;
-  style.overflow = "hidden";
-  return () => { style.overflow = prev; };
-}, [modal]);
+  useEffect(() => {
+    if (!modal) return;
+    const { style } = document.body;
+    const prev = style.overflow;
+    style.overflow = "hidden";
+    const onKey = (e) => { if (e.key === "Escape") closeModal(); };
+    window.addEventListener("keydown", onKey);
+    return () => { style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, [modal]);
 
-  /* ---------- shared UI shell for consistent card sizing ---------- */
   const CardShell = ({ children, highlight = false }) => (
     <div
       className={`relative h-full rounded-2xl p-[1px] shadow-sm transition ${
@@ -151,30 +138,34 @@ useEffect(() => {
     </div>
   );
 
-  /* ---------- UI atoms ---------- */
+  /* ===== FIXED: keep plus+label centered even when hint exists ===== */
   const EmptyTile = ({ label, onClick, disabled, hint }) => (
     <CardShell>
       <button
         type="button"
         onClick={onClick}
         disabled={disabled}
-        className={`group flex h-full flex-1 flex-col items-center justify-center gap-3 rounded-[12px] border-2 border-dashed p-4 text-center transition ${
+        className={`grid h-full w-full grid-rows-[1fr_auto] rounded-[12px] border-2 border-dashed p-4 text-center transition ${
           disabled
             ? "cursor-not-allowed border-gray-200 text-gray-400"
             : "border-gray-300 hover:border-[#1DA6DF] hover:bg-[#f0faff]"
         }`}
       >
-        <div
-          className={`flex h-12 w-12 items-center justify-center rounded-full border-2 text-xl ${
-            disabled ? "border-gray-200" : "border-gray-300 group-hover:border-[#1DA6DF]"
-          }`}
-        >
-          +
+        {/* Row 1: center content perfectly */}
+        <div className="flex flex-col items-center justify-center gap-3">
+          <div
+            className={`flex h-12 w-12 items-center justify-center rounded-full border-2 text-xl ${
+              disabled ? "border-gray-200" : "border-gray-300 group-hover:border-[#1DA6DF]"
+            }`}
+          >
+            +
+          </div>
+          <div className="text-sm font-semibold">{label}</div>
         </div>
-        <div className="text-sm font-semibold">{label}</div>
 
+        {/* Row 2: hint pinned to bottom; doesn't affect centering */}
         {hint && (
-          <div className="mt-auto w-full px-2 text-center text-xs text-gray-500">{hint}</div>
+          <div className="mt-3 w-full px-2 text-center text-xs text-gray-500">{hint}</div>
         )}
       </button>
     </CardShell>
@@ -182,17 +173,17 @@ useEffect(() => {
 
   const SelectedCard = ({ title, img, subtitle, price, note, details, onRemove, secondary }) => (
     <CardShell highlight>
-      {/* Ribbon */}
       <div className="pointer-events-none absolute right-3 top-3 rounded-full bg-[#1DA6DF]/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-[#1DA6DF]">
         Added
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row">
         {img ? (
-          <div className="shrink-0">
-            {/* Fixed image box to avoid card height shifts */}
-            <div className="flex h-[--imgH] w-[--imgH] items-center justify-center rounded-lg bg-gray-50"
-                 style={{ ["--imgH"]: `${IMG_BOX_H}px` }}>
+          <div className="shrink-0 flex justify-center sm:block">
+            <div
+              className="flex h-[--imgH] w-[--imgH] items-center justify-center rounded-lg bg-gray-50"
+              style={{ ["--imgH"]: `${IMG_BOX_H}px` }}
+            >
               <Image
                 unoptimized
                 src={img}
@@ -241,11 +232,10 @@ useEffect(() => {
             </div>
           )}
 
-          {/* actions pinned bottom: keep heights identical */}
           <div className="mt-auto flex flex-wrap gap-2 pt-3">
             <button
               type="button"
-              className="inline-flex items-center gap-1 rounded-md bg-[#1DA6DF] px-3 py-2 text-xs font-semibold text-white shadow-sm"
+              className="inline-flex w-full sm:w-auto items-center justify-center gap-1 rounded-md bg-[#1DA6DF] px-3 py-2 text-xs font-semibold text-white shadow-sm"
               disabled
               aria-disabled="true"
             >
@@ -254,102 +244,111 @@ useEffect(() => {
             <button
               type="button"
               onClick={onRemove}
-              className="rounded-md border border-gray-300 px-3 py-2 text-xs hover:bg-gray-50"
+              className="w-full sm:w-auto rounded-md border border-gray-300 px-3 py-2 text-xs hover:bg-gray-50"
             >
               Remove
             </button>
-            {secondary}
+            <div className="w-full sm:w-auto">{secondary}</div>
           </div>
         </div>
       </div>
     </CardShell>
   );
 
-  // Center with CSS grid (no translate), animate scale/opacity, stop click bubbling
-const Modal = ({ open, onClose, title, children }) =>
-  !open ? null : (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center"
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-      onClick={onClose}
-    >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
+  const Modal = ({ open, onClose, title, children }) =>
+    !open ? null : (
       <div
-        className="relative w-[95vw] max-w-2xl rounded-2xl bg-white p-6 shadow-2xl animate-[modalIn_140ms_ease-out_forwards]"
-        onClick={(e) => e.stopPropagation()}
+        className="fixed inset-0 z-50 grid place-items-center px-3"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        onClick={onClose}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-gray-900">{title}</h3>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-gray-700 transition hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1DA6DF]/50"
-            aria-label="Close"
-          >
-            ✕
-          </button>
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
+        <div
+          className="relative w-full max-w-2xl rounded-2xl bg-white p-4 sm:p-6 shadow-2xl animate-[modalIn_140ms_ease-out_forwards]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900">{title}</h3>
+            <button
+              onClick={onClose}
+              className="rounded-full p-2 text-gray-700 transition hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1DA6DF]/50"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
+          {children}
         </div>
-        {children}
+
+        <style jsx>{`
+          @keyframes modalIn {
+            from { opacity: 0; transform: scale(.98); }
+            to   { opacity: 1; transform: scale(1); }
+          }
+        `}</style>
       </div>
+    );
 
-      {/* Smooth in without moving position */}
-      <style jsx>{`
-        @keyframes modalIn {
-          from { opacity: 0; transform: scale(.98); }
-          to   { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
-    </div>
-  );
-
-
-  const OptionDetails = ({ opt, onConfirm, onCancel }) => (
-    <div className="flex gap-4">
-      <div className="hidden shrink-0 sm:block">
-        <div className="flex h-[--imgH] w-[--imgH] items-center justify-center rounded-lg bg-gray-50"
-             style={{ ["--imgH"]: `${IMG_BOX_H + 60}px` }}>
-          <Image
-            unoptimized
-            src={opt.img}
-            alt={opt.title}
-            width={IMG_BOX_H + 60}
-            height={IMG_BOX_H + 60}
-            className="object-contain"
-            loading="lazy"
-          />
-        </div>
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <h4 className="text-lg font-semibold text-gray-900">{opt.title}</h4>
-        {opt.subtitle && <p className="text-sm text-gray-500">{opt.subtitle}</p>}
-        <ul className="ml-4 mt-3 list-disc space-y-1 text-sm text-gray-700">
-          {opt.details.map((d, i) => (
-            <li key={i}>{d}</li>
-          ))}
-        </ul>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center rounded-full bg-[#1DA6DF]/10 px-2 py-0.5 text-xs font-semibold text-[#1DA6DF]">
-            {opt.price}
-          </span>
-          {opt.note && <span className="text-xs text-gray-500">{opt.note}</span>}
-        </div>
-        <div className="mt-6 ml-auto flex gap-2">
-          <button className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" onClick={onCancel}>
-            Cancel
-          </button>
-          <button
-            className="rounded-md bg-[#1DA6DF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0f7fb3]"
-            onClick={onConfirm}
-          >
-            Add
-          </button>
-        </div>
+const OptionDetails = ({ opt, onConfirm, onCancel }) => (
+  <div className="flex flex-col gap-6 md:flex-row md:gap-10 md:items-start">
+    {/* IMAGE left (desktop), full-width top (mobile) */}
+    <div className="flex justify-center md:justify-start md:flex-shrink-0">
+      <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 w-[220px] h-[260px] flex items-center justify-center">
+        <Image
+          unoptimized
+          src={opt.img}
+          alt={opt.title}
+          width={100}
+          height={140}
+          className="object-contain"
+          loading="lazy"
+        />
       </div>
     </div>
-  );
 
-  /* ---------- render ---------- */
+    {/* CONTENT right */}
+    <div className="flex flex-col flex-1 min-w-0">
+      <h4 className="text-lg md:text-xl font-bold text-gray-900">{opt.title}</h4>
+      {opt.subtitle && (
+        <p className="text-sm text-gray-500 mb-2">{opt.subtitle}</p>
+      )}
+
+      <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700 mb-4">
+        {opt.details.map((d, i) => (
+          <li key={i}>{d}</li>
+        ))}
+      </ul>
+
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        <span className="inline-flex items-center rounded-full bg-[#1DA6DF]/10 px-3 py-1 text-sm font-semibold text-[#1DA6DF]">
+          {opt.price}
+        </span>
+        {opt.note && <span className="text-sm text-gray-500">{opt.note}</span>}
+      </div>
+
+      {/* ACTIONS bottom aligned */}
+      <div className="mt-auto flex flex-col-reverse gap-2 sm:flex-row sm:justify-end border-t border-gray-100 pt-4">
+        <button
+          className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 w-full sm:w-auto"
+          onClick={onCancel}
+        >
+          Cancel
+        </button>
+        <button
+          className="rounded-md bg-[#1DA6DF] px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#0f7fb3] w-full sm:w-auto"
+          onClick={onConfirm}
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+
+
   const summary = [
     isModemSelected ? "Modem" : null,
     isExtenderSelected ? "Extender" : null,
@@ -357,12 +356,14 @@ const Modal = ({ open, onClose, title, children }) =>
   ].filter(Boolean);
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 px-3 sm:px-0">
       <header className="text-center">
-        <h2 className="text-2xl font-extrabold md:text-3xl">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold">
           Enhance your plan with some <span className="text-[#1DA6DF]">extras</span>
         </h2>
-        <p className="mt-1 text-sm text-gray-500">Choose a modem, add an extender, and pick a phone option.</p>
+        <p className="mt-1 text-sm sm:text-base text-gray-500">
+          Choose a modem, add an extender, and pick a phone option.
+        </p>
       </header>
 
       <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-3">
@@ -371,13 +372,12 @@ const Modal = ({ open, onClose, title, children }) =>
           <SelectedCard
             {...MODEM_OPTIONS.modem}
             onRemove={() => {
-              // Removing modem also removes extender (original behavior)
               const next = selectedModems.filter((x) => x !== "modem" && x !== "extender");
               setSelectedModems(next);
             }}
             secondary={
               <button
-                className="rounded-md border border-gray-300 px-3 py-2 text-xs hover:bg-gray-50"
+                className="w-full sm:w-auto rounded-md border border-gray-300 px-3 py-2 text-xs hover:bg-gray-50"
                 onClick={() => setModal("modem")}
                 type="button"
               >
@@ -396,7 +396,7 @@ const Modal = ({ open, onClose, title, children }) =>
             onRemove={() => setSelectedModems(selectedModems.filter((x) => x !== "extender"))}
             secondary={
               <button
-                className="rounded-md border border-gray-300 px-3 py-2 text-xs hover:bg-gray-50"
+                className="w-full sm:w-auto rounded-md border border-gray-300 px-3 py-2 text-xs hover:bg-gray-50"
                 onClick={() => setModal("extender")}
                 type="button"
               >
@@ -426,7 +426,7 @@ const Modal = ({ open, onClose, title, children }) =>
             secondary={
               <button
                 type="button"
-                className="rounded-md border border-gray-300 px-3 py-2 text-xs hover:bg-gray-50"
+                className="w-full sm:w-auto rounded-md border border-gray-300 px-3 py-2 text-xs hover:bg-gray-50"
                 onClick={() => setModal("phone")}
               >
                 Change
@@ -438,7 +438,6 @@ const Modal = ({ open, onClose, title, children }) =>
         )}
       </div>
 
-      {/* Summary (purely visual, no logic change) */}
       <div className="flex flex-wrap items-center justify-center gap-2">
         {summary.length === 0 ? (
           <span className="text-xs text-gray-500">No extras selected yet.</span>
@@ -454,7 +453,6 @@ const Modal = ({ open, onClose, title, children }) =>
         )}
       </div>
 
-      {/* Single modal for all three cases */}
       <Modal
         open={modal !== null}
         onClose={closeModal}
@@ -484,7 +482,7 @@ const Modal = ({ open, onClose, title, children }) =>
             opt={MODEM_OPTIONS.extender}
             onCancel={closeModal}
             onConfirm={() => {
-              if (!isModemSelected) return; // guard: extender depends on modem
+              if (!isModemSelected) return;
               if (!isExtenderSelected) setSelectedModems([...selectedModems, "extender"]);
               closeModal();
             }}
@@ -511,7 +509,6 @@ const Modal = ({ open, onClose, title, children }) =>
   );
 }
 
-/* ---------- Extracted phone chooser (logic unchanged) ---------- */
 function PhoneChooser({ selected, onCancel, onConfirm, phoneOptions }) {
   const [choice, setChoice] = useState(selected || "pack");
   return (
@@ -531,7 +528,7 @@ function PhoneChooser({ selected, onCancel, onConfirm, phoneOptions }) {
         />
       </div>
 
-      <div className="mt-4 flex justify-end gap-2">
+      <div className="mt-4 flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:justify-end">
         <button className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" onClick={onCancel}>
           Cancel
         </button>
@@ -581,7 +578,6 @@ function RadioCard({ checked, onChange, title, details }) {
   );
 }
 
-/* ---------- tiny icon ---------- */
 function CheckIcon({ className = "" }) {
   return (
     <svg viewBox="0 0 20 20" fill="currentColor" className={className} aria-hidden="true">
