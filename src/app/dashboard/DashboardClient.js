@@ -4,6 +4,7 @@
 import React, { useState } from "react";
 import DashboardSuperAdmin from "./components/DashboardSuperAdmin";
 import DashboardProduct from "./components/DashboardProduct";
+import DashboardPermission from "./components/DashboardPermission";
 
 
 const menuItems = [
@@ -17,6 +18,24 @@ const menuItems = [
       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" />
       </svg>
+    ), roles: ['superadmin','user']
+  },
+  { label: "Permission", page: "Permission", icon: (
+      <svg
+  xmlns="http://www.w3.org/2000/svg"
+  className="h-6 w-6"
+  fill="none"
+  viewBox="0 0 24 24"
+  stroke="currentColor"
+>
+  <path
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={2}
+    d="M12 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7zm7.94-2.34l-1.22-.71a6.97 6.97 0 000-3.9l1.22-.71a.75.75 0 00.28-1.02l-1-1.73a.75.75 0 00-1.02-.28l-1.22.71a6.97 6.97 0 00-3.38-1.95V3.75a.75.75 0 00-.75-.75h-2a.75.75 0 00-.75.75v1.42a6.97 6.97 0 00-3.38 1.95l-1.22-.71a.75.75 0 00-1.02.28l-1 1.73a.75.75 0 00.28 1.02l1.22.71a6.97 6.97 0 000 3.9l-1.22.71a.75.75 0 00-.28 1.02l1 1.73a.75.75 0 001.02.28l1.22-.71a6.97 6.97 0 003.38 1.95v1.42c0 .41.34.75.75.75h2c.41 0 .75-.34.75-.75v-1.42a6.97 6.97 0 003.38-1.95l1.22.71a.75.75 0 001.02-.28l1-1.73a.75.75 0 00-.28-1.02z"
+  />
+</svg>
+
     ), roles: ['superadmin','user']
   }
 ];
@@ -35,6 +54,7 @@ export default function DashboardClient({ type }) {
     switch (page) {
       case "SuperAdmin": return <DashboardSuperAdmin />;
       case "NBNProducts": return <DashboardProduct />;
+      case "Permission": return <DashboardPermission />;
       default: return null;
     }
   };

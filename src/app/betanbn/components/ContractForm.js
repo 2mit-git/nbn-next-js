@@ -58,6 +58,26 @@ const pill = (active) =>
     active ? "bg-[--primary] text-white shadow-sm" : "bg-white text-gray-800 border border-gray-300 hover:bg-gray-50"
   }`;
 
+/* ---------- Light toast for warnings ---------- */
+function Toast({ message, onClose }) {
+  if (!message) return null;
+  return (
+    <div className="fixed top-4 right-4 z-[80] max-w-sm rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900 shadow">
+      <div className="flex items-start gap-3">
+        <span className="text-xl leading-none">⚠️</span>
+        <div className="text-sm">{message}</div>
+        <button
+          className="ml-auto rounded-md border border-amber-300 px-2 py-0.5 text-xs hover:bg-amber-100"
+          onClick={onClose}
+          aria-label="Dismiss"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function ContractForm({
   serviceAddress = "",
   selectedPlan = null,
@@ -70,6 +90,9 @@ export default function ContractForm({
   const today = new Date().toISOString().split("T")[0];
 
   const [open, setOpen] = useState(false);
+
+  // NEW: preflight warning message before opening modal
+  const [preflightWarning, setPreflightWarning] = useState("");
 
   const [form, setForm] = useState({
     title: "Mr",
@@ -189,6 +212,38 @@ export default function ContractForm({
       setError("Failed to verify OTP");
     }
     setLoading(false);
+  };
+
+  /* ---------- NEW: preflight check before opening modal ---------- */
+  const canOpenModal = () => {
+    const hasAddress = Boolean((serviceAddress || "").trim());
+    const hasPlan =
+      !!selectedPlan &&
+      (selectedPlan.id ||
+        selectedPlan.name ||
+        selectedPlan.subtitle ||
+        typeof selectedPlan.price !== "undefined" ||
+        typeof selectedPlan.discountPrice !== "undefined" ||
+        selectedPlan.speed);
+
+    if (!hasAddress && !hasPlan) {
+      setPreflightWarning("Please select a service address and an NBN plan before completing your order.");
+      return false;
+    }
+    if (!hasAddress) {
+      setPreflightWarning("Please select a service address before completing your order.");
+      return false;
+    }
+    if (!hasPlan) {
+      setPreflightWarning("Please select an NBN plan before completing your order.");
+      return false;
+    }
+    setPreflightWarning("");
+    return true;
+  };
+
+  const handleOpenClick = () => {
+    if (canOpenModal()) setOpen(true);
   };
 
   /* ---------- Order items + payload ---------- */
@@ -404,12 +459,15 @@ export default function ContractForm({
   /* ---------- Render ---------- */
   return (
     <div style={{ "--primary": PRIMARY }}>
+      {/* Toast for preflight warnings */}
+      <Toast message={preflightWarning} onClose={() => setPreflightWarning("")} />
+
       {/* Page CTA that opens the modal */}
       <div className="flex justify-end">
         <button
           type="button"
           className="rounded-md bg-[#1DA6DF] px-4 py-2 font-semibold text-white"
-          onClick={() => setOpen(true)}
+          onClick={handleOpenClick} // ← changed
         >
           Complete order
         </button>

@@ -1,10 +1,9 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import NbnAddressSearching from "./components/NbnAddressSearching";
 import NbnProducts from "./components/NbnProducts";
 import Addons from "./components/Addons";
 import AddonsPbx from "./components/AddonsPbx";
-import OrderSummary from "./components/OrderSummary";
 import ContractForm from "./components/ContractForm";
 
 export default function Page() {
@@ -36,7 +35,7 @@ export default function Page() {
     setUpgradeEligible(!!canUpgrade);
   };
 
-  // Merge extras into the shape OrderSummary expects
+  // Merge extras into the shape ContractForm expects
   const mergedExtras = useMemo(() => {
     return {
       modems: extras.includeModem ? extras.selectedModems : [],
@@ -52,34 +51,44 @@ export default function Page() {
     pbxState.pbx,
   ]);
 
+  // Ref for the plans section (for smooth scroll)
+  const plansRef = useRef(null);
+
+  const scrollToPlans = () => {
+    // If you have a sticky header, add a scroll-mt class on the ref wrapper (e.g., "scroll-mt-24")
+    plansRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="lg:m-20 m-2 space-y-8">
       <div className="relative z-[60]">
         <NbnAddressSearching
           onTechChange={handleTechChange}
           onAddressChange={setServiceAddress}   // <-- capture formatted address
+          onSeePlans={scrollToPlans}            // <-- NEW: smooth scroll trigger
         />
       </div>
 
-      <NbnProducts
-        originalTech={addressTech}
-        selectedTech={upgradeEligible ? "FTTP_Upgrade" : null}
-        onPlanChange={setSelectedPlan}
-        onSelectPlan={setSelectedPlan}
-        onSelect={setSelectedPlan}
-        selectedPlan={selectedPlan}
-      />
+      {/* Plans section wrapped with the ref for scrolling */}
+      <div ref={plansRef} className="scroll-mt-24">
+        <NbnProducts
+          originalTech={addressTech}
+          selectedTech={upgradeEligible ? "FTTP_Upgrade" : null}
+          onPlanChange={setSelectedPlan}
+          onSelectPlan={setSelectedPlan}
+          onSelect={setSelectedPlan}
+          selectedPlan={selectedPlan}
+        />
+      </div>
 
       <Addons value={extras} onChange={setExtras} />
       <AddonsPbx value={pbxState} onChange={setPbxState} />
 
-      <OrderSummary
-        selectedPlan={selectedPlan}
+      <ContractForm
+        serviceAddress={serviceAddress}  // used by pre-check
+        selectedPlan={selectedPlan}      // used by pre-check + payload
         extras={mergedExtras}
-        title="Order Summary"
       />
-
-      <ContractForm serviceAddress={serviceAddress} />
     </div>
   );
 }

@@ -46,7 +46,7 @@ export default function OrderSummary({
   const lines = [];
 
   // Plan
-  const planLabel = selectedPlan?.subtitle || selectedPlan?.name || "Plan";
+  const planLabel = selectedPlan?.title || selectedPlan?.name || "Plan";
   const planPrice =
     typeof selectedPlan?.discountPrice !== "undefined"
       ? Number(selectedPlan.discountPrice)

@@ -198,7 +198,7 @@ function PBXWizardSection({ value, onPBXChange }) {
 
   return (
     <div className="space-y-8">
-      {/* Totals / Banner */}
+      {/* Totals / Banner
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
         <div className="text-sm md:text-base text-gray-600">
           <span className="font-semibold text-[#1DA6DF]">Monthly:</span> $
@@ -209,19 +209,8 @@ function PBXWizardSection({ value, onPBXChange }) {
           </span>{" "}
           ${upfrontTotal.toFixed(2)}
         </div>
-        {remainingLimited === 0 ? (
-          <span className="inline-flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
-            ⚠️ Limited models cap reached (Users + Queues = {maxHandsets})
-          </span>
-        ) : (
-          <span className="text-xs text-gray-500">
-            Limited models remaining:{" "}
-            <span className="font-semibold text-[#1DA6DF]">
-              {remainingLimited}
-            </span>
-          </span>
-        )}
-      </div>
+        
+      </div> */}
 
       {/* Plan */}
       <section>
@@ -323,9 +312,26 @@ function PBXWizardSection({ value, onPBXChange }) {
 
       {/* Handsets */}
       <section>
-        <h3 className="mb-3 sm:mb-4 text-lg sm:text-xl font-bold text-[#1DA6DF]">
+        <div className="flex gap-5">
+          <h3 className="mb-3 sm:mb-4 text-lg sm:text-xl font-bold text-[#1DA6DF]">
           PBX Handsets
         </h3>
+        <div>
+          {remainingLimited === 0 ? (
+          <span className="inline-flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
+            ⚠️ Limited models cap reached (Users + Queues = {maxHandsets})
+          </span>
+        ) : (
+          <span className="text-xs text-gray-500">
+            Limited models remaining:{" "}
+            <span className="font-semibold text-[#1DA6DF]">
+              {remainingLimited}
+            </span>
+          </span>
+        )}
+        </div>
+        </div>
+        
         {limitWarn && (
           <div className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200">
             {limitWarn}

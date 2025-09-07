@@ -11,7 +11,7 @@ function useDebounce(value, delay = 600) {
   return debounced;
 }
 
-export default function NbnAddressSearching({ onTechChange, onAddressChange }) {
+export default function NbnAddressSearching({ onTechChange, onAddressChange, onSeePlans }) {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [nbnResult, setNbnResult] = useState(null);
@@ -268,6 +268,7 @@ export default function NbnAddressSearching({ onTechChange, onAddressChange }) {
           <button
             className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1EA6DF] px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#0f7fb3] hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1EA6DF]/50 sm:w-auto"
             type="button"
+            onClick={() => onSeePlans?.()}   // ← only addition; no logic changed
           >
             <span>See available plans</span>
             <svg
