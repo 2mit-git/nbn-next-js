@@ -11,8 +11,13 @@ function useDebounce(value, delay = 600) {
   return debounced;
 }
 
-export default function NbnAddressSearching({ onTechChange, onAddressChange, onSeePlans }) {
-  const [query, setQuery] = useState("");
+export default function NbnAddressSearching({
+  initialValue = "",
+  onTechChange,
+  onAddressChange,
+  onSeePlans,
+}) {
+  const [query, setQuery] = useState(initialValue);
   const [suggestions, setSuggestions] = useState([]);
   const [nbnResult, setNbnResult] = useState(null);
   const [loadingSuggest, setLoadingSuggest] = useState(false);
@@ -21,12 +26,19 @@ export default function NbnAddressSearching({ onTechChange, onAddressChange, onS
   const [opened, setOpened] = useState(false);
 
   const debounced = useDebounce(query, 600);
-  const lastSelected = useRef("");
+  const lastSelected = useRef(initialValue || ""); // seed with initial value
   const boxRef = useRef(null);
   const inputRef = useRef(null);
 
   const isTyping = query.length >= 2 && debounced !== query;
   const showList = opened && suggestions.length > 0 && !nbnResult;
+
+  /* NEW: keep input in sync if parent updates initialValue (e.g. from URL) */
+  useEffect(() => {
+    if (!initialValue) return;
+    setQuery(initialValue);
+    lastSelected.current = initialValue; // prevents dropdown fetch for same value
+  }, [initialValue]);
 
   /* Close dropdown on click outside */
   useEffect(() => {
@@ -109,12 +121,11 @@ export default function NbnAddressSearching({ onTechChange, onAddressChange, onS
       .trim()
       .toLowerCase() === "eligible to order";
 
-  /* Inform parent */
+  /* Inform parent — ONLY when we actually have an NBN result */
   useEffect(() => {
-    if (typeof onTechChange === "function") {
-      onTechChange(techType || null, canUpgrade);
-    }
-  }, [techType, canUpgrade, onTechChange]);
+    if (!nbnResult) return; // prevents clearing seeded URL state on mount
+    onTechChange?.(techType || null, canUpgrade);
+  }, [nbnResult, techType, canUpgrade, onTechChange]);
 
   /* Keyboard shortcuts */
   const onKeyDown = (e) => {
@@ -268,21 +279,11 @@ export default function NbnAddressSearching({ onTechChange, onAddressChange, onS
           <button
             className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1EA6DF] px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#0f7fb3] hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1EA6DF]/50 sm:w-auto"
             type="button"
-            onClick={() => onSeePlans?.()}   // ← only addition; no logic changed
+            onClick={() => onSeePlans?.()}
           >
             <span>See available plans</span>
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
 

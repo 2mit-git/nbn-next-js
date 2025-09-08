@@ -66,13 +66,19 @@ const MODAL_IMG_H_MOBILE = IMG_BOX_H + 20;
 const MODAL_IMG_H_SM = IMG_BOX_H + 60;
 
 export default function Addons({ value = {}, onChange }) {
-  const [localIncludeModem, setLocalIncludeModem] = useState(value.includeModem ?? null);
-  const [localSelectedModems, setLocalSelectedModems] = useState(value.selectedModems ?? []);
+  const [localIncludeModem, setLocalIncludeModem] = useState(
+    value.includeModem ?? null
+  );
+  const [localSelectedModems, setLocalSelectedModems] = useState(
+    value.selectedModems ?? []
+  );
   useEffect(() => {
-    if (value.includeModem !== undefined) setLocalIncludeModem(value.includeModem);
+    if (value.includeModem !== undefined)
+      setLocalIncludeModem(value.includeModem);
   }, [value.includeModem]);
   useEffect(() => {
-    if (value.selectedModems !== undefined) setLocalSelectedModems(value.selectedModems);
+    if (value.selectedModems !== undefined)
+      setLocalSelectedModems(value.selectedModems);
   }, [value.selectedModems]);
 
   const includeModem = value.includeModem ?? localIncludeModem;
@@ -80,19 +86,26 @@ export default function Addons({ value = {}, onChange }) {
 
   useEffect(() => {
     if (includeModem === false && selectedModems.length > 0) {
-      if (onChange) onChange({ ...value, includeModem: false, selectedModems: [] });
+      if (onChange)
+        onChange({ ...value, includeModem: false, selectedModems: [] });
       else setLocalSelectedModems([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [includeModem]);
 
-  const [localIncludePhone, setLocalIncludePhone] = useState(value.includePhone ?? null);
-  const [localSelectedPhone, setLocalSelectedPhone] = useState(value.selectedPhone ?? "pack");
+  const [localIncludePhone, setLocalIncludePhone] = useState(
+    value.includePhone ?? null
+  );
+  const [localSelectedPhone, setLocalSelectedPhone] = useState(
+    value.selectedPhone ?? "pack"
+  );
   useEffect(() => {
-    if (value.includePhone !== undefined) setLocalIncludePhone(value.includePhone);
+    if (value.includePhone !== undefined)
+      setLocalIncludePhone(value.includePhone);
   }, [value.includePhone]);
   useEffect(() => {
-    if (value.selectedPhone !== undefined) setLocalSelectedPhone(value.selectedPhone);
+    if (value.selectedPhone !== undefined)
+      setLocalSelectedPhone(value.selectedPhone);
   }, [value.selectedPhone]);
 
   const includePhone = value.includePhone ?? localIncludePhone;
@@ -120,15 +133,22 @@ export default function Addons({ value = {}, onChange }) {
     const { style } = document.body;
     const prev = style.overflow;
     style.overflow = "hidden";
-    const onKey = (e) => { if (e.key === "Escape") closeModal(); };
+    const onKey = (e) => {
+      if (e.key === "Escape") closeModal();
+    };
     window.addEventListener("keydown", onKey);
-    return () => { style.overflow = prev; window.removeEventListener("keydown", onKey); };
+    return () => {
+      style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
   }, [modal]);
 
   const CardShell = ({ children, highlight = false }) => (
     <div
       className={`relative h-full rounded-2xl p-[1px] shadow-sm transition ${
-        highlight ? "bg-gradient-to-b from-white to-gray-100" : "bg-gradient-to-b from-gray-200 to-gray-100"
+        highlight
+          ? "bg-gradient-to-b from-white to-gray-100"
+          : "bg-gradient-to-b from-gray-200 to-gray-100"
       } hover:shadow-md`}
       style={{ minHeight: CARD_MIN_H }}
     >
@@ -155,7 +175,9 @@ export default function Addons({ value = {}, onChange }) {
         <div className="flex flex-col items-center justify-center gap-3">
           <div
             className={`flex h-12 w-12 items-center justify-center rounded-full border-2 text-xl ${
-              disabled ? "border-gray-200" : "border-gray-300 group-hover:border-[#1DA6DF]"
+              disabled
+                ? "border-gray-200"
+                : "border-gray-300 group-hover:border-[#1DA6DF]"
             }`}
           >
             +
@@ -165,20 +187,27 @@ export default function Addons({ value = {}, onChange }) {
 
         {/* Row 2: hint pinned to bottom; doesn't affect centering */}
         {hint && (
-          <div className="mt-3 w-full px-2 text-center text-xs text-gray-500">{hint}</div>
+          <div className="mt-3 w-full px-2 text-center text-xs text-gray-500">
+            {hint}
+          </div>
         )}
       </button>
     </CardShell>
   );
 
-  const SelectedCard = ({ title, img, subtitle, price, note, details, onRemove, secondary }) => (
+  const SelectedCard = ({
+    title,
+    img,
+    subtitle,
+    price,
+    note,
+    details,
+    onRemove,
+    secondary,
+  }) => (
     <CardShell highlight>
-      <div className="pointer-events-none absolute right-3 top-3 rounded-full bg-[#1DA6DF]/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-[#1DA6DF]">
-        Added
-      </div>
-
       <div className="flex flex-col gap-4 sm:flex-row">
-        {img ? (
+        {img && (
           <div className="shrink-0 flex justify-center sm:block">
             <div
               className="flex h-[--imgH] w-[--imgH] items-center justify-center rounded-lg bg-gray-50"
@@ -195,14 +224,16 @@ export default function Addons({ value = {}, onChange }) {
               />
             </div>
           </div>
-        ) : (
-          <div className="shrink-0" style={{ width: IMG_BOX_H, height: IMG_BOX_H }} />
         )}
 
         <div className="flex min-w-0 flex-1 flex-col">
           <div>
-            <h4 className="truncate text-base font-semibold text-gray-900">{title}</h4>
-            {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+            <h4 className="text-base font-semibold text-gray-900">{title}</h4>
+            {subtitle && (
+              <p className="whitespace-normal break-words text-xs text-gray-500">
+                {subtitle}
+              </p>
+            )}
           </div>
 
           {!!details?.length && (
@@ -231,26 +262,24 @@ export default function Addons({ value = {}, onChange }) {
               {note && <span className="text-xs text-gray-500">{note}</span>}
             </div>
           )}
-
-          <div className="mt-auto flex flex-wrap gap-2 pt-3">
-            <button
-              type="button"
-              className="inline-flex w-full sm:w-auto items-center justify-center gap-1 rounded-md bg-[#1DA6DF] px-3 py-2 text-xs font-semibold text-white shadow-sm"
-              disabled
-              aria-disabled="true"
-            >
-              <CheckIcon className="h-4 w-4" /> Selected
-            </button>
-            <button
-              type="button"
-              onClick={onRemove}
-              className="w-full sm:w-auto rounded-md border border-gray-300 px-3 py-2 text-xs hover:bg-gray-50"
-            >
-              Remove
-            </button>
-            <div className="w-full sm:w-auto">{secondary}</div>
-          </div>
         </div>
+      </div>
+      <div className="mt-auto flex flex-wrap gap-10 pt-3 w-full justify-center">
+        <button
+          type="button"
+          className="inline-flex w-full sm:w-auto items-center justify-center gap-1 rounded-md bg-[#1DA6DF] px-3 py-2 text-xs font-semibold text-white shadow-sm"
+          disabled
+          aria-disabled="true"
+        >
+          <CheckIcon className="h-4 w-4" /> Selected
+        </button>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="w-full sm:w-auto rounded-md border border-gray-300 px-3 py-2 text-xs hover:bg-gray-50"
+        >
+          Remove
+        </button>
       </div>
     </CardShell>
   );
@@ -270,7 +299,9 @@ export default function Addons({ value = {}, onChange }) {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-900">{title}</h3>
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+              {title}
+            </h3>
             <button
               onClick={onClose}
               className="rounded-full p-2 text-gray-700 transition hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1DA6DF]/50"
@@ -284,82 +315,95 @@ export default function Addons({ value = {}, onChange }) {
 
         <style jsx>{`
           @keyframes modalIn {
-            from { opacity: 0; transform: scale(.98); }
-            to   { opacity: 1; transform: scale(1); }
+            from {
+              opacity: 0;
+              transform: scale(0.98);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1);
+            }
           }
         `}</style>
       </div>
     );
 
-const OptionDetails = ({ opt, onConfirm, onCancel }) => (
-  <div className="flex flex-col gap-6 md:flex-row md:gap-10 md:items-start">
-    {/* IMAGE left (desktop), full-width top (mobile) */}
-    <div className="flex justify-center md:justify-start md:flex-shrink-0">
-      <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 w-[220px] h-[260px] flex items-center justify-center">
-        <Image
-          unoptimized
-          src={opt.img}
-          alt={opt.title}
-          width={100}
-          height={140}
-          className="object-contain"
-          loading="lazy"
-        />
+  const OptionDetails = ({ opt, onConfirm, onCancel }) => (
+    <div className="flex flex-col gap-6 md:flex-row md:gap-10 md:items-start">
+      {/* IMAGE left (desktop), full-width top (mobile) */}
+      <div className="flex justify-center md:justify-start md:flex-shrink-0">
+        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 w-[220px] h-[260px] flex items-center justify-center">
+          <Image
+            unoptimized
+            src={opt.img}
+            alt={opt.title}
+            width={100}
+            height={140}
+            className="object-contain"
+            loading="lazy"
+          />
+        </div>
+      </div>
+
+      {/* CONTENT right */}
+      <div className="flex flex-col flex-1 min-w-0">
+        <h4 className="text-lg md:text-xl font-bold text-gray-900">
+          {opt.title}
+        </h4>
+        {opt.subtitle && (
+          <p className="text-sm text-gray-500 mb-2">{opt.subtitle}</p>
+        )}
+
+        <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700 mb-4">
+          {opt.details.map((d, i) => (
+            <li key={i}>{d}</li>
+          ))}
+        </ul>
+
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          <span className="inline-flex items-center rounded-full bg-[#1DA6DF]/10 px-3 py-1 text-sm font-semibold text-[#1DA6DF]">
+            {opt.price}
+          </span>
+          {opt.note && (
+            <span className="text-sm text-gray-500">{opt.note}</span>
+          )}
+        </div>
+
+        {/* ACTIONS bottom aligned */}
+        <div className="mt-auto flex flex-col-reverse gap-2 sm:flex-row sm:justify-end border-t border-gray-100 pt-4">
+          <button
+            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 w-full sm:w-auto"
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+          <button
+            className="rounded-md bg-[#1DA6DF] px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#0f7fb3] w-full sm:w-auto"
+            onClick={onConfirm}
+          >
+            Add
+          </button>
+        </div>
       </div>
     </div>
-
-    {/* CONTENT right */}
-    <div className="flex flex-col flex-1 min-w-0">
-      <h4 className="text-lg md:text-xl font-bold text-gray-900">{opt.title}</h4>
-      {opt.subtitle && (
-        <p className="text-sm text-gray-500 mb-2">{opt.subtitle}</p>
-      )}
-
-      <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700 mb-4">
-        {opt.details.map((d, i) => (
-          <li key={i}>{d}</li>
-        ))}
-      </ul>
-
-      <div className="flex flex-wrap items-center gap-2 mb-6">
-        <span className="inline-flex items-center rounded-full bg-[#1DA6DF]/10 px-3 py-1 text-sm font-semibold text-[#1DA6DF]">
-          {opt.price}
-        </span>
-        {opt.note && <span className="text-sm text-gray-500">{opt.note}</span>}
-      </div>
-
-      {/* ACTIONS bottom aligned */}
-      <div className="mt-auto flex flex-col-reverse gap-2 sm:flex-row sm:justify-end border-t border-gray-100 pt-4">
-        <button
-          className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 w-full sm:w-auto"
-          onClick={onCancel}
-        >
-          Cancel
-        </button>
-        <button
-          className="rounded-md bg-[#1DA6DF] px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#0f7fb3] w-full sm:w-auto"
-          onClick={onConfirm}
-        >
-          Add
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
-
+  );
 
   const summary = [
     isModemSelected ? "Modem" : null,
     isExtenderSelected ? "Extender" : null,
-    includePhone ? (selectedPhone === "pack" ? "Phone: Unlimited Pack" : "Phone: PAYG") : null,
+    includePhone
+      ? selectedPhone === "pack"
+        ? "Phone: Unlimited Pack"
+        : "Phone: PAYG"
+      : null,
   ].filter(Boolean);
 
   return (
     <div className="space-y-10 px-3 sm:px-0">
       <header className="text-center">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold">
-          Enhance your plan with some <span className="text-[#1DA6DF]">extras</span>
+          Enhance your plan with some{" "}
+          <span className="text-[#1DA6DF]">extras</span>
         </h2>
         <p className="mt-1 text-sm sm:text-base text-gray-500">
           Choose a modem, add an extender, and pick a phone option.
@@ -372,7 +416,9 @@ const OptionDetails = ({ opt, onConfirm, onCancel }) => (
           <SelectedCard
             {...MODEM_OPTIONS.modem}
             onRemove={() => {
-              const next = selectedModems.filter((x) => x !== "modem" && x !== "extender");
+              const next = selectedModems.filter(
+                (x) => x !== "modem" && x !== "extender"
+              );
               setSelectedModems(next);
             }}
             secondary={
@@ -393,7 +439,9 @@ const OptionDetails = ({ opt, onConfirm, onCancel }) => (
         {isExtenderSelected ? (
           <SelectedCard
             {...MODEM_OPTIONS.extender}
-            onRemove={() => setSelectedModems(selectedModems.filter((x) => x !== "extender"))}
+            onRemove={() =>
+              setSelectedModems(selectedModems.filter((x) => x !== "extender"))
+            }
             secondary={
               <button
                 className="w-full sm:w-auto rounded-md border border-gray-300 px-3 py-2 text-xs hover:bg-gray-50"
@@ -409,19 +457,33 @@ const OptionDetails = ({ opt, onConfirm, onCancel }) => (
             label="Add an extender"
             disabled={!isModemSelected}
             onClick={() => isModemSelected && setModal("extender")}
-            hint={!isModemSelected ? "Select the modem first to enable the extender option." : undefined}
+            hint={
+              !isModemSelected
+                ? "Select the modem first to enable the extender option."
+                : undefined
+            }
           />
         )}
 
         {/* Phone */}
         {includePhone === true ? (
           <SelectedCard
-            title={selectedPhone === "pack" ? PHONE_OPTIONS.pack.title : PHONE_OPTIONS.payg.title}
+            title={
+              selectedPhone === "pack"
+                ? PHONE_OPTIONS.pack.title
+                : PHONE_OPTIONS.payg.title
+            }
             img={undefined}
             price={selectedPhone === "pack" ? "$10 / month" : undefined}
-            details={selectedPhone === "pack" ? PHONE_OPTIONS.pack.details : PHONE_OPTIONS.payg.details}
+            details={
+              selectedPhone === "pack"
+                ? PHONE_OPTIONS.pack.details
+                : PHONE_OPTIONS.payg.details
+            }
             onRemove={() =>
-              onChange ? onChange({ ...value, includePhone: false }) : setLocalIncludePhone(false)
+              onChange
+                ? onChange({ ...value, includePhone: false })
+                : setLocalIncludePhone(false)
             }
             secondary={
               <button
@@ -471,7 +533,8 @@ const OptionDetails = ({ opt, onConfirm, onCancel }) => (
             opt={MODEM_OPTIONS.modem}
             onCancel={closeModal}
             onConfirm={() => {
-              if (!isModemSelected) setSelectedModems([...selectedModems, "modem"]);
+              if (!isModemSelected)
+                setSelectedModems([...selectedModems, "modem"]);
               closeModal();
             }}
           />
@@ -483,7 +546,8 @@ const OptionDetails = ({ opt, onConfirm, onCancel }) => (
             onCancel={closeModal}
             onConfirm={() => {
               if (!isModemSelected) return;
-              if (!isExtenderSelected) setSelectedModems([...selectedModems, "extender"]);
+              if (!isExtenderSelected)
+                setSelectedModems([...selectedModems, "extender"]);
               closeModal();
             }}
           />
@@ -494,7 +558,12 @@ const OptionDetails = ({ opt, onConfirm, onCancel }) => (
             selected={selectedPhone}
             onCancel={closeModal}
             onConfirm={(choice) => {
-              if (onChange) onChange({ ...value, includePhone: true, selectedPhone: choice });
+              if (onChange)
+                onChange({
+                  ...value,
+                  includePhone: true,
+                  selectedPhone: choice,
+                });
               else {
                 setLocalIncludePhone(true);
                 setLocalSelectedPhone(choice);
@@ -529,7 +598,10 @@ function PhoneChooser({ selected, onCancel, onConfirm, phoneOptions }) {
       </div>
 
       <div className="mt-4 flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:justify-end">
-        <button className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50" onClick={onCancel}>
+        <button
+          className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50"
+          onClick={onCancel}
+        >
           Cancel
         </button>
         <button
@@ -552,11 +624,18 @@ function RadioCard({ checked, onChange, title, details }) {
           : "border-gray-200 hover:border-[#1DA6DF]"
       } bg-white`}
     >
-      <input type="radio" className="sr-only" checked={checked} onChange={onChange} />
+      <input
+        type="radio"
+        className="sr-only"
+        checked={checked}
+        onChange={onChange}
+      />
       <div className="mb-2 flex items-center gap-2">
         <span
           className={`inline-flex h-4 w-4 items-center justify-center rounded-full border ${
-            checked ? "border-[#1DA6DF] bg-[#1DA6DF]" : "border-gray-300 bg-white"
+            checked
+              ? "border-[#1DA6DF] bg-[#1DA6DF]"
+              : "border-gray-300 bg-white"
           }`}
         >
           {checked && <CheckIcon className="h-3 w-3 text-white" />}
@@ -580,7 +659,12 @@ function RadioCard({ checked, onChange, title, details }) {
 
 function CheckIcon({ className = "" }) {
   return (
-    <svg viewBox="0 0 20 20" fill="currentColor" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+    >
       <path
         fillRule="evenodd"
         d="M16.707 5.293a1 1 0 00-1.414 0L8.5 12.086 6.207 9.793a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 000-1.414z"

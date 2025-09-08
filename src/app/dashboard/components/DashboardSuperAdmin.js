@@ -2,44 +2,23 @@
 import React, { useState, useEffect } from "react";
 import DashboardCreateAdmin from "./DashboardCreateAdmin";
 
-// AlertPopup component
+// AlertPopup component (design-only tweaks, same logic)
 function AlertPopup({ show, message, onClose }) {
   if (!show) return null;
   return (
     <div
-      style={{
-        position: "fixed",
-        bottom: 24,
-        right: 24,
-        zIndex: 9999,
-        minWidth: 300,
-        maxWidth: 400,
-        transition: "opacity 0.3s",
-      }}
+      style={{ position: "fixed", bottom: 24, right: 24, zIndex: 9999, minWidth: 300, maxWidth: 420, transition: "opacity 0.3s" }}
       className="animate-fade-in"
     >
-      <div role="alert" className="alert alert-info shadow-lg flex items-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          className="h-6 w-6 shrink-0 stroke-current"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          ></path>
+      <div
+        role="alert"
+        className="flex items-center gap-2 rounded-2xl border border-info/20 bg-info/10 px-4 py-3 shadow-xl backdrop-blur supports-[backdrop-filter]:bg-info/15 text-info-content"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="h-5 w-5 shrink-0 stroke-current">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span className="ml-2">{message}</span>
-        <button
-          onClick={onClose}
-          className="btn btn-sm btn-circle btn-ghost ml-2"
-          aria-label="Close"
-        >
-          ✕
-        </button>
+        <span className="text-sm">{message}</span>
+        <button onClick={onClose} className="btn btn-xs btn-circle btn-ghost ml-2" aria-label="Close">✕</button>
       </div>
     </div>
   );
@@ -47,9 +26,9 @@ function AlertPopup({ show, message, onClose }) {
 
 export default function DashboardSuperAdmin() {
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [admins, setAdmins]           = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [editingId, setEditingId]     = useState(null);
+  const [admins, setAdmins] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
   const [newPassword, setNewPassword] = useState("");
   const [alert, setAlert] = useState({ show: false, message: "" });
 
@@ -65,7 +44,6 @@ export default function DashboardSuperAdmin() {
   const loadAdmins = async () => {
     setLoading(true);
     try {
-      // Always try to fetch fresh data from the API first
       const res = await fetch("/api/admin");
       if (!res.ok) throw new Error();
       const data = await res.json();
@@ -76,15 +54,12 @@ export default function DashboardSuperAdmin() {
         } catch (e) {}
       }
     } catch (err) {
-      // If API fails, fallback to cache
       if (typeof window !== "undefined") {
         try {
           const cached = localStorage.getItem(CACHE_KEY);
           if (cached) {
             const parsed = JSON.parse(cached);
-            if (Array.isArray(parsed)) {
-              setAdmins(parsed);
-            }
+            if (Array.isArray(parsed)) setAdmins(parsed);
           }
         } catch (e) {}
       }
@@ -115,7 +90,6 @@ export default function DashboardSuperAdmin() {
       });
       if (!res.ok) throw new Error();
       setEditingId(null);
-      // After update, fetch fresh and update cache
       if (typeof window !== "undefined") {
         try {
           const res = await fetch("/api/admin");
@@ -142,7 +116,6 @@ export default function DashboardSuperAdmin() {
         body: JSON.stringify({ id }),
       });
       if (!res.ok) throw new Error();
-      // After delete, fetch fresh and update cache
       if (typeof window !== "undefined") {
         try {
           const res = await fetch("/api/admin");
@@ -162,106 +135,88 @@ export default function DashboardSuperAdmin() {
 
   if (showCreateForm) {
     return (
-     <div className="w-full h-full">
-       <DashboardCreateAdmin
-        onGoBack={() => {
-          setShowCreateForm(false);
-          loadAdmins();
-        }}
-        onSuccess={() => {
-          setShowCreateForm(false);
-          loadAdmins();
-          triggerAlert("Admin created successfully.");
-        }}
-      />
-     </div>
+      <div className="w-full h-full">
+        <DashboardCreateAdmin
+          onGoBack={() => {
+            setShowCreateForm(false);
+            loadAdmins();
+          }}
+          onSuccess={() => {
+            setShowCreateForm(false);
+            loadAdmins();
+            triggerAlert("Admin created successfully.");
+          }}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full p-3 sm:p-6">
       {/* Alert Popup */}
-      <AlertPopup
-        show={alert.show}
-        message={alert.message}
-        onClose={() => setAlert({ show: false, message: "" })}
-      />
-      <div className="m-10 space-y-6">
-        <div className="flex items-center space-x-4">
-          <div className="stats shadow border-1 h-30">
-            <div className="stat">
-              <div className="stat-title">Total Admins</div>
-              <div className="stat-value">{admins.length}</div>
+      <AlertPopup show={alert.show} message={alert.message} onClose={() => setAlert({ show: false, message: "" })} />
+
+      <div className="mx-auto max-w-7xl space-y-6">
+        {/* Header / Stats */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="stats shadow-sm rounded-2xl border border-base-content/10 bg-base-100/80 backdrop-blur supports-[backdrop-filter]:bg-base-100/60">
+            <div className="stat px-6 py-4">
+              <div className="stat-title text-xs opacity-70">Total Admins</div>
+              <div className="stat-value text-3xl">{admins.length}</div>
             </div>
           </div>
-          <button
-            className="btn btn-primary"
-            onClick={() => setShowCreateForm(true)}
-          >
+          <button className="btn ml-auto border-[#1EA6DF] bg-[#1EA6DF] text-white hover:brightness-95 rounded-xl" onClick={() => setShowCreateForm(true)}>
             Create Admin
           </button>
         </div>
 
+        {/* Table / Content */}
         {loading ? (
-          <p>Loading…</p>
+          <div className="rounded-2xl border border-base-content/10 bg-base-100/60 p-6 text-sm opacity-70">Loading…</div>
         ) : (
-          <div className="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
-            <table className="table w-full">
-              <thead>
-                <tr>
-                  <th>#</th>
+          <div className="overflow-x-auto rounded-2xl border border-base-content/10 bg-base-100/80 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-base-100/60">
+            <table className="table table-sm md:table-md w-full">
+              <thead className="sticky top-0 z-10 text-[11px] uppercase tracking-wide">
+                <tr className="bg-base-100/90 backdrop-blur supports-[backdrop-filter]:bg-base-100/60">
+                  <th className="w-10">#</th>
                   <th>Email</th>
-                  <th>Password</th>
-                  <th>Actions</th>
+                  <th className="w-[280px]">Password</th>
+                  <th className="text-right w-[220px]">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="align-middle">
                 {admins.map((admin, i) => (
-                  <tr key={admin._id}>
-                    <th>{i + 1}</th>
-                    <td>{admin.email} {
-                      admin.type=="superadmin" && (<div className="badge badge-outline badge-success ms-2">superadmin</div>)}</td>
+                  <tr key={admin._id} className="hover">
+                    <th className="text-xs opacity-70">{i + 1}</th>
+                    <td className="max-w-[360px]">
+                      <span className="break-all align-middle">{admin.email}</span>
+                      {admin.type == "superadmin" && (
+                        <span className="badge badge-outline badge-success ml-2 align-middle">superadmin</span>
+                      )}
+                    </td>
                     <td>
                       <input
                         type="password"
-                        className="input input-sm w-full"
+                        className="input input-xs md:input-sm input-bordered w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1EA6DF]/40"
                         disabled={editingId !== admin._id}
                         placeholder="••••••••"
                         value={editingId === admin._id ? newPassword : ""}
                         onChange={(e) => setNewPassword(e.target.value)}
                       />
                     </td>
-                    <td className="space-x-2">
+                    <td className="text-right">
                       {editingId === admin._id ? (
-                        <>
-                          <button
-                            onClick={() => handleSave(admin._id)}
-                            className="btn btn-success btn-sm"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="btn btn-neutral btn-sm"
-                          >
-                            Cancel
-                          </button>
-                        </>
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => handleSave(admin._id)} className="btn btn-success btn-xs rounded-lg">Save</button>
+                          <button onClick={() => setEditingId(null)} className="btn btn-neutral btn-xs rounded-lg">Cancel</button>
+                        </div>
                       ) : (
-                        <>
-                          <button
-                            onClick={() => handleEdit(admin._id)}
-                            className="btn btn-warning btn-sm"
-                          >
-                            Edit
-                          </button>
-                          {admin.type=="admin" && (<button
-                            onClick={() => handleDelete(admin._id)}
-                            className="btn btn-error btn-sm"
-                          >
-                            Delete
-                          </button>)}
-                        </>
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => handleEdit(admin._id)} className="btn btn-warning btn-xs rounded-lg">Edit</button>
+                          {admin.type == "admin" && (
+                            <button onClick={() => handleDelete(admin._id)} className="btn btn-error btn-xs rounded-lg">Delete</button>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>
