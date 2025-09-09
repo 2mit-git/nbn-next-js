@@ -1,7 +1,7 @@
 // app/nbnaddress-finder/page.js
 "use client";
 import React, { useState } from "react";
-import NbnAddressSearching from "../betanbn/components/NbnAddressSearching";
+import NbnAddressSearching from "../nbn/components/NbnAddressSearching";
 
 export default function Page() {
   const [state, setState] = useState({
@@ -17,7 +17,7 @@ export default function Page() {
       tech: state.tech || "",
       upgrade: state.upgrade ? "1" : "0",
     }).toString();
-    window.location.href = `/betanbn?${qs}`; // full page load
+    window.location.href = `/nbn?${qs}`; // full page load
   };
 
   return (
