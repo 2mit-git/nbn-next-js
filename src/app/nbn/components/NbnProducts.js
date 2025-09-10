@@ -211,7 +211,7 @@ export default function NbnProducts({
 
   return (
     <div className="relative px-3 sm:px-0">
-      <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-center m-5">
+      <h2 className="text-3xl sm:text-2xl md:text-4xl font-extrabold text-center m-5 mt-30">
         Select NBN plans that offer{" "}
         <span className="text-[#1DA6DF]">unlimited data</span>
       </h2>

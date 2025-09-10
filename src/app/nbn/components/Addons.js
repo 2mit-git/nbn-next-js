@@ -401,7 +401,7 @@ export default function Addons({ value = {}, onChange }) {
   return (
     <div className="space-y-10 px-3 sm:px-0">
       <header className="text-center">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold">
+        <h2 className="text-xl sm:text-2xl md:text-4xl font-extrabold">
           Enhance your plan with some{" "}
           <span className="text-[#1DA6DF]">extras</span>
         </h2>

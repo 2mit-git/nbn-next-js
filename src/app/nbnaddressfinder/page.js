@@ -12,12 +12,35 @@ export default function Page() {
 
   const goToPlans = () => {
     if (!state.address) return; // safety guard
+
     const qs = new URLSearchParams({
       address: state.address,
       tech: state.tech || "",
       upgrade: state.upgrade ? "1" : "0",
     }).toString();
-    window.location.href = `/nbn?${qs}`; // full page load
+
+    const target = `https://2mit.com.au/nbn/?${qs}`;
+
+    if (typeof window !== "undefined") {
+      // If inside an iframe, tell parent to navigate
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage(
+          { type: "NAVIGATE", url: target },
+          "https://2mit.com.au"
+        );
+
+        // Fallback: try forcing top-level navigation
+        try {
+          window.top.location.href = target;
+        } catch (e) {
+          // Last fallback: navigate iframe itself
+          window.location.href = target;
+        }
+      } else {
+        // Not embedded — navigate normally
+        window.location.href = target;
+      }
+    }
   };
 
   return (
@@ -29,9 +52,8 @@ export default function Page() {
         onTechChange={(tech, canUpgrade) =>
           setState((s) => ({ ...s, tech: tech || null, upgrade: !!canUpgrade }))
         }
-        onSeePlans={goToPlans}   // ← hook up the CTA inside the component
+        onSeePlans={goToPlans} // CTA hooked up
       />
-      {/* Removed the separate "Get started" button */}
     </div>
   );
 }

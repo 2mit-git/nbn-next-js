@@ -145,7 +145,7 @@ export default function NbnAddressSearching({
       <div className="grid gap-6 lg:grid-cols-2 items-center">
         {/* Headline */}
         <div className="text-left">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+          <h2 className="text-4xl sm:text-5xl font-extrabold text-gray-900">
             Find out what{" "}
             <span className="text-[#1EA6DF]">nbn plans</span> are at your address
           </h2>
