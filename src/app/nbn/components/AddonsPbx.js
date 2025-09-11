@@ -1,5 +1,6 @@
 // File: src/app/components/AddonsPbx.jsx
 "use client";
+import { notifyParentModal } from "@/utils/embedBridge";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 /* ---------------- shared constants/helpers ---------------- */
@@ -198,20 +199,6 @@ function PBXWizardSection({ value, onPBXChange }) {
 
   return (
     <div className="space-y-8">
-      {/* Totals / Banner
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-        <div className="text-sm md:text-base text-gray-600">
-          <span className="font-semibold text-[#1DA6DF]">Monthly:</span> $
-          {monthlyTotal.toFixed(2)}
-          <span className="mx-2 hidden sm:inline text-gray-300">|</span>
-          <span className="block sm:inline font-semibold text-[#1DA6DF] sm:ml-2">
-            Upfront (with handsets):
-          </span>{" "}
-          ${upfrontTotal.toFixed(2)}
-        </div>
-        
-      </div> */}
-
       {/* Plan */}
       <section>
         <h3 className="mb-3 sm:mb-4 text-lg sm:text-xl font-bold text-[#1DA6DF]">
@@ -314,24 +301,24 @@ function PBXWizardSection({ value, onPBXChange }) {
       <section>
         <div className="flex gap-5">
           <h3 className="mb-3 sm:mb-4 text-lg sm:text-xl font-bold text-[#1DA6DF]">
-          PBX Handsets
-        </h3>
-        <div>
-          {remainingLimited === 0 ? (
-          <span className="inline-flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
-            ⚠️ Limited models cap reached (Users + Queues = {maxHandsets})
-          </span>
-        ) : (
-          <span className="text-xs text-gray-500">
-            Limited models remaining:{" "}
-            <span className="font-semibold text-[#1DA6DF]">
-              {remainingLimited}
-            </span>
-          </span>
-        )}
+            PBX Handsets
+          </h3>
+          <div>
+            {remainingLimited === 0 ? (
+              <span className="inline-flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
+                ⚠️ Limited models cap reached (Users + Queues = {maxHandsets})
+              </span>
+            ) : (
+              <span className="text-xs text-gray-500">
+                Limited models remaining:{" "}
+                <span className="font-semibold text-[#1DA6DF]">
+                  {remainingLimited}
+                </span>
+              </span>
+            )}
+          </div>
         </div>
-        </div>
-        
+
         {limitWarn && (
           <div className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200">
             {limitWarn}
@@ -352,7 +339,7 @@ function PBXWizardSection({ value, onPBXChange }) {
                     ? "border-[#1DA6DF] ring-2 ring-[#1DA6DF]"
                     : "border-gray-200 hover:shadow-md"
                 }`}
-                style={{ minHeight: 260 }} // same baseline height for all
+                style={{ minHeight: 260 }}
               >
                 {/* Top: image + details */}
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-1">
@@ -495,8 +482,11 @@ const Modal = ({ open, onClose, title, children }) => {
     <div
       className="fixed inset-0 z-[60] grid place-items-center px-3 sm:px-0"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
     >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] animate-[fade_120ms_ease-out]" />
+      <div className="absolute inset-0 bg-white animate-[fade_120ms_ease-out]" />
       <div
         className="relative w-full max-w-5xl animate-[pop_140ms_ease-out_forwards] overflow-hidden rounded-2xl bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -687,6 +677,20 @@ export default function AddonsPbx({ value = {}, onChange }) {
   const draftRef = useRef(pbx || null);
   const handlePBXChange = (data) => (draftRef.current = data);
 
+  // ---- Parent notification for modal open/close ----
+  useEffect(() => {
+    notifyParentModal?.(open, { modal: "pbx", source: "AddonsPbx" });
+    return () => {
+      // if component unmounts with modal open, make sure the parent is told it's closed
+      notifyParentModal?.(false, { modal: "pbx", source: "AddonsPbx", reason: "unmount" });
+    };
+  }, [open]);
+
+  const closePBXModal = (reason) => {
+    notifyParentModal?.(false, { modal: "pbx", source: "AddonsPbx", reason });
+    setOpen(false);
+  };
+
   const saveFromModal = () => {
     const data = draftRef.current;
     if (!data?.selectedPlan) return;
@@ -695,7 +699,7 @@ export default function AddonsPbx({ value = {}, onChange }) {
       setLocalInclude(true);
       setLocalPBX(data);
     }
-    setOpen(false);
+    closePBXModal("save");
   };
 
   const removePBX = () => {
@@ -704,6 +708,8 @@ export default function AddonsPbx({ value = {}, onChange }) {
       setLocalInclude(false);
       setLocalPBX(null);
     }
+    // not strictly a modal close, but useful for parent UIs that watch for pbx changes
+    notifyParentModal?.(false, { modal: "pbx", source: "AddonsPbx", reason: "remove" });
   };
 
   return (
@@ -718,12 +724,16 @@ export default function AddonsPbx({ value = {}, onChange }) {
         <EmptyTile label="Add PBX plan" onClick={() => setOpen(true)} />
       )}
 
-      <Modal open={open} onClose={() => setOpen(false)} title="PBX plan">
+      <Modal
+        open={open}
+        onClose={() => closePBXModal("backdrop/close-button")}
+        title="PBX plan"
+      >
         <PBXWizardSection value={pbx} onPBXChange={handlePBXChange} />
         <div className=" bottom-0 mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end border-t bg-white px-1 pt-4">
           <button
             className="rounded-md border px-4 py-2 w-full sm:w-auto"
-            onClick={() => setOpen(false)}
+            onClick={() => closePBXModal("cancel")}
           >
             Cancel
           </button>

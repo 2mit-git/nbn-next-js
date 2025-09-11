@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { notifyParentModal } from "@/utils/embedBridge";
 
 /* ---------------------------------------------------------
    Static options (outside to avoid re-creation each render)
@@ -127,6 +128,12 @@ export default function Addons({ value = {}, onChange }) {
 
   const [modal, setModal] = useState(null);
   const closeModal = () => setModal(null);
+
+  // Tell the parent when the modal opens/closes
+  useEffect(() => {
+    notifyParentModal(!!modal);
+    return () => notifyParentModal(false);
+  }, [modal]);
 
   useEffect(() => {
     if (!modal) return;
@@ -284,20 +291,28 @@ export default function Addons({ value = {}, onChange }) {
     </CardShell>
   );
 
-  const Modal = ({ open, onClose, title, children }) =>
-    !open ? null : (
+const Modal = ({ open, onClose, title, children }) =>
+  !open ? null : (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center px-3"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      onClick={onClose}
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-white" />
+
+      {/* Heading + Card grouped together */}
       <div
-        className="fixed inset-0 z-50 grid place-items-center px-3"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onClick={onClose}
+        className="relative z-10 flex flex-col items-center gap-10"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
-        <div
-          className="relative w-full max-w-2xl rounded-2xl bg-white p-4 sm:p-6 shadow-2xl animate-[modalIn_140ms_ease-out_forwards]"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <h2 className="text-4xl sm:text-5xl font-extrabold text-gray-900 text-center">
+          Choose What Works <span className="text-[#1EA6DF]">Best for You</span> 
+        </h2>
+
+        <div className="w-full max-w-4xl rounded-2xl bg-white p-4 sm:p-6 shadow-2xl animate-[modalIn_140ms_ease-out_forwards]">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg sm:text-xl font-bold text-gray-900">
               {title}
@@ -312,21 +327,23 @@ export default function Addons({ value = {}, onChange }) {
           </div>
           {children}
         </div>
-
-        <style jsx>{`
-          @keyframes modalIn {
-            from {
-              opacity: 0;
-              transform: scale(0.98);
-            }
-            to {
-              opacity: 1;
-              transform: scale(1);
-            }
-          }
-        `}</style>
       </div>
-    );
+
+      <style jsx>{`
+        @keyframes modalIn {
+          from {
+            opacity: 0;
+            transform: scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
+    </div>
+  );
+
 
   const OptionDetails = ({ opt, onConfirm, onCancel }) => (
     <div className="flex flex-col gap-6 md:flex-row md:gap-10 md:items-start">

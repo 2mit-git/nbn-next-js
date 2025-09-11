@@ -7,8 +7,16 @@ import Addons from "./components/Addons";
 import AddonsPbx from "./components/AddonsPbx";
 import ContractForm from "./components/ContractForm";
 import OrderSummary from "./components/OrderSummary";
+import { initEmbedBridge } from "@/utils/embedBridge";
+
 
 export default function Page() {
+  // ✅ Initialize parent <-> iframe messaging once
+  useEffect(() => {
+    const cleanup = initEmbedBridge();
+    return () => cleanup?.();
+  }, []);
+
   const [serviceAddress, setServiceAddress] = useState("");
   const [addressTech, setAddressTech] = useState(null); // "FTTC" | "FTTP" | "HFC" | "FTTN" | null
   const [upgradeEligible, setUpgradeEligible] = useState(false);
@@ -117,7 +125,7 @@ export default function Page() {
 
   return (
     <div className="lg:m-20 m-2 space-y-8">
-      <div className="relative z-[60]">
+      <div className="relative z-[0]">
         <NbnAddressSearching
           key={`addr-${resetVersion}`}         
           initialValue={serviceAddress}

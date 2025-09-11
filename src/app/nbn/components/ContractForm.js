@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+// NEW: use your bridge if present (safe to keep even if not used elsewhere)
+import { notifyParentModal as _notifyParentModal } from "@/utils/embedBridge";
 
 /* ---------- Constants ---------- */
 const TITLES = ["Mr", "Mrs", "Ms"];
@@ -29,7 +31,7 @@ const PBX_HANDSETS = [
 const Modal = ({ open, title, onClose, children }) =>
   !open ? null : (
     <div className="fixed inset-0 z-[70]">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="absolute inset-0 bg-white" onClick={onClose} />
       <div className="absolute left-1/2 top-1/2 w-[96vw] max-w-4xl -translate-x-1/2 -translate-y-1/2">
         <div className="max-h-[85vh] overflow-hidden rounded-2xl bg-white shadow-2xl">
           <div className="flex items-center justify-between border-b px-5 py-4">
@@ -42,7 +44,9 @@ const Modal = ({ open, title, onClose, children }) =>
               ✕
             </button>
           </div>
-          <div className="max-h-[75vh] overflow-y-auto px-6 py-6">{children}</div>
+          <div className="max-h-[75vh] overflow-y-auto px-6 py-6">
+            {children}
+          </div>
         </div>
       </div>
     </div>
@@ -55,7 +59,9 @@ const btnSecondary =
   "inline-flex items-center justify-center rounded-lg bg-white text-gray-800 border border-gray-300 px-5 py-2.5 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[--primary]/30";
 const pill = (active) =>
   `rounded-full px-5 py-2 font-medium transition ${
-    active ? "bg-[--primary] text-white shadow-sm" : "bg-white text-gray-800 border border-gray-300 hover:bg-gray-50"
+    active
+      ? "bg-[--primary] text-white shadow-sm"
+      : "bg-white text-gray-800 border border-gray-300 hover:bg-gray-50"
   }`;
 
 /* ---------- Light toast for warnings ---------- */
@@ -132,6 +138,39 @@ export default function ContractForm({
   const [resendTimer, setResendTimer] = useState(0);
   const [error, setError] = useState("");
 
+  /* ---------- NEW: notify parent about modal open/close ---------- */
+  const notifyParent = useCallback(
+    (isOpen) => {
+      try {
+        // Preferred: your bridge helper if it exists
+        if (typeof _notifyParentModal === "function") {
+          _notifyParentModal(isOpen, { title: "Complete your order" });
+          return;
+        }
+      } catch (_) {}
+
+      // Fallback: postMessage for iframe parents
+      try {
+        if (typeof window !== "undefined" && window.parent && window.parent !== window) {
+          window.parent.postMessage(
+            {
+              __embed: "nbn",
+              type: "modal",
+              open: isOpen,
+              title: "Complete your order",
+            },
+            "*"
+          );
+        }
+      } catch (_) {}
+    },
+    []
+  );
+
+  useEffect(() => {
+    notifyParent(open);
+  }, [open, notifyParent]);
+
   /* ---------- SYNC: serviceAddress prop → form.serviceAddress ---------- */
   useEffect(() => {
     setForm((f) => ({ ...f, serviceAddress }));
@@ -159,8 +198,9 @@ export default function ContractForm({
     const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
     setForm((prev) => {
       if (key !== "deliverySame") return { ...prev, [key]: value };
-      // If turning ON, mirror from latest serviceAddress prop (preferred) or current form value.
-      const nextDelivery = value ? (serviceAddress || prev.serviceAddress || "") : prev.deliveryAddress;
+      const nextDelivery = value
+        ? serviceAddress || prev.serviceAddress || ""
+        : prev.deliveryAddress;
       return { ...prev, deliverySame: value, deliveryAddress: nextDelivery };
     });
   };
@@ -288,8 +328,11 @@ export default function ContractForm({
     // PBX plan
     if (extras?.pbx?.selectedPlan && Number(extras.pbx.numUsers) > 0) {
       const perUser =
-        extras.pbx.selectedPlan === "Hosted UNLIMITED" ? 33.0 :
-        extras.pbx.selectedPlan === "Hosted PAYG"     ? 5.5  : 0;
+        extras.pbx.selectedPlan === "Hosted UNLIMITED"
+          ? 33.0
+          : extras.pbx.selectedPlan === "Hosted PAYG"
+          ? 5.5
+          : 0;
 
       items.push({
         key: `${extras.pbx.selectedPlan}`,
@@ -310,8 +353,11 @@ export default function ContractForm({
 
     // PBX notes for sticky bar
     let perUser =
-      extras?.pbx?.selectedPlan === "Hosted UNLIMITED" ? 33 :
-      extras?.pbx?.selectedPlan === "Hosted PAYG"     ? 5.5 : 0;
+      extras?.pbx?.selectedPlan === "Hosted UNLIMITED"
+        ? 33
+        : extras?.pbx?.selectedPlan === "Hosted PAYG"
+        ? 5.5
+        : 0;
 
     const monthly = (Number(extras?.pbx?.numUsers) || 0) * perUser;
     const upfront = Object.entries(extras?.pbx?.handsets || {}).reduce(
@@ -467,22 +513,36 @@ export default function ContractForm({
   /* ---------- Render ---------- */
   return (
     <div style={{ "--primary": PRIMARY }}>
-      {/* Toast for preflight warnings */}
-      <Toast message={preflightWarning} onClose={() => setPreflightWarning("")} />
-
-      {/* Page CTA that opens the modal */}
-      <div className="flex justify-end">
+      {/* Page CTA that opens the modal (toast inline beside it) */}
+      <div className="flex justify-end items-center gap-4">
+        {preflightWarning && (
+          <div className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-2">
+            <h1 className="text-sm font-medium text-red-600">{preflightWarning}</h1>
+            <button
+              type="button"
+              onClick={() => setPreflightWarning("")}
+              className="ml-auto text-red-500 hover:text-red-700"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
+        )}
         <button
           type="button"
           className="rounded-md bg-[#1DA6DF] px-4 py-2 font-semibold text-white"
-          onClick={handleOpenClick} // ← preflight-checked
+          onClick={handleOpenClick}
         >
           Complete order
         </button>
       </div>
 
       {/* Modal with the full submit form */}
-      <Modal open={open} onClose={() => setOpen(false)} title="Complete your order">
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Complete your order"
+      >
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* loading overlay */}
           {loading && !submitSuccess && (
@@ -519,7 +579,11 @@ export default function ContractForm({
                 >
                   Submit another one
                 </button>
-                <button type="button" className={btnSecondary} onClick={() => setOpen(false)}>
+                <button
+                  type="button"
+                  className={btnSecondary}
+                  onClick={() => setOpen(false)}
+                >
                   Close
                 </button>
               </div>
@@ -532,25 +596,49 @@ export default function ContractForm({
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Title</label>
-                    <select className={inputClasses} value={form.title} onChange={handleChange("title")} disabled={otpSent && !otpVerified}>
+                    <select
+                      className={inputClasses}
+                      value={form.title}
+                      onChange={handleChange("title")}
+                      disabled={otpSent && !otpVerified}
+                    >
                       {TITLES.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
+                        <option key={t} value={t}>{t}</option>
                       ))}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">First Name</label>
-                    <input type="text" className={inputClasses} value={form.firstName} onChange={handleChange("firstName")} required disabled={otpSent && !otpVerified} />
+                    <input
+                      type="text"
+                      className={inputClasses}
+                      value={form.firstName}
+                      onChange={handleChange("firstName")}
+                      required
+                      disabled={otpSent && !otpVerified}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Last Name</label>
-                    <input type="text" className={inputClasses} value={form.lastName} onChange={handleChange("lastName")} required disabled={otpSent && !otpVerified} />
+                    <input
+                      type="text"
+                      className={inputClasses}
+                      value={form.lastName}
+                      onChange={handleChange("lastName")}
+                      required
+                      disabled={otpSent && !otpVerified}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Email Address</label>
-                    <input type="email" className={inputClasses} value={form.email} onChange={handleChange("email")} required disabled={otpSent && !otpVerified} />
+                    <input
+                      type="email"
+                      className={inputClasses}
+                      value={form.email}
+                      onChange={handleChange("email")}
+                      required
+                      disabled={otpSent && !otpVerified}
+                    />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700">
@@ -565,11 +653,21 @@ export default function ContractForm({
                       placeholder="e.g. 0412345678 (AU)"
                       disabled={otpSent && !otpVerified}
                     />
-                    <span className="text-xs text-gray-500">Enter your number without country code (e.g. 412345678 or 0412345678).</span>
+                    <span className="text-xs text-gray-500">
+                      Enter your number without country code (e.g. 412345678 or 0412345678).
+                    </span>
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
-                    <input type="date" className={inputClasses} value={form.dob} onChange={handleChange("dob")} required max={today} disabled={otpSent && !otpVerified} />
+                    <input
+                      type="date"
+                      className={inputClasses}
+                      value={form.dob}
+                      onChange={handleChange("dob")}
+                      required
+                      max={today}
+                      disabled={otpSent && !otpVerified}
+                    />
                   </div>
                 </div>
               </div>
@@ -580,11 +678,23 @@ export default function ContractForm({
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Business Name</label>
-                    <input type="text" className={inputClasses} value={form.businessName} onChange={handleChange("businessName")} placeholder="e.g. Acme Pty Ltd" />
+                    <input
+                      type="text"
+                      className={inputClasses}
+                      value={form.businessName}
+                      onChange={handleChange("businessName")}
+                      placeholder="e.g. Acme Pty Ltd"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Business Address</label>
-                    <input type="text" className={inputClasses} value={form.businessAddress} onChange={handleChange("businessAddress")} placeholder="e.g. 123 King St, Sydney NSW 2000" />
+                    <input
+                      type="text"
+                      className={inputClasses}
+                      value={form.businessAddress}
+                      onChange={handleChange("businessAddress")}
+                      placeholder="e.g. 123 King St, Sydney NSW 2000"
+                    />
                   </div>
                 </div>
               </div>
@@ -595,7 +705,12 @@ export default function ContractForm({
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Service Address</label>
-                    <input type="text" className={`${inputClasses} cursor-not-allowed bg-gray-100 text-black`} value={form.serviceAddress} readOnly />
+                    <input
+                      type="text"
+                      className={`${inputClasses} cursor-not-allowed bg-gray-100 text-black`}
+                      value={form.serviceAddress}
+                      readOnly
+                    />
                   </div>
                   <div>
                     <span className="block text-sm font-medium text-gray-700">Activate ASAP?</span>
@@ -603,7 +718,9 @@ export default function ContractForm({
                       <button
                         type="button"
                         onClick={() => setForm((f) => ({ ...f, activateASAP: true }))}
-                        className={`rounded-md px-4 py-2 font-semibold ${form.activateASAP ? "bg-[#1DA6DF] text-white" : "bg-gray-200 text-gray-800"}`}
+                        className={`rounded-md px-4 py-2 font-semibold ${
+                          form.activateASAP ? "bg-[#1DA6DF] text-white" : "bg-gray-200 text-gray-800"
+                        }`}
                       >
                         ASAP
                       </button>
@@ -611,13 +728,21 @@ export default function ContractForm({
                       <button
                         type="button"
                         onClick={() => setForm((f) => ({ ...f, activateASAP: false }))}
-                        className={`rounded-md px-4 py-2 font-semibold ${!form.activateASAP ? "bg-[#1DA6DF] text-white" : "bg-gray-200 text-gray-800"}`}
+                        className={`rounded-md px-4 py-2 font-semibold ${
+                          !form.activateASAP ? "bg-[#1DA6DF] text-white" : "bg-gray-200 text-gray-800"
+                        }`}
                       >
                         Pick Date
                       </button>
                     </div>
                     {!form.activateASAP && (
-                      <input type="date" className={`${inputClasses} mt-2`} value={form.activationDate} onChange={handleChange("activationDate")} required />
+                      <input
+                        type="date"
+                        className={`${inputClasses} mt-2`}
+                        value={form.activationDate}
+                        onChange={handleChange("activationDate")}
+                        required
+                      />
                     )}
                   </div>
                 </div>
@@ -653,13 +778,23 @@ export default function ContractForm({
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Full Name (Delivery)</label>
-                      <input type="text" className={inputClasses} value={form.deliveryName} onChange={handleChange("deliveryName")} />
+                      <input
+                        type="text"
+                        className={inputClasses}
+                        value={form.deliveryName}
+                        onChange={handleChange("deliveryName")}
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Company Name <span className="text-xs text-gray-500">(Optional)</span>
                       </label>
-                      <input type="text" className={inputClasses} value={form.companyName} onChange={handleChange("companyName")} />
+                      <input
+                        type="text"
+                        className={inputClasses}
+                        value={form.companyName}
+                        onChange={handleChange("companyName")}
+                      />
                     </div>
                   </div>
                 </div>
@@ -668,10 +803,23 @@ export default function ContractForm({
               {/* OTP panel */}
               {otpSent && !otpVerified && (
                 <div className="rounded-2xl border border-[--primary]/30 bg-white p-6 shadow">
-                  <label className="block text-sm font-medium text-gray-700">Enter OTP sent to your contact number</label>
-                  <input type="text" className={`${inputClasses} mt-2`} value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="123456" />
+                  <label className="block text-sm font-medium text-gray-700">
+                    Enter OTP sent to your contact number
+                  </label>
+                  <input
+                    type="text"
+                    className={`${inputClasses} mt-2`}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="123456"
+                  />
                   <div className="mt-3 flex flex-wrap items-center gap-3">
-                    <button type="button" onClick={verifyOtp} className="rounded-md bg-[#1DA6DF] px-4 py-2 font-semibold text-white" disabled={loading || !otp.trim()}>
+                    <button
+                      type="button"
+                      onClick={verifyOtp}
+                      className="rounded-md bg-[#1DA6DF] px-4 py-2 font-semibold text-white"
+                      disabled={loading || !otp.trim()}
+                    >
                       {loading ? "Verifying…" : "Verify OTP"}
                     </button>
                     {resendTimer > 0 ? (
@@ -708,7 +856,11 @@ export default function ContractForm({
                       className="rounded-md bg-[#1DA6DF] px-4 py-2 font-semibold text-white"
                       disabled={loading || (otpSent && !otpVerified)}
                       title={
-                        !otpSent ? "Sends an OTP to your number" : otpVerified ? "Submit your contract" : "Verify the OTP to enable submission"
+                        !otpSent
+                          ? "Sends an OTP to your number"
+                          : otpVerified
+                          ? "Submit your contract"
+                          : "Verify the OTP to enable submission"
                       }
                     >
                       {otpSent ? (otpVerified ? "Submit Contract" : "Submit Contract") : "Verify & Submit"}
@@ -718,7 +870,9 @@ export default function ContractForm({
                     </button>
                   </div>
                 </div>
-                {error && !otpSent && <div className="mt-2 text-right text-sm text-red-500">{error}</div>}
+                {error && !otpSent && (
+                  <div className="mt-2 text-right text-sm text-red-500">{error}</div>
+                )}
               </div>
             </>
           )}
