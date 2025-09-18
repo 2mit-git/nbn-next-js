@@ -1,3 +1,4 @@
+// File: src/app/components/ContractForm.jsx
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
@@ -6,15 +7,11 @@ import { notifyParentModal as _notifyParentModal } from "@/utils/embedBridge";
 
 /* ---------- Constants ---------- */
 const TITLES = ["Mr", "Mrs", "Ms"];
-const PRIMARY = "#1DA6DF";
+const PRIMARY = "#1EA6DF"; // unified brand color
 
 const MODEM_OPTIONS = [
   { id: "modem", title: "Gigabit WiFi-6 MESH 1800Mbps Modem", price: 170 },
-  {
-    id: "extender",
-    title: "Gigabit WiFi-6 MESH 1800Mbps Extender",
-    price: 120,
-  },
+  { id: "extender", title: "Gigabit WiFi-6 MESH 1800Mbps Extender", price: 120 },
 ];
 
 const PHONE_OPTIONS = [
@@ -31,22 +28,31 @@ const PBX_HANDSETS = [
   { name: "Yealink BH72", cost: 355 },
 ];
 
+/* ---- For modem/router info in webhook (mirrors Addons.js) ---- */
+const MODEM_MODEL = "Gigabit WiFi-6 MESH 1800Mbps Modem";
+const BUNDLE_PRICING = {
+  0: { outright: 170, "12": 15, "24": 8 },
+  1: { outright: 235, "12": 20, "24": 10 },
+  2: { outright: 325, "12": 25, "24": 15 },
+};
+const BUNDLE_LABEL = {
+  0: "1 Modem",
+  1: "1 Modem + 1 Extender",
+  2: "1 Modem + 2 Extenders",
+};
+const TERM_LABEL = { outright: "Upfront", "12": "12 months", "24": "24 months" };
+
 /* ---------- Reusable UI ---------- */
 const Modal = ({ open, title, onClose, children }) =>
   !open ? null : (
     <div className="fixed inset-0 z-[70]">
       {/* soft white glass backdrop */}
-      <div
-        className="absolute inset-0 bg-white/70 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-white/70 backdrop-blur-sm" onClick={onClose} />
       <div className="absolute left-1/2 top-1/2 w-[96vw] max-w-4xl -translate-x-1/2 -translate-y-1/2">
         {/* card with gentle border & shadow */}
         <div className="max-h-[85vh] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
           <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-            <h3 className="text-xl font-semibold tracking-tight text-gray-900">
-              {title}
-            </h3>
+            <h3 className="text-xl font-semibold tracking-tight text-gray-900">{title}</h3>
             <button
               onClick={onClose}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[--primary]/30"
@@ -55,9 +61,7 @@ const Modal = ({ open, title, onClose, children }) =>
               ✕
             </button>
           </div>
-          <div className="max-h-[75vh] overflow-y-auto px-6 py-6">
-            {children}
-          </div>
+          <div className="max-h-[75vh] overflow-y-auto px-6 py-6">{children}</div>
         </div>
       </div>
     </div>
@@ -158,11 +162,7 @@ export default function ContractForm({
       }
     } catch (_) {}
     try {
-      if (
-        typeof window !== "undefined" &&
-        window.parent &&
-        window.parent !== window
-      ) {
+      if (typeof window !== "undefined" && window.parent && window.parent !== window) {
         window.parent.postMessage(
           {
             __embed: "nbn",
@@ -197,22 +197,16 @@ export default function ContractForm({
   // Optional: countdown for resend timer
   useEffect(() => {
     if (resendTimer <= 0) return;
-    const t = setInterval(
-      () => setResendTimer((s) => (s > 0 ? s - 1 : 0)),
-      1000
-    );
+    const t = setInterval(() => setResendTimer((s) => (s > 0 ? s - 1 : 0)), 1000);
     return () => clearInterval(t);
   }, [resendTimer]);
 
   // 2) When user toggles deliverySame, copy the service address immediately on TRUE
   const handleChange = (key) => (e) => {
-    const value =
-      e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
     setForm((prev) => {
       if (key !== "deliverySame") return { ...prev, [key]: value };
-      const nextDelivery = value
-        ? serviceAddress || prev.serviceAddress || ""
-        : prev.deliveryAddress;
+      const nextDelivery = value ? serviceAddress || prev.serviceAddress || "" : prev.deliveryAddress;
       return { ...prev, deliverySame: value, deliveryAddress: nextDelivery };
     });
   };
@@ -287,21 +281,15 @@ export default function ContractForm({
         selectedPlan.speed);
 
     if (!hasAddress && !hasPlan) {
-      setPreflightWarning(
-        "Please select a service address and an NBN plan before completing your order."
-      );
+      setPreflightWarning("Please select a service address and an NBN plan before completing your order.");
       return false;
     }
     if (!hasAddress) {
-      setPreflightWarning(
-        "Please select a service address before completing your order."
-      );
+      setPreflightWarning("Please select a service address before completing your order.");
       return false;
     }
     if (!hasPlan) {
-      setPreflightWarning(
-        "Please select an NBN plan before completing your order."
-      );
+      setPreflightWarning("Please select an NBN plan before completing your order.");
       return false;
     }
     setPreflightWarning("");
@@ -312,7 +300,7 @@ export default function ContractForm({
     if (canOpenModal()) setOpen(true);
   };
 
-  /* ---------- Order items + payload ---------- */
+  /* ---------- Order items + PBX previews (kept to preserve preview logic) ---------- */
   const buildOrderItems = () => {
     const items = [];
 
@@ -332,7 +320,7 @@ export default function ContractForm({
       });
     }
 
-    // Modems
+    // Modems (legacy list if ever used)
     (extras?.modems || []).forEach((id) => {
       const m = MODEM_OPTIONS.find((x) => x.id === id);
       if (m) items.push({ key: m.title, value: 1, price: m.price });
@@ -370,7 +358,7 @@ export default function ContractForm({
         });
     }
 
-    // PBX notes for sticky bar
+    // PBX previews for sticky bar
     let perUser =
       extras?.pbx?.selectedPlan === "Hosted UNLIMITED"
         ? 33
@@ -379,32 +367,243 @@ export default function ContractForm({
         : 0;
 
     const monthly = (Number(extras?.pbx?.numUsers) || 0) * perUser;
-    const upfront = Object.entries(extras?.pbx?.handsets || {}).reduce(
-      (sum, [model, qty]) => {
-        const h = PBX_HANDSETS.find((x) => x.name === model);
-        return sum + (h ? h.cost * Number(qty || 0) : 0);
-      },
-      0
-    );
+    const upfront = Object.entries(extras?.pbx?.handsets || {}).reduce((sum, [model, qty]) => {
+      const h = PBX_HANDSETS.find((x) => x.name === model);
+      return sum + (h ? h.cost * Number(qty || 0) : 0);
+    }, 0);
     setPbxMonthlyPreview(monthly);
     setPbxUpfrontPreview(upfront);
 
     return items;
   };
 
+  /* ---------- Build modem/router object for webhook ---------- */
+  const modemRouterPayload = () => {
+    const hasBundle =
+      typeof extras?.modemBundle === "number" &&
+      extras?.modemBundle in BUNDLE_PRICING &&
+      (extras?.modemTerm === "outright" || extras?.modemTerm === "12" || extras?.modemTerm === "24");
+
+    // Legacy safety: if only legacy list is used, assume 1 modem, 0 extenders, upfront
+    const legacySelected = Array.isArray(extras?.modems) && extras.modems.includes("modem");
+
+    if (!hasBundle && !legacySelected) return null;
+
+    const bundle = hasBundle ? extras.modemBundle : 0;
+    const term = hasBundle ? extras.modemTerm : "outright";
+    const billing = term === "outright" ? "upfront" : "monthly";
+    const price = BUNDLE_PRICING[bundle][term];
+
+    return {
+      modemId: "modem",
+      modemModel: MODEM_MODEL,
+      bundleCode: bundle,                // 0, 1, 2
+      bundleLabel: BUNDLE_LABEL[bundle],
+      term,                              // 'outright' | '12' | '24'
+      termLabel: TERM_LABEL[term],
+      billing,                           // 'upfront' | 'monthly'
+      modemCount: 1,
+      extenderCount: Math.max(0, bundle),// 0, 1, 2
+      price,                             // numeric (per month or upfront)
+    };
+  };
+
+  /* ---------- Build BOTH payload styles ---------- */
   const buildPayload = () => {
+    // keep this call to preserve PBX preview updates (monthly/upfront)
+    buildOrderItems();
+
     const plan = selectedPlan || {};
-    const activationDateValue =
-      form.activateASAP || !form.activationDate ? "ASAP" : form.activationDate;
-    const deliveryAddressValue = form.deliverySame
-      ? form.serviceAddress
-      : form.deliveryAddress;
+    const activationDateValue = form.activateASAP || !form.activationDate ? "ASAP" : form.activationDate;
 
-    const items = buildOrderItems();
-    const total = items.reduce((s, it) => s + it.price * it.value, 0);
+    const planPrice =
+      typeof plan?.discountPrice !== "undefined"
+        ? Number(plan.discountPrice)
+        : typeof plan?.price !== "undefined"
+        ? Number(plan.price)
+        : 0;
 
+    const modemObj = modemRouterPayload();
+
+    // ================== Structured (modern) items ==================
+    const items = [];
+
+    // Plan
+    if (planPrice > 0 || plan?.subtitle || plan?.name) {
+      items.push({
+        key: plan?.subtitle || plan?.name || "Plan",
+        qty: 1,
+        unitPrice: planPrice,
+        subtotal: planPrice,
+      });
+    }
+
+    // Modem bundle (as one line in structured section)
+    if (modemObj) {
+      items.push({
+        key: `${modemObj.bundleLabel} (${modemObj.termLabel})`,
+        qty: 1,
+        unitPrice: modemObj.price,
+        subtotal: modemObj.price,
+        meta: {
+          modemModel: modemObj.modemModel,
+          billing: modemObj.billing,
+          extenderCount: modemObj.extenderCount,
+        },
+      });
+    }
+
+    // Phone
+    if (extras?.phone) {
+      const phoneLine = extras.phone === "pack"
+        ? { name: PHONE_OPTIONS.find(p => p.id === "pack").title, price: 10 }
+        : { name: PHONE_OPTIONS.find(p => p.id === "payg").title, price: 0 };
+      items.push({
+        key: phoneLine.name,
+        qty: 1,
+        unitPrice: phoneLine.price,
+        subtotal: phoneLine.price,
+      });
+    }
+
+    // PBX plan
+    const pbx = {};
+    if (extras?.pbx?.selectedPlan && Number(extras.pbx.numUsers) > 0) {
+      const perUser =
+        extras.pbx.selectedPlan === "Hosted UNLIMITED" ? 33.0 :
+        extras.pbx.selectedPlan === "Hosted PAYG" ? 5.5 : 0;
+
+      pbx.plan = extras.pbx.selectedPlan;
+      pbx.users = Number(extras.pbx.numUsers);
+      pbx.monthly = perUser * pbx.users;
+
+      items.push({
+        key: `${pbx.plan} x${pbx.users}`,
+        qty: 1,
+        unitPrice: pbx.monthly,
+        subtotal: pbx.monthly,
+      });
+    }
+
+    // PBX handsets
+    if (extras?.pbx?.handsets) {
+      pbx.handsets = Object.entries(extras.pbx.handsets)
+        .filter(([, qty]) => Number(qty) > 0)
+        .map(([model, qty]) => {
+          const h = PBX_HANDSETS.find((x) => x.name === model);
+          const unit = h?.cost || 0;
+          const sub = unit * Number(qty);
+          items.push({
+            key: `${model} x${qty}`,
+            qty: Number(qty),
+            unitPrice: unit,
+            subtotal: sub,
+          });
+          return { model, qty: Number(qty), unitPrice: unit, subtotal: sub };
+        });
+    }
+
+    const total = items.reduce((s, it) => s + (Number(it.subtotal) || 0), 0);
+
+    // ================== Legacy data1..dataN (your example format) ==================
+    const legacyDataLines = [];
+
+    // Plan line label prefers typical speeds if available
+    const typical =
+      plan?.typicalEveningSpeed || plan?.speed || plan?.subtitle || plan?.name;
+    if (planPrice > 0 || typical) {
+      legacyDataLines.push({
+        label: typical ? `Typical Evening Speed : ${typical}` : (plan?.name || "Plan"),
+        value: 1,
+        price: planPrice,
+        subtotal: planPrice,
+      });
+    }
+
+    // Modem/extenders breakdown:
+    if (modemObj) {
+      if (modemObj.term === "outright") {
+        // Separate modem and extenders using unit prices (matches your example)
+        legacyDataLines.push({
+          label: MODEM_OPTIONS.find(m => m.id === "modem").title,
+          value: 1,
+          price: MODEM_OPTIONS.find(m => m.id === "modem").price,
+          subtotal: MODEM_OPTIONS.find(m => m.id === "modem").price,
+        });
+        if (modemObj.extenderCount > 0) {
+          legacyDataLines.push({
+            label: MODEM_OPTIONS.find(m => m.id === "extender").title,
+            value: modemObj.extenderCount,
+            price: MODEM_OPTIONS.find(m => m.id === "extender").price,
+            subtotal: MODEM_OPTIONS.find(m => m.id === "extender").price * modemObj.extenderCount,
+          });
+        }
+      } else {
+        // Monthly terms: single bundle line for clarity
+        legacyDataLines.push({
+          label: `${modemObj.bundleLabel} — $${modemObj.price}/mth (${TERM_LABEL[modemObj.term]})`,
+          value: 1,
+          price: modemObj.price,
+          subtotal: modemObj.price,
+        });
+      }
+    }
+
+    // Phone
+    if (extras?.phone) {
+      const phoneOpt = PHONE_OPTIONS.find((p) => p.id === extras.phone);
+      legacyDataLines.push({
+        label: phoneOpt?.title || (extras.phone === "pack" ? "$10/mth Unlimited call pack" : "Pay-as-you-go call rates"),
+        value: 1,
+        price: phoneOpt?.price ?? (extras.phone === "pack" ? 10 : 0),
+        subtotal: phoneOpt?.price ?? (extras.phone === "pack" ? 10 : 0),
+      });
+    }
+
+    // PBX summary line for plan monthly charge
+    if (extras?.pbx?.selectedPlan && Number(extras.pbx.numUsers) > 0) {
+      const perUser =
+        extras.pbx.selectedPlan === "Hosted UNLIMITED" ? 33.0 :
+        extras.pbx.selectedPlan === "Hosted PAYG" ? 5.5 : 0;
+
+      legacyDataLines.push({
+        label: extras.pbx.selectedPlan,
+        value: 1,
+        price: perUser,
+        subtotal: perUser,
+      });
+    }
+
+    // PBX handsets (each model)
+    if (extras?.pbx?.handsets) {
+      Object.entries(extras.pbx.handsets)
+        .filter(([, qty]) => Number(qty) > 0)
+        .forEach(([model, qty]) => {
+          const h = PBX_HANDSETS.find((x) => x.name === model);
+          const unit = h?.cost || 0;
+          legacyDataLines.push({
+            label: model,
+            value: Number(qty),
+            price: unit,
+            subtotal: unit * Number(qty),
+          });
+        });
+    }
+
+    // Flatten legacy lines into data1..dataN
+    const legacyDataFields = {};
+    legacyDataLines.slice(0, 20).forEach((row, idx) => {
+      const i = idx + 1;
+      legacyDataFields[`data${i}`] = row.label;
+      legacyDataFields[`data${i}Value`] = row.value;
+      legacyDataFields[`data${i}Price`] = row.price;
+      legacyDataFields[`data${i}Subtotal`] = Number(row.subtotal.toFixed(2));
+    });
+
+    // ================== FINAL payload (both methods) ==================
     const payload = {
-      contactDetails: {
+      // Modern/structured
+      contact: {
         title: form.title,
         firstName: form.firstName,
         lastName: form.lastName,
@@ -412,46 +611,54 @@ export default function ContractForm({
         contactNumber: form.contactNumber,
         dob: form.dob,
       },
-      // include business fields
-      businessDetails: {
-        businessName: form.businessName,
-        businessAddress: form.businessAddress,
+      address: { serviceAddress: form.serviceAddress },
+      activation: { when: activationDateValue }, // 'ASAP' or 'YYYY-MM-DD'
+      plan: {
+        id: plan.id || "",
+        name: plan.name || plan.subtitle || "Plan",
+        speed: plan.speed || "",
+        price: planPrice,
       },
-      connectionDetails: {
-        serviceAddress: form.serviceAddress,
-        activationDate: activationDateValue,
-        planSpeed: plan.speed || "",
-        planName: plan.name || "",
-        planId: plan.id || "",
-      },
-      deliveryDetails: {
-        deliveryAddress: deliveryAddressValue,
-        deliveryName: form.deliveryName,
-        companyName: form.companyName,
-      },
-      phoneDetails: {
-        keepPhone: form.keepPhone,
-        phoneNumber: form.phoneNumber,
-        transferVoip: form.transferVoip,
-        accountNumber: form.accountNumber,
-      },
-      pricing: { total },
-      rawForm: form,
-      rawSelections: { selectedPlan, extras },
+      devices: { modem: modemObj || null }, // includes model + bundle/term info
+      phone: extras?.phone || null,         // 'pack' | 'payg' | null
+      pbx: items.find(it => it.key?.startsWith("Hosted ")) ? {
+        plan: extras?.pbx?.selectedPlan,
+        users: Number(extras?.pbx?.numUsers) || undefined,
+        monthly: typeof pbxMonthlyPreview === "number" ? pbxMonthlyPreview : undefined,
+      } : null,
+      items,
+      total,
+
+      // Legacy (data1..dataN)
+      ...legacyDataFields,
     };
 
-    // data1..data10 in order
-    items
-      .filter((f) => f.value > 0)
-      .slice(0, 10)
-      .forEach((item, i) => {
-        const idx = i + 1;
-        const subtotal = Number((item.price * item.value).toFixed(2));
-        payload[`data${idx}`] = item.key;
-        payload[`data${idx}Value`] = item.value;
-        payload[`data${idx}Price`] = item.price;
-        payload[`data${idx}Subtotal`] = subtotal;
-      });
+    // Include delivery only if different from service address
+    if (!form.deliverySame) {
+      payload.delivery = {
+        address: form.deliveryAddress,
+        name: form.deliveryName || undefined,
+        company: form.companyName || undefined,
+      };
+    }
+
+    // Include “keep phone/transfer” only if toggled/provided
+    if (form.keepPhone || form.transferVoip || form.phoneNumber || form.accountNumber) {
+      payload.phoneDetails = {
+        keepPhone: form.keepPhone || undefined,
+        transferVoip: form.transferVoip || undefined,
+        phoneNumber: form.phoneNumber || undefined,
+        accountNumber: form.accountNumber || undefined,
+      };
+    }
+
+    // Include business only if provided
+    if (form.businessName || form.businessAddress) {
+      payload.business = {
+        name: form.businessName || undefined,
+        address: form.businessAddress || undefined,
+      };
+    }
 
     return payload;
   };
@@ -536,9 +743,7 @@ export default function ContractForm({
       <div className="flex justify-end items-center gap-4">
         {preflightWarning && (
           <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 shadow-sm">
-            <span className="text-sm font-medium text-red-600">
-              {preflightWarning}
-            </span>
+            <span className="text-sm font-medium text-red-600">{preflightWarning}</span>
             <button
               type="button"
               onClick={() => setPreflightWarning("")}
@@ -551,7 +756,7 @@ export default function ContractForm({
         )}
         <button
           type="button"
-          className="rounded-lg bg-[#1DA6DF] px-4 py-2.5 font-semibold text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[--primary]/40"
+          className="rounded-lg bg-[#1EA6DF] px-4 py-2.5 font-semibold text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[--primary]/40"
           onClick={handleOpenClick}
         >
           Complete order
@@ -559,11 +764,7 @@ export default function ContractForm({
       </div>
 
       {/* Modal with the full submit form */}
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Complete your order"
-      >
+      <Modal open={open} onClose={() => setOpen(false)} title="Complete your order">
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* loading overlay */}
           {loading && !submitSuccess && (
@@ -575,23 +776,10 @@ export default function ContractForm({
                   fill="none"
                   viewBox="0 0 24 24"
                 >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                  />
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
-                <span className="text-lg font-semibold text-[--primary]">
-                  Submitting…
-                </span>
+                <span className="text-lg font-semibold text-[--primary]">Submitting…</span>
               </div>
             </div>
           )}
@@ -613,11 +801,7 @@ export default function ContractForm({
                 >
                   Submit another one
                 </button>
-                <button
-                  type="button"
-                  className={btnSecondary}
-                  onClick={() => setOpen(false)}
-                >
+                <button type="button" className={btnSecondary} onClick={() => setOpen(false)}>
                   Close
                 </button>
               </div>
@@ -627,18 +811,14 @@ export default function ContractForm({
               {/* Contact Details */}
               <div className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-[1.25rem] font-semibold text-[--primary]">
-                    Contact Details
-                  </h2>
+                  <h2 className="text-[1.25rem] font-semibold text-[--primary]">Contact Details</h2>
                   <span className="rounded-full border border-[--primary]/25 bg-[--primary]/8 px-3 py-1 text-xs font-medium text-[--primary]">
                     Step 1
                   </span>
                 </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                      Title
-                    </label>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Title</label>
                     <select
                       className={inputClasses}
                       value={form.title}
@@ -653,9 +833,7 @@ export default function ContractForm({
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                      First Name
-                    </label>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">First Name</label>
                     <input
                       type="text"
                       className={inputClasses}
@@ -666,9 +844,7 @@ export default function ContractForm({
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                      Last Name
-                    </label>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Last Name</label>
                     <input
                       type="text"
                       className={inputClasses}
@@ -679,9 +855,7 @@ export default function ContractForm({
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                      Email Address
-                    </label>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Email Address</label>
                     <input
                       type="email"
                       className={inputClasses}
@@ -693,10 +867,7 @@ export default function ContractForm({
                   </div>
                   <div className="md:col-span-2">
                     <label className="mb-1 block text-sm font-medium text-gray-700">
-                      Contact Number{" "}
-                      <span className="text-xs text-gray-500">
-                        (Mobile or Home)
-                      </span>
+                      Contact Number <span className="text-xs text-gray-500">(Mobile or Home)</span>
                     </label>
                     <input
                       type="tel"
@@ -708,14 +879,11 @@ export default function ContractForm({
                       disabled={otpSent && !otpVerified}
                     />
                     <span className="mt-1 block text-xs text-gray-500">
-                      Enter your number without country code (e.g. 412345678 or
-                      0412345678).
+                      Enter your number without country code (e.g. 412345678 or 0412345678).
                     </span>
                   </div>
                   <div className="md:col-span-2">
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                      Date of Birth
-                    </label>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Date of Birth</label>
                     <input
                       type="date"
                       className={inputClasses}
@@ -732,18 +900,14 @@ export default function ContractForm({
               {/* Business Details */}
               <div className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-[1.25rem] font-semibold text-[--primary]">
-                    Business Details
-                  </h2>
+                  <h2 className="text-[1.25rem] font-semibold text-[--primary]">Business Details</h2>
                   <span className="rounded-full border border-[--primary]/25 bg-[--primary]/8 px-3 py-1 text-xs font-medium text-[--primary]">
                     Optional
                   </span>
                 </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                      Business Name
-                    </label>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Business Name</label>
                     <input
                       type="text"
                       className={inputClasses}
@@ -753,9 +917,7 @@ export default function ContractForm({
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                      Business Address
-                    </label>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Business Address</label>
                     <input
                       type="text"
                       className={inputClasses}
@@ -770,18 +932,14 @@ export default function ContractForm({
               {/* Connection Details */}
               <div className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-[1.25rem] font-semibold text-[--primary]">
-                    Connection Details
-                  </h2>
+                  <h2 className="text-[1.25rem] font-semibold text-[--primary]">Connection Details</h2>
                   <span className="rounded-full border border-[--primary]/25 bg-[--primary]/8 px-3 py-1 text-xs font-medium text-[--primary]">
                     Step 2
                   </span>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                      Service Address
-                    </label>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Service Address</label>
                     <input
                       type="text"
                       className={`${inputClasses} cursor-not-allowed bg-gray-100`}
@@ -790,15 +948,11 @@ export default function ContractForm({
                     />
                   </div>
                   <div>
-                    <span className="mb-1 block text-sm font-medium text-gray-700">
-                      Activate ASAP?
-                    </span>
+                    <span className="mb-1 block text-sm font-medium text-gray-700">Activate ASAP?</span>
                     <div className="flex gap-3">
                       <button
                         type="button"
-                        onClick={() =>
-                          setForm((f) => ({ ...f, activateASAP: true }))
-                        }
+                        onClick={() => setForm((f) => ({ ...f, activateASAP: true }))}
                         aria-pressed={form.activateASAP}
                         className={
                           form.activateASAP
@@ -811,9 +965,7 @@ export default function ContractForm({
 
                       <button
                         type="button"
-                        onClick={() =>
-                          setForm((f) => ({ ...f, activateASAP: false }))
-                        }
+                        onClick={() => setForm((f) => ({ ...f, activateASAP: false }))}
                         aria-pressed={!form.activateASAP}
                         className={
                           !form.activateASAP
@@ -840,9 +992,7 @@ export default function ContractForm({
               {/* Delivery Details */}
               <div className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-[1.25rem] font-semibold text-[--primary]">
-                    Delivery Details
-                  </h2>
+                  <h2 className="text-[1.25rem] font-semibold text-[--primary]">Delivery Details</h2>
                   <span className="rounded-full border border-[--primary]/25 bg-[--primary]/8 px-3 py-1 text-xs font-medium text-[--primary]">
                     Step 3
                   </span>
@@ -856,9 +1006,7 @@ export default function ContractForm({
                         checked={form.deliverySame}
                         onChange={handleChange("deliverySame")}
                       />
-                      <span className="text-gray-700">
-                        Same as Service Address
-                      </span>
+                      <span className="text-gray-700">Same as Service Address</span>
                     </label>
 
                     {!form.deliverySame && (
@@ -875,9 +1023,7 @@ export default function ContractForm({
 
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Full Name (Delivery)
-                      </label>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Full Name (Delivery)</label>
                       <input
                         type="text"
                         className={inputClasses}
@@ -887,10 +1033,7 @@ export default function ContractForm({
                     </div>
                     <div>
                       <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Company Name{" "}
-                        <span className="text-xs text-gray-500">
-                          (Optional)
-                        </span>
+                        Company Name <span className="text-xs text-gray-500">(Optional)</span>
                       </label>
                       <input
                         type="text"
@@ -906,9 +1049,7 @@ export default function ContractForm({
               {/* OTP panel */}
               {otpSent && !otpVerified && (
                 <div className="rounded-2xl border border-[--primary]/35 bg-white p-6 shadow-sm">
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
-                    Enter OTP sent to your contact number
-                  </label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Enter OTP sent to your contact number</label>
                   <input
                     type="text"
                     className={`${inputClasses} mt-2`}
@@ -926,23 +1067,13 @@ export default function ContractForm({
                       {loading ? "Verifying…" : "Verify OTP"}
                     </button>
                     {resendTimer > 0 ? (
-                      <span className="text-sm text-gray-500">
-                        Resend in {resendTimer}s
-                      </span>
+                      <span className="text-sm text-gray-500">Resend in {resendTimer}s</span>
                     ) : (
                       <>
-                        <button
-                          type="button"
-                          onClick={() => sendOtp("sms")}
-                          className={btnSecondary}
-                        >
+                        <button type="button" onClick={() => sendOtp("sms")} className={btnSecondary}>
                           Resend via SMS
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => sendOtp("call")}
-                          className={btnSecondary}
-                        >
+                        <button type="button" onClick={() => sendOtp("call")} className={btnSecondary}>
                           Send via Call
                         </button>
                       </>
@@ -955,11 +1086,9 @@ export default function ContractForm({
               {/* Sticky submit bar */}
               <div className="bottom-0 z-10 -mx-6 mt-6 bg-white/95 px-6 py-4 backdrop-blur-sm sm:mx-0 sm:rounded-xl sm:border sm:border-gray-200">
                 <div className="flex flex-col items-end gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  {extras?.pbx &&
-                  (pbxMonthlyPreview > 0 || pbxUpfrontPreview > 0) ? (
+                  {extras?.pbx && (pbxMonthlyPreview > 0 || pbxUpfrontPreview > 0) ? (
                     <div className="text-xs text-gray-600">
-                      * PBX monthly: ${pbxMonthlyPreview.toFixed(2)} | First
-                      month upfront: $
+                      * PBX monthly: ${pbxMonthlyPreview.toFixed(2)} | First month upfront: $
                       {(pbxMonthlyPreview + pbxUpfrontPreview).toFixed(2)}
                     </div>
                   ) : (
@@ -978,26 +1107,14 @@ export default function ContractForm({
                           : "Verify the OTP to enable submission"
                       }
                     >
-                      {otpSent
-                        ? otpVerified
-                          ? "Submit Contract"
-                          : "Submit Contract"
-                        : "Verify & Submit"}
+                      {otpSent ? (otpVerified ? "Submit Contract" : "Submit Contract") : "Verify & Submit"}
                     </button>
-                    <button
-                      type="button"
-                      className={btnSecondary}
-                      onClick={() => setOpen(false)}
-                    >
+                    <button type="button" className={btnSecondary} onClick={() => setOpen(false)}>
                       Cancel
                     </button>
                   </div>
                 </div>
-                {error && !otpSent && (
-                  <div className="mt-2 text-right text-sm text-red-500">
-                    {error}
-                  </div>
-                )}
+                {error && !otpSent && <div className="mt-2 text-right text-sm text-red-500">{error}</div>}
               </div>
             </>
           )}

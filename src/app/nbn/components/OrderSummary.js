@@ -2,6 +2,9 @@
 "use client";
 import React from "react";
 
+
+
+
 /** ----- Legacy reference data (kept) ----- */
 const modemOptions = [
   { id: "modem",    title: "Gigabit WiFi-6 MESH 1800Mbps Modem",     price: "$170 / Upfront" },
