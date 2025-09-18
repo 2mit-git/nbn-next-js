@@ -49,13 +49,28 @@ export default function Page() {
 
   const mergedExtras = useMemo(
     () => ({
+      // legacy/per-item list still supported
       modems: extras.includeModem ? extras.selectedModems : [],
+
+      // NEW: pass bundle + term chosen in Addons
+      modemBundle:
+        extras.includeModem && Number.isInteger(extras.modemBundle)
+          ? extras.modemBundle
+          : undefined,
+      modemTerm:
+        extras.includeModem && (extras.modemTerm === "outright" || extras.modemTerm === "12" || extras.modemTerm === "24")
+          ? extras.modemTerm
+          : undefined,
+
+      // unchanged
       phone: extras.includePhone ? extras.selectedPhone : null,
       pbx: pbxState.includePBX ? pbxState.pbx : null,
     }),
     [
       extras.includeModem,
       extras.selectedModems,
+      extras.modemBundle,
+      extras.modemTerm,
       extras.includePhone,
       extras.selectedPhone,
       pbxState.includePBX,
