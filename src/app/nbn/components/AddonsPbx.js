@@ -213,6 +213,7 @@ function PBXWizardSection({ value, onPBXChange }) {
             className="hidden sm:flex items-center gap-3 text-sm"
             aria-hidden="true"
           >
+            
           </div>
         </div>
 
@@ -558,7 +559,7 @@ const Modal = ({ open, onClose, title, children }) => {
       aria-label={title}
     >
       {/* Dim/blur backdrop */}
-      <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm animate-[fade_120ms_ease-out]" />
+      <div className="absolute inset-0 bg-white backdrop-blur-sm animate-[fade_120ms_ease-out]" />
       <div
         className="relative w-full max-w-5xl animate-[pop_140ms_ease-out_forwards] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200"
         onClick={(e) => e.stopPropagation()}
@@ -802,7 +803,7 @@ export default function AddonsPbx({ value = {}, onChange }) {
         <PBXWizardSection value={pbx} onPBXChange={handlePBXChange} />
 
         {/* Actions (kept exactly the same logic) */}
-        <div className="sticky bottom-0 mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end border-t bg-white/95 backdrop-blur px-1 pt-4">
+        <div className=" bottom-0 mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end border-t bg-white/95 backdrop-blur px-1 pt-4">
           <button
             className="rounded-md border px-4 py-2 w-full sm:w-auto hover:bg-gray-50"
             onClick={() => closePBXModal("cancel")}

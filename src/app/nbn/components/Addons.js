@@ -290,7 +290,7 @@ export default function Addons({ value = {}, onChange }) {
         aria-label={title}
         onClick={onClose}
       >
-        <div className="absolute inset-0 bg-white/90 backdrop-blur-[1px]" />
+        <div className="absolute inset-0 bg-white backdrop-blur-[1px]" />
         <div
           className="relative z-10 flex w-full max-w-4xl flex-col items-center gap-8"
           onClick={(e) => e.stopPropagation()}
