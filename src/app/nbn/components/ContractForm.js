@@ -317,133 +317,143 @@ export default function ContractForm({
   /* ---------- Common vs PBX breakdowns (NEW) ---------- */
 
   // Builds ONLY the common (non-PBX) section
-  const buildCommonSection = () => {
-    const items = [];
-    const plan = selectedPlan || {};
+  // ⬇️ Replace ONLY your current buildCommonSection with this version
+const buildCommonSection = () => {
+  const items = [];
+  const plan = selectedPlan || {};
 
-    const planPrice =
-      typeof plan?.discountPrice !== "undefined"
-        ? Number(plan.discountPrice)
-        : typeof plan?.price !== "undefined"
-        ? Number(plan.price)
-        : 0;
+  const planPrice =
+    typeof plan?.discountPrice !== "undefined"
+      ? Number(plan.discountPrice)
+      : typeof plan?.price !== "undefined"
+      ? Number(plan.price)
+      : 0;
 
-    // Plan (structured) — prefer explicit name/title
-    if (planPrice > 0 || plan?.name || plan?.title) {
-      items.push({
-        key: plan?.name || plan?.title || "Plan",
-        qty: 1,
-        unitPrice: planPrice,
-        subtotal: planPrice,
-      });
-    }
+  // Plan (structured) — prefer explicit name/title
+  if (planPrice > 0 || plan?.name || plan?.title) {
+    items.push({
+      key: plan?.name || plan?.title || "Plan",
+      qty: 1,
+      unitPrice: planPrice,
+      subtotal: planPrice,
+    });
+  }
 
-    // Modem bundle (structured)
-    const modemObj = modemRouterPayload();
-    if (modemObj) {
-      items.push({
-        key: `${modemObj.bundleLabel} (${modemObj.termLabel})`,
-        qty: 1,
-        unitPrice: modemObj.price,
-        subtotal: modemObj.price,
-        meta: {
-          modemModel: modemObj.modemModel,
-          extenderModel: modemObj.extenderModel,
-          billing: modemObj.billing,
-          extenderCount: modemObj.extenderCount,
-        },
-      });
-    }
+  // Modem bundle (structured)
+  const modemObj = modemRouterPayload();
+  if (modemObj) {
+    items.push({
+      key: `${modemObj.bundleLabel} (${modemObj.termLabel})`,
+      qty: 1,
+      unitPrice: modemObj.price,
+      subtotal: modemObj.price,
+      meta: {
+        modemModel: modemObj.modemModel,
+        extenderModel: modemObj.extenderModel,
+        billing: modemObj.billing,
+        extenderCount: modemObj.extenderCount,
+      },
+    });
+  }
 
-    // Phone (structured)
-    if (extras?.phone) {
-      const phoneOpt = PHONE_OPTIONS.find((p) => p.id === extras.phone);
-      const unit = phoneOpt?.price ?? (extras.phone === "pack" ? 10 : 0);
-      items.push({
-        key: phoneOpt?.title || (extras.phone === "pack" ? "$10/mth Unlimited call pack" : "Pay-as-you-go call rates"),
-        qty: 1,
-        unitPrice: unit,
-        subtotal: unit,
-      });
-    }
+  // Phone (structured)
+  if (extras?.phone) {
+    const phoneOpt = PHONE_OPTIONS.find((p) => p.id === extras.phone);
+    const unit = phoneOpt?.price ?? (extras.phone === "pack" ? 10 : 0);
+    items.push({
+      key:
+        phoneOpt?.title ||
+        (extras.phone === "pack" ? "$10/mth Unlimited call pack" : "Pay-as-you-go call rates"),
+      qty: 1,
+      unitPrice: unit,
+      subtotal: unit,
+    });
+  }
 
-    const total = items.reduce((s, it) => s + (Number(it.subtotal) || 0), 0);
+  const total = items.reduce((s, it) => s + (Number(it.subtotal) || 0), 0);
 
-    // Legacy (data1..): use plan title/name (never speed/subtitle)
-    const legacyLines = [];
-    const planTitle = plan?.name || plan?.title || "Plan";
-    if (planPrice > 0 || planTitle) {
-      legacyLines.push({
-        label: planTitle,
-        value: 1,
-        price: planPrice,
-        subtotal: planPrice,
-      });
-    }
+  // ------- Legacy (data1..): use plan title/name (never speed/subtitle)
+  const legacyLines = [];
+  const planTitle = plan?.name || plan?.title || "Plan";
+  if (planPrice > 0 || planTitle) {
+    legacyLines.push({
+      label: planTitle,
+      value: 1,
+      price: planPrice,
+      subtotal: planPrice,
+    });
+  }
 
-    // Modem/extender legacy
-    if (modemObj) {
-      if (modemObj.term === "outright") {
-        // separate lines for modem + extenders
-        const m = MODEM_OPTIONS.find((x) => x.id === "modem");
-        const e = MODEM_OPTIONS.find((x) => x.id === "extender");
-        if (m) {
-          legacyLines.push({ label: m.title, value: 1, price: m.price, subtotal: m.price });
-        }
-        if (e && modemObj.extenderCount > 0) {
-          legacyLines.push({
-            label: e.title,
-            value: modemObj.extenderCount,
-            price: e.price,
-            subtotal: e.price * modemObj.extenderCount,
-          });
-        }
-      } else {
-        // monthly term: compose a single line with full model names
-        const parts = [];
-        parts.push(`1 ${MODEM_MODEL}`);
-        if (modemObj.extenderCount > 0) {
-          parts.push(`${modemObj.extenderCount} ${EXTENDER_MODEL}`);
-        }
-        const humanBundle = parts.join(" + ");
+  // Modem/extender legacy
+  if (modemObj) {
+    if (modemObj.term === "outright") {
+      // separate lines for modem + extenders
+      const m = MODEM_OPTIONS.find((x) => x.id === "modem");
+      const e = MODEM_OPTIONS.find((x) => x.id === "extender");
+      if (m) {
+        legacyLines.push({ label: m.title, value: 1, price: m.price, subtotal: m.price });
+      }
+      if (e && modemObj.extenderCount > 0) {
         legacyLines.push({
-          label: `${humanBundle} — $${modemObj.price}/mth (${TERM_LABEL[modemObj.term]})`,
-          value: 1,
-          price: modemObj.price,
-          subtotal: modemObj.price,
+          label: e.title,
+          value: modemObj.extenderCount,
+          price: e.price,
+          subtotal: e.price * modemObj.extenderCount,
         });
       }
-    }
-
-    // Phone legacy
-    if (extras?.phone) {
-      const p = PHONE_OPTIONS.find((x) => x.id === extras.phone);
+    } else {
+      // monthly term: compose a single line with full model names
+      const parts = [];
+      parts.push(`1 ${MODEM_MODEL}`);
+      if (modemObj.extenderCount > 0) {
+        parts.push(`${modemObj.extenderCount} ${EXTENDER_MODEL}`);
+      }
+      const humanBundle = parts.join(" + ");
       legacyLines.push({
-        label: p?.title || (extras.phone === "pack" ? "$10/mth Unlimited call pack" : "Pay-as-you-go call rates"),
+        label: `${humanBundle} — $${modemObj.price}/mth (${TERM_LABEL[modemObj.term]})`,
         value: 1,
-        price: p?.price ?? (extras.phone === "pack" ? 10 : 0),
-        subtotal: p?.price ?? (extras.phone === "pack" ? 10 : 0),
+        price: modemObj.price,
+        subtotal: modemObj.price,
       });
     }
+  }
 
-    const legacyFields = {};
-    legacyLines.slice(0, 20).forEach((row, idx) => {
-      const i = idx + 1;
-      legacyFields[`data${i}`] = row.label;
-      legacyFields[`data${i}Value`] = row.value;
-      legacyFields[`data${i}Price`] = row.price;
-      legacyFields[`data${i}Subtotal`] = Number(row.subtotal.toFixed(2));
+  // Phone legacy
+  if (extras?.phone) {
+    const p = PHONE_OPTIONS.find((x) => x.id === extras.phone);
+    legacyLines.push({
+      label: p?.title || (extras.phone === "pack" ? "$10/mth Unlimited call pack" : "Pay-as-you-go call rates"),
+      value: 1,
+      price: p?.price ?? (extras.phone === "pack" ? 10 : 0),
+      subtotal: p?.price ?? (extras.phone === "pack" ? 10 : 0),
     });
+  }
 
-    return {
-      items,
-      total,
-      legacyLines,
-      legacyFields,
-      modemObj,
-      planPrice,
-    };
+  const legacyFields = {};
+  legacyLines.slice(0, 20).forEach((row, idx) => {
+    const i = idx + 1;
+    legacyFields[`data${i}`] = row.label;
+    legacyFields[`data${i}Value`] = row.value;
+    legacyFields[`data${i}Price`] = row.price;
+    legacyFields[`data${i}Subtotal`] = Number(row.subtotal.toFixed(2));
+  });
+
+  // ✅ NEW: compute total of first three legacy subtotals and expose as "total of nbn"
+  const nbnFirst3Total = legacyLines
+    .slice(0, 3)
+    .reduce((s, r) => s + (Number(r.subtotal) || 0), 0);
+  legacyFields["total of nbn"] = Number(nbnFirst3Total.toFixed(2));
+
+  return {
+    items,
+    total,
+    legacyLines,
+    legacyFields, // includes "total of nbn"
+    modemObj,
+    planPrice,
   };
+};
+
 
   // Builds ONLY the PBX section (and updates previews)
   const buildPbxSection = () => {
